@@ -1,0 +1,343 @@
+{
+  "version": 1,
+  "description": "Smart-home vocabulary and natural Southern/Appalachian-influenced conversational language for Kentucky voice dataset generation.",
+
+  "openings": [
+    { "text": "go ahead and", "weight": 8, "informality": 70 },
+    { "text": "can you", "weight": 8, "informality": 40 },
+    { "text": "I need you to", "weight": 6, "informality": 50 },
+    { "text": "would you", "weight": 5, "informality": 35 },
+    { "text": "hey", "weight": 6, "informality": 85 },
+    { "text": "hey, can you", "weight": 5, "informality": 80 },
+    { "text": "hey, go ahead and", "weight": 5, "informality": 85 },
+    { "text": "I want you to", "weight": 5, "informality": 60 },
+    { "text": "I need that", "weight": 4, "informality": 70 },
+    { "text": "how about you", "weight": 6, "informality": 85 },
+    { "text": "why don't you", "weight": 4, "informality": 70 },
+    { "text": "could you", "weight": 4, "informality": 30 },
+    { "text": "would you mind", "weight": 2, "informality": 20 },
+    { "text": "I reckon you could", "weight": 2, "informality": 90 },
+    { "text": "let's", "weight": 3, "informality": 70 },
+    { "text": "just", "weight": 3, "informality": 75 },
+    { "text": "please", "weight": 3, "informality": 25 }
+  ],
+
+  "actions": [
+    { "text": "turn on", "weight": 10 },
+    { "text": "turn off", "weight": 10 },
+    { "text": "shut off", "weight": 8 },
+    { "text": "switch on", "weight": 5 },
+    { "text": "switch off", "weight": 5 },
+    { "text": "cut on", "weight": 4 },
+    { "text": "cut off", "weight": 4 },
+    { "text": "power on", "weight": 3 },
+    { "text": "power off", "weight": 3 },
+    { "text": "get", "weight": 3 },
+    { "text": "start", "weight": 3 },
+    { "text": "stop", "weight": 3 },
+    { "text": "activate", "weight": 2 },
+    { "text": "deactivate", "weight": 2 },
+    { "text": "open", "weight": 4 },
+    { "text": "close", "weight": 4 },
+    { "text": "lock", "weight": 4 },
+    { "text": "unlock", "weight": 4 },
+    { "text": "raise", "weight": 3 },
+    { "text": "lower", "weight": 3 },
+    { "text": "dim", "weight": 5 },
+    { "text": "brighten", "weight": 3 },
+    { "text": "set", "weight": 5 },
+    { "text": "change", "weight": 4 },
+    { "text": "adjust", "weight": 3 },
+    { "text": "make", "weight": 3 },
+    { "text": "put", "weight": 3 }
+  ],
+
+  "devices": [
+    { "text": "the light", "weight": 10 },
+    { "text": "the lights", "weight": 10 },
+    { "text": "the living room light", "weight": 8 },
+    { "text": "the living room lights", "weight": 8 },
+    { "text": "the kitchen light", "weight": 7 },
+    { "text": "the kitchen lights", "weight": 7 },
+    { "text": "the bedroom light", "weight": 6 },
+    { "text": "the bedroom lights", "weight": 6 },
+    { "text": "the porch light", "weight": 7 },
+    { "text": "the hallway light", "weight": 6 },
+    { "text": "the bathroom light", "weight": 5 },
+    { "text": "the lamp", "weight": 8 },
+    { "text": "the lamps", "weight": 6 },
+    { "text": "the fan", "weight": 6 },
+    { "text": "the ceiling fan", "weight": 7 },
+    { "text": "the TV", "weight": 7 },
+    { "text": "the television", "weight": 4 },
+    { "text": "the thermostat", "weight": 6 },
+    { "text": "the heater", "weight": 5 },
+    { "text": "the air conditioner", "weight": 5 },
+    { "text": "the AC", "weight": 6 },
+    { "text": "the porch lights", "weight": 5 },
+    { "text": "the door", "weight": 5 },
+    { "text": "the front door", "weight": 6 },
+    { "text": "the back door", "weight": 5 },
+    { "text": "the garage door", "weight": 5 },
+    { "text": "the blinds", "weight": 5 },
+    { "text": "the curtains", "weight": 4 },
+    { "text": "the outlet", "weight": 4 },
+    { "text": "the plug", "weight": 4 },
+    { "text": "the coffee maker", "weight": 5 },
+    { "text": "the kitchen fan", "weight": 4 },
+    { "text": "the bedroom fan", "weight": 4 }
+  ],
+
+  "locations": [
+    { "text": "living room", "weight": 10 },
+    { "text": "kitchen", "weight": 9 },
+    { "text": "bedroom", "weight": 8 },
+    { "text": "bathroom", "weight": 7 },
+    { "text": "hallway", "weight": 7 },
+    { "text": "hall", "weight": 6 },
+    { "text": "porch", "weight": 7 },
+    { "text": "front porch", "weight": 6 },
+    { "text": "back porch", "weight": 5 },
+    { "text": "garage", "weight": 6 },
+    { "text": "basement", "weight": 4 },
+    { "text": "upstairs", "weight": 5 },
+    { "text": "downstairs", "weight": 5 },
+    { "text": "outside", "weight": 5 },
+    { "text": "out back", "weight": 4 },
+    { "text": "in the house", "weight": 4 },
+    { "text": "in here", "weight": 5 },
+    { "text": "in there", "weight": 4 }
+  ],
+
+  "connectors": [
+    { "text": "and", "weight": 10 },
+    { "text": "then", "weight": 7 },
+    { "text": "while you're at it", "weight": 4 },
+    { "text": "while you're in there", "weight": 4 },
+    { "text": "since you're there", "weight": 3 },
+    { "text": "when you get a chance", "weight": 3 },
+    { "text": "if you would", "weight": 3 },
+    { "text": "go on and", "weight": 4 },
+    { "text": "just go ahead and", "weight": 5 },
+    { "text": "might as well", "weight": 4 },
+    { "text": "while you're at it, go ahead and", "weight": 3 }
+  ],
+
+  "pronouns": [
+    { "text": "it", "weight": 10 },
+    { "text": "that", "weight": 8 },
+    { "text": "that one", "weight": 6 },
+    { "text": "this one", "weight": 5 },
+    { "text": "those", "weight": 5 },
+    { "text": "these", "weight": 4 },
+    { "text": "them", "weight": 4 },
+    { "text": "the one", "weight": 5 },
+    { "text": "that thing", "weight": 3 }
+  ],
+
+  "modifiers": [
+    { "text": "dark", "weight": 10 },
+    { "text": "too dark", "weight": 8 },
+    { "text": "pretty dark", "weight": 6 },
+    { "text": "mighty dark", "weight": 3 },
+    { "text": "cold", "weight": 5 },
+    { "text": "hot", "weight": 5 },
+    { "text": "warm", "weight": 4 },
+    { "text": "bright", "weight": 4 },
+    { "text": "too bright", "weight": 4 },
+    { "text": "stuffy", "weight": 3 },
+    { "text": "too warm", "weight": 3 },
+    { "text": "too cold", "weight": 3 },
+    { "text": "a little dark", "weight": 4 },
+    { "text": "a little warm", "weight": 3 },
+    { "text": "a little cold", "weight": 3 }
+  ],
+
+  "questions": [
+    { "text": "can you", "weight": 8 },
+    { "text": "could you", "weight": 5 },
+    { "text": "would you", "weight": 4 },
+    { "text": "how about you", "weight": 7 },
+    { "text": "why don't you", "weight": 4 },
+    { "text": "you reckon you could", "weight": 2 },
+    { "text": "would you mind", "weight": 2 }
+  ],
+
+  "regional": [
+    {
+      "id": "yonder",
+      "text": "over yonder",
+      "weight": 4,
+      "southern": 0.9,
+      "appalachian": 0.95
+    },
+    {
+      "id": "right_here",
+      "text": "right here",
+      "weight": 7,
+      "southern": 0.5,
+      "appalachian": 0.5
+    },
+    {
+      "id": "right_there",
+      "text": "right there",
+      "weight": 7,
+      "southern": 0.5,
+      "appalachian": 0.5
+    },
+    {
+      "id": "down_there",
+      "text": "down there",
+      "weight": 6,
+      "southern": 0.6,
+      "appalachian": 0.7
+    },
+    {
+      "id": "up_there",
+      "text": "up there",
+      "weight": 6,
+      "southern": 0.6,
+      "appalachian": 0.6
+    },
+    {
+      "id": "over_there",
+      "text": "over there",
+      "weight": 8,
+      "southern": 0.6,
+      "appalachian": 0.6
+    },
+    {
+      "id": "down_home",
+      "text": "down home",
+      "weight": 2,
+      "southern": 0.9,
+      "appalachian": 0.9
+    },
+    {
+      "id": "around_here",
+      "text": "around here",
+      "weight": 6,
+      "southern": 0.6,
+      "appalachian": 0.7
+    },
+    {
+      "id": "up_here",
+      "text": "up here",
+      "weight": 5,
+      "southern": 0.5,
+      "appalachian": 0.6
+    },
+    {
+      "id": "downstairs",
+      "text": "downstairs",
+      "weight": 6,
+      "southern": 0.3,
+      "appalachian": 0.4
+    },
+    {
+      "id": "upstairs",
+      "text": "upstairs",
+      "weight": 6,
+      "southern": 0.3,
+      "appalachian": 0.4
+    },
+    {
+      "id": "in_here",
+      "text": "in here",
+      "weight": 8,
+      "southern": 0.5,
+      "appalachian": 0.5
+    },
+    {
+      "id": "in_there",
+      "text": "in there",
+      "weight": 7,
+      "southern": 0.5,
+      "appalachian": 0.6
+    },
+    {
+      "id": "out_back",
+      "text": "out back",
+      "weight": 5,
+      "southern": 0.7,
+      "appalachian": 0.8
+    },
+    {
+      "id": "back_yonder",
+      "text": "back yonder",
+      "weight": 2,
+      "southern": 0.9,
+      "appalachian": 0.95
+    },
+    {
+      "id": "a_ways",
+      "text": "a ways over",
+      "weight": 2,
+      "southern": 0.8,
+      "appalachian": 0.9
+    },
+    {
+      "id": "this_here",
+      "text": "this here",
+      "weight": 3,
+      "southern": 0.85,
+      "appalachian": 0.9
+    },
+    {
+      "id": "that_there",
+      "text": "that there",
+      "weight": 3,
+      "southern": 0.85,
+      "appalachian": 0.9
+    },
+    {
+      "id": "them_lights",
+      "text": "them lights",
+      "weight": 3,
+      "southern": 0.8,
+      "appalachian": 0.85
+    },
+    {
+      "id": "them_lights_over_there",
+      "text": "them lights over there",
+      "weight": 2,
+      "southern": 0.85,
+      "appalachian": 0.9
+    },
+    {
+      "id": "folks",
+      "text": "folks",
+      "weight": 2,
+      "southern": 0.8,
+      "appalachian": 0.8
+    },
+    {
+      "id": "reckon",
+      "text": "I reckon",
+      "weight": 3,
+      "southern": 0.8,
+      "appalachian": 0.85
+    },
+    {
+      "id": "might_as_well",
+      "text": "might as well",
+      "weight": 4,
+      "southern": 0.6,
+      "appalachian": 0.65
+    },
+    {
+      "id": "go_on",
+      "text": "go on",
+      "weight": 5,
+      "southern": 0.7,
+      "appalachian": 0.75
+    },
+    {
+      "id": "yall",
+      "text": "y'all",
+      "weight": 2,
+      "southern": 0.95,
+      "appalachian": 0.8
+    }
+  ]
+}

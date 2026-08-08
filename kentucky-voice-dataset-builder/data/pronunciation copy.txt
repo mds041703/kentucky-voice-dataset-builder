@@ -1,0 +1,289 @@
+{
+  "version": 1,
+  "description": "Pronunciation targets for Kentucky and Southern-influenced smart-home speech recordings.",
+
+  "targets": [
+    {
+      "id": "light",
+      "target": "light",
+      "category": "vowel",
+      "notes": "Useful for monitoring vowel quality."
+    },
+    {
+      "id": "lights",
+      "target": "lights",
+      "category": "vowel",
+      "notes": "Common smart-home command word."
+    },
+    {
+      "id": "right",
+      "target": "right",
+      "category": "vowel",
+      "notes": "Useful comparison with light."
+    },
+    {
+      "id": "night",
+      "target": "night",
+      "category": "vowel",
+      "notes": "Useful in darkness-related commands."
+    },
+    {
+      "id": "there",
+      "target": "there",
+      "category": "vowel",
+      "notes": "Common location/deictic word."
+    },
+    {
+      "id": "their",
+      "target": "their",
+      "category": "vowel",
+      "notes": "Useful for natural conversational speech."
+    },
+    {
+      "id": "here",
+      "target": "here",
+      "category": "vowel",
+      "notes": "Common smart-home reference."
+    },
+    {
+      "id": "air",
+      "target": "air",
+      "category": "vowel",
+      "notes": "Appears in air-conditioner and climate commands."
+    },
+    {
+      "id": "fire",
+      "target": "fire",
+      "category": "vowel",
+      "notes": "Useful Southern/Appalachian vowel target."
+    },
+    {
+      "id": "tire",
+      "target": "tire",
+      "category": "vowel",
+      "notes": "General regional pronunciation target."
+    },
+    {
+      "id": "door",
+      "target": "door",
+      "category": "vowel",
+      "notes": "Common home-automation word."
+    },
+    {
+      "id": "floor",
+      "target": "floor",
+      "category": "vowel",
+      "notes": "Useful r-controlled vowel target."
+    },
+    {
+      "id": "four",
+      "target": "four",
+      "category": "vowel",
+      "notes": "Useful comparison target."
+    },
+    {
+      "id": "porch",
+      "target": "porch",
+      "category": "regional",
+      "notes": "Common Southern/Appalachian home vocabulary."
+    },
+    {
+      "id": "house",
+      "target": "house",
+      "category": "vowel",
+      "notes": "Common conversational word."
+    },
+    {
+      "id": "out",
+      "target": "out",
+      "category": "vowel",
+      "notes": "Important Southern/Appalachian vowel target."
+    },
+    {
+      "id": "about",
+      "target": "about",
+      "category": "vowel",
+      "notes": "Useful conversational vowel target."
+    },
+    {
+      "id": "down",
+      "target": "down",
+      "category": "vowel",
+      "notes": "Common location word."
+    },
+    {
+      "id": "up",
+      "target": "up",
+      "category": "vowel",
+      "notes": "Common location word."
+    },
+    {
+      "id": "home",
+      "target": "home",
+      "category": "vowel",
+      "notes": "Common conversational word."
+    },
+    {
+      "id": "yall",
+      "target": "y'all",
+      "category": "regional",
+      "notes": "Southern conversational form."
+    },
+    {
+      "id": "yonder",
+      "target": "yonder",
+      "category": "regional",
+      "notes": "Regional location vocabulary."
+    },
+    {
+      "id": "reckon",
+      "target": "reckon",
+      "category": "regional",
+      "notes": "Southern/Appalachian conversational vocabulary."
+    },
+    {
+      "id": "folks",
+      "target": "folks",
+      "category": "regional",
+      "notes": "Southern/Appalachian conversational vocabulary."
+    },
+    {
+      "id": "mighty",
+      "target": "mighty",
+      "category": "regional",
+      "notes": "Useful regional intensifier."
+    },
+    {
+      "id": "pretty",
+      "target": "pretty",
+      "category": "regional",
+      "notes": "Useful as an intensifier, such as 'pretty dark'."
+    },
+    {
+      "id": "them",
+      "target": "them",
+      "category": "grammar",
+      "notes": "Useful when recording natural conversational references such as 'them lights'."
+    },
+    {
+      "id": "this",
+      "target": "this",
+      "category": "grammar",
+      "notes": "Useful in phrases such as 'this here'."
+    },
+    {
+      "id": "that",
+      "target": "that",
+      "category": "grammar",
+      "notes": "Useful in phrases such as 'that there'."
+    },
+    {
+      "id": "there",
+      "target": "there",
+      "category": "grammar",
+      "notes": "Useful for natural deictic speech."
+    },
+    {
+      "id": "going",
+      "target": "going",
+      "category": "reduction",
+      "notes": "Record naturally rather than forcing a spelling such as 'goin'."
+    },
+    {
+      "id": "going_to",
+      "target": "going to",
+      "category": "reduction",
+      "notes": "Useful for natural connected speech."
+    },
+    {
+      "id": "want_to",
+      "target": "want to",
+      "category": "reduction",
+      "notes": "Useful for natural connected speech."
+    },
+    {
+      "id": "have_to",
+      "target": "have to",
+      "category": "reduction",
+      "notes": "Useful for natural connected speech."
+    },
+    {
+      "id": "got_to",
+      "target": "got to",
+      "category": "reduction",
+      "notes": "Useful for conversational speech."
+    },
+    {
+      "id": "kind_of",
+      "target": "kind of",
+      "category": "reduction",
+      "notes": "Useful conversational phrase."
+    },
+    {
+      "id": "out_of",
+      "target": "out of",
+      "category": "reduction",
+      "notes": "Useful connected-speech target."
+    }
+  ],
+
+  "substitutions": [
+    {
+      "id": "yall",
+      "target": "y'all",
+      "category": "regional",
+      "description": "Southern contraction. Keep standard spelling in transcript."
+    },
+    {
+      "id": "gonna",
+      "target": "going to",
+      "category": "reduction",
+      "description": "Natural spoken reduction. Do not force phonetic spelling into transcript."
+    },
+    {
+      "id": "wanna",
+      "target": "want to",
+      "category": "reduction",
+      "description": "Natural spoken reduction."
+    },
+    {
+      "id": "gotta",
+      "target": "got to",
+      "category": "reduction",
+      "description": "Natural spoken reduction."
+    },
+    {
+      "id": "kinda",
+      "target": "kind of",
+      "category": "reduction",
+      "description": "Natural spoken reduction."
+    },
+    {
+      "id": "sorta",
+      "target": "sort of",
+      "category": "reduction",
+      "description": "Natural spoken reduction."
+    },
+    {
+      "id": "outta",
+      "target": "out of",
+      "category": "reduction",
+      "description": "Natural spoken reduction."
+    }
+  ],
+
+  "categories": {
+    "vowel": "Words useful for monitoring regional vowel characteristics.",
+    "regional": "Vocabulary associated with Southern/Appalachian conversational speech.",
+    "grammar": "Natural grammatical constructions that may occur in regional speech.",
+    "reduction": "Connected-speech reductions that should be spoken naturally."
+  },
+
+  "recording_guidance": {
+    "transcription": "Use the words actually intended as the transcript. Do not intentionally misspell words to represent an accent.",
+    "speech": "Speak naturally. Do not exaggerate a Southern or Appalachian accent.",
+    "variation": "Record the same target in multiple natural sentence contexts when possible.",
+    "consistency": "Keep transcript spelling consistent across recordings.",
+    "goal": "Capture the acoustic characteristics of the speaker rather than teaching the model an artificial phonetic spelling system."
+  }
+}

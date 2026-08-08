@@ -1,0 +1,994 @@
+:root {
+    --bg: #111315;
+    --surface: #191c1f;
+    --surface-2: #202428;
+    --surface-3: #292e33;
+
+    --border: #383e44;
+
+    --text: #f1f3f4;
+    --text-muted: #a9b0b7;
+
+    --accent: #d99a32;
+    --accent-hover: #edab3d;
+
+    --danger: #c94b4b;
+    --success: #4da36a;
+
+    --radius: 8px;
+    --radius-small: 5px;
+
+    --max-width: 1400px;
+
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Helvetica,
+        Arial,
+        sans-serif;
+}
+
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    min-height: 100%;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+
+    background: var(--bg);
+    color: var(--text);
+
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   APP
+   ========================================================= */
+
+#app {
+    min-height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.app-header {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 18px 28px;
+
+    background: var(--surface);
+
+    border-bottom: 1px solid var(--border);
+}
+
+.app-title h1 {
+    margin: 0;
+
+    font-size: 22px;
+    font-weight: 650;
+}
+
+.app-title p {
+    margin: 3px 0 0;
+
+    color: var(--text-muted);
+
+    font-size: 13px;
+}
+
+.app-status {
+    display: flex;
+    align-items: center;
+}
+
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+
+    color: var(--text-muted);
+
+    font-size: 13px;
+}
+
+.status-indicator::before {
+    content: "";
+
+    width: 8px;
+    height: 8px;
+
+    border-radius: 50%;
+
+    background: var(--success);
+}
+
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+
+.main-nav {
+    display: flex;
+
+    padding: 0 28px;
+
+    background: var(--surface);
+
+    border-bottom: 1px solid var(--border);
+
+    overflow-x: auto;
+}
+
+.nav-button {
+    position: relative;
+
+    padding: 13px 18px;
+
+    border: 0;
+    background: transparent;
+
+    color: var(--text-muted);
+
+    white-space: nowrap;
+
+    transition:
+        color 0.15s ease,
+        background 0.15s ease;
+}
+
+.nav-button:hover {
+    color: var(--text);
+    background: var(--surface-2);
+}
+
+.nav-button.active {
+    color: var(--text);
+}
+
+.nav-button.active::after {
+    content: "";
+
+    position: absolute;
+
+    left: 14px;
+    right: 14px;
+    bottom: -1px;
+
+    height: 2px;
+
+    background: var(--accent);
+}
+
+
+/* =========================================================
+   MAIN
+   ========================================================= */
+
+.app-main {
+    width: 100%;
+    max-width: var(--max-width);
+
+    margin: 0 auto;
+
+    padding: 30px;
+
+    flex: 1;
+}
+
+.page {
+    display: none;
+}
+
+.page.active {
+    display: block;
+}
+
+.page-header {
+    margin-bottom: 25px;
+}
+
+.page-header h2 {
+    margin: 0 0 5px;
+
+    font-size: 26px;
+    font-weight: 650;
+}
+
+.page-header p {
+    margin: 0;
+
+    color: var(--text-muted);
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.primary-button,
+.secondary-button {
+    min-height: 42px;
+
+    padding: 9px 17px;
+
+    border-radius: var(--radius-small);
+
+    font-weight: 600;
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        opacity 0.15s ease;
+}
+
+.primary-button {
+    border: 1px solid var(--accent);
+
+    background: var(--accent);
+    color: #111;
+}
+
+.primary-button:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+}
+
+.secondary-button {
+    border: 1px solid var(--border);
+
+    background: var(--surface-2);
+    color: var(--text);
+}
+
+.secondary-button:hover {
+    background: var(--surface-3);
+}
+
+.primary-button:disabled,
+.secondary-button:disabled {
+    opacity: 0.4;
+
+    cursor: not-allowed;
+}
+
+.primary-button:focus-visible,
+.secondary-button:focus-visible,
+.nav-button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+
+/* =========================================================
+   RECORDING PROGRESS
+   ========================================================= */
+
+.recording-progress {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 15px;
+
+    color: var(--text-muted);
+
+    font-size: 14px;
+}
+
+.recording-progress strong {
+    color: var(--text);
+}
+
+
+/* =========================================================
+   SENTENCE CARD
+   ========================================================= */
+
+.sentence-card {
+    min-height: 210px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    padding: 35px;
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+
+    text-align: center;
+}
+
+.sentence-label {
+    margin-bottom: 15px;
+
+    color: var(--accent);
+
+    font-size: 12px;
+    font-weight: 700;
+
+    letter-spacing: 0.12em;
+}
+
+.current-sentence {
+    max-width: 1000px;
+
+    font-size: clamp(24px, 4vw, 40px);
+    font-weight: 500;
+
+    line-height: 1.3;
+}
+
+.sentence-metadata {
+    margin-top: 18px;
+
+    color: var(--text-muted);
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   RECORDING DISPLAY
+   ========================================================= */
+
+.recording-display {
+    padding: 30px 0 20px;
+
+    text-align: center;
+}
+
+.countdown {
+    min-height: 72px;
+
+    font-size: 58px;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.recording-state {
+    margin-top: 5px;
+
+    color: var(--text-muted);
+
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   AUDIO METER
+   ========================================================= */
+
+.audio-meter-container {
+    max-width: 800px;
+
+    margin: 0 auto 25px;
+}
+
+.audio-meter-label {
+    margin-bottom: 7px;
+
+    color: var(--text-muted);
+
+    font-size: 12px;
+}
+
+.audio-meter {
+    height: 12px;
+
+    overflow: hidden;
+
+    border: 1px solid var(--border);
+    border-radius: 100px;
+
+    background: var(--surface);
+}
+
+.audio-meter-level {
+    width: 0;
+    height: 100%;
+
+    background: var(--accent);
+
+    transition: width 0.05s linear;
+}
+
+
+/* =========================================================
+   RECORDING CONTROLS
+   ========================================================= */
+
+.recording-controls {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+    margin-bottom: 25px;
+}
+
+
+/* =========================================================
+   RECORDING RESULT
+   ========================================================= */
+
+.recording-result {
+    max-width: 700px;
+
+    margin: 25px auto 0;
+    padding: 20px;
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.recording-result h3 {
+    margin-top: 0;
+}
+
+.recording-result audio {
+    width: 100%;
+
+    margin: 15px 0;
+}
+
+.recording-result-controls {
+    display: flex;
+    gap: 10px;
+}
+
+
+/* =========================================================
+   GENERATOR
+   ========================================================= */
+
+.generator-layout {
+    display: grid;
+
+    grid-template-columns:
+        minmax(260px, 330px)
+        minmax(0, 1fr);
+
+    gap: 20px;
+}
+
+.generator-controls,
+.generator-results,
+.custom-sentence,
+.panel {
+    padding: 20px;
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.generator-controls {
+    display: flex;
+    flex-direction: column;
+
+    align-self: start;
+
+    gap: 8px;
+}
+
+.generator-controls label {
+    margin-top: 10px;
+
+    color: var(--text-muted);
+
+    font-size: 13px;
+}
+
+.generator-controls label:first-child {
+    margin-top: 0;
+}
+
+.generator-controls input[type="range"] {
+    width: 100%;
+}
+
+.generator-controls output {
+    color: var(--accent);
+
+    font-size: 13px;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 15px;
+
+    margin-bottom: 15px;
+}
+
+.section-header h3 {
+    margin: 0;
+}
+
+.generated-sentences {
+    display: flex;
+    flex-direction: column;
+
+    gap: 8px;
+
+    max-height: 600px;
+
+    overflow-y: auto;
+}
+
+.generated-sentence {
+    display: flex;
+    align-items: flex-start;
+
+    gap: 10px;
+
+    padding: 11px;
+
+    background: var(--surface-2);
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-small);
+}
+
+.generated-sentence input {
+    margin-top: 4px;
+}
+
+.generated-sentence-text {
+    flex: 1;
+}
+
+.custom-sentence {
+    margin-top: 20px;
+}
+
+.custom-sentence h3 {
+    margin-top: 0;
+}
+
+.custom-sentence textarea {
+    width: 100%;
+
+    min-height: 90px;
+
+    resize: vertical;
+}
+
+.custom-sentence-controls {
+    display: flex;
+
+    gap: 10px;
+
+    margin-top: 10px;
+}
+
+
+/* =========================================================
+   FORMS
+   ========================================================= */
+
+input[type="text"],
+input[type="number"],
+input[type="search"],
+input[type="file"],
+select,
+textarea {
+    width: 100%;
+
+    padding: 9px 11px;
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-small);
+
+    background: var(--surface-2);
+    color: var(--text);
+
+    outline: none;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--accent);
+
+    box-shadow:
+        0 0 0 2px rgba(217, 154, 50, 0.15);
+}
+
+input[type="range"] {
+    accent-color: var(--accent);
+}
+
+fieldset {
+    margin: 0 0 20px;
+    padding: 20px;
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+
+    background: var(--surface);
+}
+
+legend {
+    padding: 0 8px;
+
+    color: var(--accent);
+
+    font-weight: 650;
+}
+
+fieldset label {
+    display: block;
+
+    margin: 13px 0 6px;
+
+    color: var(--text-muted);
+
+    font-size: 13px;
+}
+
+fieldset label:first-of-type {
+    margin-top: 0;
+}
+
+fieldset input[type="checkbox"] {
+    width: auto;
+
+    margin-right: 8px;
+}
+
+.form-actions {
+    display: flex;
+
+    gap: 10px;
+
+    flex-wrap: wrap;
+}
+
+
+/* =========================================================
+   DATASET STATISTICS
+   ========================================================= */
+
+.dataset-statistics {
+    display: grid;
+
+    grid-template-columns:
+        repeat(5, minmax(120px, 1fr));
+
+    gap: 12px;
+
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    padding: 18px;
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.stat-card span {
+    display: block;
+
+    color: var(--text-muted);
+
+    font-size: 12px;
+}
+
+.stat-card strong {
+    display: block;
+
+    margin-top: 5px;
+
+    font-size: 24px;
+}
+
+
+/* =========================================================
+   DATASET TOOLBAR
+   ========================================================= */
+
+.dataset-toolbar {
+    display: grid;
+
+    grid-template-columns:
+        1fr
+        180px;
+
+    gap: 10px;
+
+    margin-bottom: 15px;
+}
+
+
+/* =========================================================
+   DATASET LIST
+   ========================================================= */
+
+.dataset-list {
+    display: flex;
+    flex-direction: column;
+
+    gap: 8px;
+}
+
+.dataset-entry {
+    display: grid;
+
+    grid-template-columns:
+        90px
+        110px
+        minmax(0, 1fr)
+        100px;
+
+    gap: 12px;
+
+    align-items: center;
+
+    padding: 13px;
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-small);
+}
+
+.dataset-entry-id {
+    color: var(--text-muted);
+
+    font-family: monospace;
+}
+
+.dataset-entry-status {
+    font-size: 12px;
+    font-weight: 650;
+
+    text-transform: uppercase;
+}
+
+.dataset-entry-status.recorded {
+    color: var(--success);
+}
+
+.dataset-entry-status.pending {
+    color: var(--text-muted);
+}
+
+.dataset-entry-status.skipped {
+    color: var(--accent);
+}
+
+.dataset-entry-text {
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   IMPORT / EXPORT
+   ========================================================= */
+
+.import-export-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 20px;
+}
+
+.panel h3 {
+    margin-top: 0;
+}
+
+.panel p {
+    color: var(--text-muted);
+}
+
+.operation-status {
+    margin-top: 20px;
+
+    padding: 15px;
+
+    border-radius: var(--radius);
+
+    color: var(--text-muted);
+}
+
+.operation-status.success {
+    border: 1px solid var(--success);
+
+    color: var(--success);
+}
+
+.operation-status.error {
+    border: 1px solid var(--danger);
+
+    color: var(--danger);
+}
+
+
+/* =========================================================
+   EMPTY STATES
+   ========================================================= */
+
+.empty-state {
+    padding: 30px;
+
+    color: var(--text-muted);
+
+    text-align: center;
+}
+
+
+/* =========================================================
+   UTILITY
+   ========================================================= */
+
+.hidden {
+    display: none !important;
+}
+
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+.app-footer {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+
+    padding: 15px 25px;
+
+    background: var(--surface);
+
+    border-top: 1px solid var(--border);
+
+    color: var(--text-muted);
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    .generator-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .dataset-statistics {
+        grid-template-columns:
+            repeat(3, minmax(120px, 1fr));
+    }
+
+    .import-export-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+@media (max-width: 650px) {
+
+    .app-header {
+        padding: 15px 18px;
+    }
+
+    .app-title h1 {
+        font-size: 18px;
+    }
+
+    .main-nav {
+        padding: 0 10px;
+    }
+
+    .nav-button {
+        padding: 12px 13px;
+    }
+
+    .app-main {
+        padding: 20px 15px;
+    }
+
+    .sentence-card {
+        min-height: 180px;
+
+        padding: 25px 18px;
+    }
+
+    .current-sentence {
+        font-size: 25px;
+    }
+
+    .dataset-statistics {
+        grid-template-columns:
+            repeat(2, minmax(120px, 1fr));
+    }
+
+    .dataset-toolbar {
+        grid-template-columns: 1fr;
+    }
+
+    .dataset-entry {
+        grid-template-columns:
+            70px
+            1fr;
+    }
+
+    .dataset-entry-status {
+        grid-column: 2;
+    }
+
+    .dataset-entry-text {
+        grid-column: 1 / -1;
+    }
+
+    .custom-sentence-controls {
+        flex-direction: column;
+    }
+
+    .recording-result-controls {
+        flex-direction: column;
+    }
+
+    .app-footer {
+        flex-direction: column;
+        align-items: center;
+
+        gap: 3px;
+    }
+}

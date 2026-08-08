@@ -1,0 +1,908 @@
+{
+  "version": 3,
+  "description": "Pronunciation targets for natural American, Southern, Appalachian, and general smart-home speech. Targets prioritize the vocabulary, articles, prepositions, device names, locations, references, and connected-speech patterns used by the smart-home sentence generator.",
+
+  "targets": [
+
+    {
+      "id": "the",
+      "target": "the",
+      "category": "grammar",
+      "notes": "Critical article for natural commands such as 'turn on the light' and 'start the fan'."
+    },
+    {
+      "id": "a",
+      "target": "a",
+      "category": "grammar",
+      "notes": "Common article in natural conversational speech."
+    },
+
+    {
+      "id": "in",
+      "target": "in",
+      "category": "grammar",
+      "notes": "Critical location preposition used in phrases such as 'in the kitchen' and 'in the utility room'."
+    },
+    {
+      "id": "on",
+      "target": "on",
+      "category": "vowel",
+      "notes": "Very common smart-home command and location word."
+    },
+    {
+      "id": "off",
+      "target": "off",
+      "category": "vowel",
+      "notes": "Very common smart-home command word."
+    },
+    {
+      "id": "at",
+      "target": "at",
+      "category": "grammar",
+      "notes": "Common conversational preposition."
+    },
+    {
+      "id": "to",
+      "target": "to",
+      "category": "grammar",
+      "notes": "Common infinitive and conversational word."
+    },
+    {
+      "id": "for",
+      "target": "for",
+      "category": "grammar",
+      "notes": "Common conversational preposition."
+    },
+    {
+      "id": "with",
+      "target": "with",
+      "category": "grammar",
+      "notes": "Common conversational preposition."
+    },
+
+    {
+      "id": "light",
+      "target": "light",
+      "category": "vowel",
+      "notes": "Core smart-home device word."
+    },
+    {
+      "id": "lights",
+      "target": "lights",
+      "category": "vowel",
+      "notes": "Core smart-home device word."
+    },
+    {
+      "id": "lamp",
+      "target": "lamp",
+      "category": "device",
+      "notes": "Common lighting device."
+    },
+    {
+      "id": "lamps",
+      "target": "lamps",
+      "category": "device",
+      "notes": "Common lighting device."
+    },
+    {
+      "id": "ceiling",
+      "target": "ceiling",
+      "category": "device",
+      "notes": "Used in 'ceiling fan' and 'ceiling lights'."
+    },
+    {
+      "id": "ceiling_fan",
+      "target": "ceiling fan",
+      "category": "phrase",
+      "notes": "Common smart-home device phrase."
+    },
+    {
+      "id": "fan",
+      "target": "fan",
+      "category": "device",
+      "notes": "Common smart-home device word."
+    },
+    {
+      "id": "heater",
+      "target": "heater",
+      "category": "device",
+      "notes": "Common climate-control device."
+    },
+    {
+      "id": "space_heater",
+      "target": "space heater",
+      "category": "phrase",
+      "notes": "Common climate-control device phrase."
+    },
+    {
+      "id": "air_conditioner",
+      "target": "air conditioner",
+      "category": "phrase",
+      "notes": "Common climate-control device phrase."
+    },
+    {
+      "id": "ac",
+      "target": "AC",
+      "category": "device",
+      "notes": "Common conversational abbreviation for air conditioner."
+    },
+    {
+      "id": "thermostat",
+      "target": "thermostat",
+      "category": "device",
+      "notes": "Common smart-home climate device."
+    },
+    {
+      "id": "humidifier",
+      "target": "humidifier",
+      "category": "device",
+      "notes": "Common smart-home climate device."
+    },
+    {
+      "id": "dehumidifier",
+      "target": "dehumidifier",
+      "category": "device",
+      "notes": "Common smart-home climate device."
+    },
+    {
+      "id": "air_purifier",
+      "target": "air purifier",
+      "category": "phrase",
+      "notes": "Common smart-home device phrase."
+    },
+
+    {
+      "id": "door",
+      "target": "door",
+      "category": "device",
+      "notes": "Common smart-home device word."
+    },
+    {
+      "id": "front_door",
+      "target": "front door",
+      "category": "phrase",
+      "notes": "Common smart-home device phrase."
+    },
+    {
+      "id": "back_door",
+      "target": "back door",
+      "category": "phrase",
+      "notes": "Common smart-home device phrase."
+    },
+    {
+      "id": "garage_door",
+      "target": "garage door",
+      "category": "phrase",
+      "notes": "Common smart-home device phrase."
+    },
+
+    {
+      "id": "blinds",
+      "target": "blinds",
+      "category": "device",
+      "notes": "Common smart-home device."
+    },
+    {
+      "id": "curtains",
+      "target": "curtains",
+      "category": "device",
+      "notes": "Common smart-home device."
+    },
+    {
+      "id": "outlet",
+      "target": "outlet",
+      "category": "device",
+      "notes": "Common smart-home device."
+    },
+    {
+      "id": "plug",
+      "target": "plug",
+      "category": "device",
+      "notes": "Common smart-home device."
+    },
+    {
+      "id": "speaker",
+      "target": "speaker",
+      "category": "device",
+      "notes": "Common smart-home device."
+    },
+    {
+      "id": "television",
+      "target": "television",
+      "category": "device",
+      "notes": "Common smart-home device."
+    },
+    {
+      "id": "tv",
+      "target": "TV",
+      "category": "device",
+      "notes": "Common conversational abbreviation."
+    },
+    {
+      "id": "coffee_maker",
+      "target": "coffee maker",
+      "category": "phrase",
+      "notes": "Common smart-home device phrase."
+    },
+    {
+      "id": "range_hood",
+      "target": "range hood",
+      "category": "phrase",
+      "notes": "Common kitchen device phrase."
+    },
+    {
+      "id": "exhaust_fan",
+      "target": "exhaust fan",
+      "category": "phrase",
+      "notes": "Common ventilation device phrase."
+    },
+
+    {
+      "id": "living_room",
+      "target": "living room",
+      "category": "location",
+      "notes": "Core smart-home location phrase."
+    },
+    {
+      "id": "kitchen",
+      "target": "kitchen",
+      "category": "location",
+      "notes": "Core smart-home location word."
+    },
+    {
+      "id": "bedroom",
+      "target": "bedroom",
+      "category": "location",
+      "notes": "Core smart-home location word."
+    },
+    {
+      "id": "bathroom",
+      "target": "bathroom",
+      "category": "location",
+      "notes": "Core smart-home location word."
+    },
+    {
+      "id": "hallway",
+      "target": "hallway",
+      "category": "location",
+      "notes": "Core smart-home location word."
+    },
+    {
+      "id": "hall",
+      "target": "hall",
+      "category": "location",
+      "notes": "Common conversational alternative to hallway."
+    },
+    {
+      "id": "porch",
+      "target": "porch",
+      "category": "regional",
+      "notes": "Common Southern/Appalachian home vocabulary."
+    },
+    {
+      "id": "front_porch",
+      "target": "front porch",
+      "category": "location",
+      "notes": "Common home location phrase."
+    },
+    {
+      "id": "back_porch",
+      "target": "back porch",
+      "category": "location",
+      "notes": "Common home location phrase."
+    },
+    {
+      "id": "garage",
+      "target": "garage",
+      "category": "location",
+      "notes": "Common smart-home location."
+    },
+    {
+      "id": "basement",
+      "target": "basement",
+      "category": "location",
+      "notes": "Common smart-home location."
+    },
+    {
+      "id": "upstairs",
+      "target": "upstairs",
+      "category": "location",
+      "notes": "Common location reference."
+    },
+    {
+      "id": "downstairs",
+      "target": "downstairs",
+      "category": "location",
+      "notes": "Common location reference."
+    },
+    {
+      "id": "outside",
+      "target": "outside",
+      "category": "location",
+      "notes": "Common location reference."
+    },
+    {
+      "id": "out_back",
+      "target": "out back",
+      "category": "regional",
+      "notes": "Common Southern/Appalachian location phrase."
+    },
+    {
+      "id": "house",
+      "target": "house",
+      "category": "location",
+      "notes": "Common conversational location word."
+    },
+    {
+      "id": "the_house",
+      "target": "the house",
+      "category": "phrase",
+      "notes": "Important natural location phrase. Used instead of incorrectly producing 'AC the house'."
+    },
+    {
+      "id": "here",
+      "target": "here",
+      "category": "reference",
+      "notes": "Common conversational location reference."
+    },
+    {
+      "id": "there",
+      "target": "there",
+      "category": "reference",
+      "notes": "Common conversational location reference."
+    },
+    {
+      "id": "utility_room",
+      "target": "utility room",
+      "category": "location",
+      "notes": "Important smart-home location phrase."
+    },
+    {
+      "id": "laundry_room",
+      "target": "laundry room",
+      "category": "location",
+      "notes": "Common smart-home location phrase."
+    },
+    {
+      "id": "entryway",
+      "target": "entryway",
+      "category": "location",
+      "notes": "Common home location."
+    },
+    {
+      "id": "mudroom",
+      "target": "mudroom",
+      "category": "location",
+      "notes": "Common home location."
+    },
+    {
+      "id": "dining_room",
+      "target": "dining room",
+      "category": "location",
+      "notes": "Common smart-home location phrase."
+    },
+    {
+      "id": "office",
+      "target": "office",
+      "category": "location",
+      "notes": "Common smart-home location."
+    },
+
+    {
+      "id": "turn_on",
+      "target": "turn on",
+      "category": "action",
+      "notes": "Primary natural smart-home activation phrase."
+    },
+    {
+      "id": "turn_off",
+      "target": "turn off",
+      "category": "action",
+      "notes": "Primary natural smart-home deactivation phrase."
+    },
+    {
+      "id": "switch_on",
+      "target": "switch on",
+      "category": "action",
+      "notes": "Common alternative activation phrase."
+    },
+    {
+      "id": "switch_off",
+      "target": "switch off",
+      "category": "action",
+      "notes": "Common alternative deactivation phrase."
+    },
+    {
+      "id": "shut_off",
+      "target": "shut off",
+      "category": "action",
+      "notes": "Common conversational deactivation phrase."
+    },
+    {
+      "id": "cut_on",
+      "target": "cut on",
+      "category": "regional",
+      "notes": "Regional Southern usage."
+    },
+    {
+      "id": "cut_off",
+      "target": "cut off",
+      "category": "regional",
+      "notes": "Regional Southern usage."
+    },
+    {
+      "id": "power_on",
+      "target": "power on",
+      "category": "action",
+      "notes": "Common device-control phrase."
+    },
+    {
+      "id": "power_off",
+      "target": "power off",
+      "category": "action",
+      "notes": "Common device-control phrase."
+    },
+    {
+      "id": "start",
+      "target": "start",
+      "category": "action",
+      "notes": "Useful with fans, appliances, and other devices."
+    },
+    {
+      "id": "stop",
+      "target": "stop",
+      "category": "action",
+      "notes": "Common device-control action."
+    },
+    {
+      "id": "activate",
+      "target": "activate",
+      "category": "action",
+      "notes": "Formal device-control action."
+    },
+    {
+      "id": "deactivate",
+      "target": "deactivate",
+      "category": "action",
+      "notes": "Formal device-control action."
+    },
+    {
+      "id": "open",
+      "target": "open",
+      "category": "action",
+      "notes": "Common device-control action."
+    },
+    {
+      "id": "close",
+      "target": "close",
+      "category": "action",
+      "notes": "Common device-control action."
+    },
+    {
+      "id": "lock",
+      "target": "lock",
+      "category": "action",
+      "notes": "Common smart-home security action."
+    },
+    {
+      "id": "unlock",
+      "target": "unlock",
+      "category": "action",
+      "notes": "Common smart-home security action."
+    },
+    {
+      "id": "dim",
+      "target": "dim",
+      "category": "action",
+      "notes": "Common lighting action."
+    },
+    {
+      "id": "brighten",
+      "target": "brighten",
+      "category": "action",
+      "notes": "Common lighting action."
+    },
+    {
+      "id": "raise",
+      "target": "raise",
+      "category": "action",
+      "notes": "Common adjustment action."
+    },
+    {
+      "id": "lower",
+      "target": "lower",
+      "category": "action",
+      "notes": "Common adjustment action."
+    },
+    {
+      "id": "set",
+      "target": "set",
+      "category": "action",
+      "notes": "Common device-setting action."
+    },
+    {
+      "id": "change",
+      "target": "change",
+      "category": "action",
+      "notes": "Common adjustment action."
+    },
+    {
+      "id": "adjust",
+      "target": "adjust",
+      "category": "action",
+      "notes": "Common adjustment action."
+    },
+
+    {
+      "id": "dark",
+      "target": "dark",
+      "category": "context",
+      "notes": "Common lighting-context word."
+    },
+    {
+      "id": "pretty_dark",
+      "target": "pretty dark",
+      "category": "context",
+      "notes": "Common conversational lighting phrase."
+    },
+    {
+      "id": "really_dark",
+      "target": "really dark",
+      "category": "context",
+      "notes": "Common conversational lighting phrase."
+    },
+    {
+      "id": "too_dark",
+      "target": "too dark",
+      "category": "context",
+      "notes": "Common contextual request phrase."
+    },
+    {
+      "id": "mighty_dark",
+      "target": "mighty dark",
+      "category": "regional",
+      "notes": "Southern/Appalachian-influenced conversational phrase."
+    },
+    {
+      "id": "cold",
+      "target": "cold",
+      "category": "context",
+      "notes": "Common climate-related word."
+    },
+    {
+      "id": "hot",
+      "target": "hot",
+      "category": "context",
+      "notes": "Common climate-related word."
+    },
+    {
+      "id": "warm",
+      "target": "warm",
+      "category": "context",
+      "notes": "Common climate-related word."
+    },
+    {
+      "id": "bright",
+      "target": "bright",
+      "category": "context",
+      "notes": "Common lighting-related word."
+    },
+    {
+      "id": "stuffy",
+      "target": "stuffy",
+      "category": "context",
+      "notes": "Common climate/context word."
+    },
+
+    {
+      "id": "it",
+      "target": "it",
+      "category": "reference",
+      "notes": "Common pronoun for previously identified devices."
+    },
+    {
+      "id": "that",
+      "target": "that",
+      "category": "reference",
+      "notes": "Common demonstrative reference."
+    },
+    {
+      "id": "this",
+      "target": "this",
+      "category": "reference",
+      "notes": "Common demonstrative reference."
+    },
+    {
+      "id": "them",
+      "target": "them",
+      "category": "regional",
+      "notes": "Useful in conversational references such as 'them lights'."
+    },
+    {
+      "id": "those",
+      "target": "those",
+      "category": "reference",
+      "notes": "Common plural demonstrative."
+    },
+    {
+      "id": "these",
+      "target": "these",
+      "category": "reference",
+      "notes": "Common plural demonstrative."
+    },
+    {
+      "id": "one",
+      "target": "one",
+      "category": "reference",
+      "notes": "Common reference word in phrases such as 'that one'."
+    },
+
+    {
+      "id": "can_you",
+      "target": "can you",
+      "category": "phrase",
+      "notes": "Common polite smart-home request."
+    },
+    {
+      "id": "could_you",
+      "target": "could you",
+      "category": "phrase",
+      "notes": "Common polite smart-home request."
+    },
+    {
+      "id": "would_you",
+      "target": "would you",
+      "category": "phrase",
+      "notes": "Common polite smart-home request."
+    },
+    {
+      "id": "how_about_you",
+      "target": "how about you",
+      "category": "phrase",
+      "notes": "Common conversational request."
+    },
+    {
+      "id": "why_dont_you",
+      "target": "why don't you",
+      "category": "phrase",
+      "notes": "Common conversational request."
+    },
+    {
+      "id": "go_ahead_and",
+      "target": "go ahead and",
+      "category": "phrase",
+      "notes": "Common conversational command construction."
+    },
+    {
+      "id": "i_need_you_to",
+      "target": "I need you to",
+      "category": "phrase",
+      "notes": "Direct conversational request construction."
+    },
+    {
+      "id": "i_want_you_to",
+      "target": "I want you to",
+      "category": "phrase",
+      "notes": "Direct conversational request construction."
+    },
+
+    {
+      "id": "in_here",
+      "target": "in here",
+      "category": "phrase",
+      "notes": "Common conversational location phrase."
+    },
+    {
+      "id": "in_there",
+      "target": "in there",
+      "category": "phrase",
+      "notes": "Common conversational location phrase."
+    },
+    {
+      "id": "over_there",
+      "target": "over there",
+      "category": "phrase",
+      "notes": "Common deictic location phrase."
+    },
+    {
+      "id": "right_here",
+      "target": "right here",
+      "category": "phrase",
+      "notes": "Common deictic location phrase."
+    },
+    {
+      "id": "right_there",
+      "target": "right there",
+      "category": "phrase",
+      "notes": "Common deictic location phrase."
+    },
+    {
+      "id": "up_there",
+      "target": "up there",
+      "category": "phrase",
+      "notes": "Common location phrase."
+    },
+    {
+      "id": "down_there",
+      "target": "down there",
+      "category": "phrase",
+      "notes": "Common location phrase."
+    },
+    {
+      "id": "this_here",
+      "target": "this here",
+      "category": "regional",
+      "notes": "Southern/Appalachian demonstrative construction."
+    },
+    {
+      "id": "that_there",
+      "target": "that there",
+      "category": "regional",
+      "notes": "Southern/Appalachian demonstrative construction."
+    },
+    {
+      "id": "back_yonder",
+      "target": "back yonder",
+      "category": "regional",
+      "notes": "Regional location phrase."
+    },
+    {
+      "id": "yonder",
+      "target": "yonder",
+      "category": "regional",
+      "notes": "Regional location vocabulary."
+    },
+
+    {
+      "id": "going_to",
+      "target": "going to",
+      "category": "reduction",
+      "notes": "Natural connected-speech target. Spoken reduction may occur."
+    },
+    {
+      "id": "want_to",
+      "target": "want to",
+      "category": "reduction",
+      "notes": "Natural connected-speech target."
+    },
+    {
+      "id": "have_to",
+      "target": "have to",
+      "category": "reduction",
+      "notes": "Natural connected-speech target."
+    },
+    {
+      "id": "got_to",
+      "target": "got to",
+      "category": "reduction",
+      "notes": "Conversational connected-speech target."
+    },
+    {
+      "id": "kind_of",
+      "target": "kind of",
+      "category": "reduction",
+      "notes": "Common conversational phrase."
+    },
+    {
+      "id": "sort_of",
+      "target": "sort of",
+      "category": "reduction",
+      "notes": "Common conversational phrase."
+    },
+    {
+      "id": "out_of",
+      "target": "out of",
+      "category": "reduction",
+      "notes": "Common connected-speech phrase."
+    },
+    {
+      "id": "would_you_reduction",
+      "target": "would you",
+      "category": "reduction",
+      "notes": "Useful connected-speech target."
+    },
+    {
+      "id": "could_you_reduction",
+      "target": "could you",
+      "category": "reduction",
+      "notes": "Useful connected-speech target."
+    },
+    {
+      "id": "did_you",
+      "target": "did you",
+      "category": "reduction",
+      "notes": "Common conversational connected-speech target."
+    },
+
+    {
+      "id": "yall",
+      "target": "y'all",
+      "category": "regional",
+      "notes": "Common Southern conversational form. Keep standard spelling in transcripts."
+    },
+    {
+      "id": "reckon",
+      "target": "reckon",
+      "category": "regional",
+      "notes": "Southern/Appalachian conversational vocabulary."
+    },
+    {
+      "id": "folks",
+      "target": "folks",
+      "category": "regional",
+      "notes": "Southern/Appalachian conversational vocabulary."
+    }
+  ],
+
+  "substitutions": [
+    {
+      "id": "yall",
+      "target": "y'all",
+      "category": "regional",
+      "description": "Southern contraction. Keep standard spelling in transcript."
+    },
+    {
+      "id": "gonna",
+      "target": "going to",
+      "category": "reduction",
+      "description": "Natural spoken reduction. Do not force phonetic spelling into transcripts."
+    },
+    {
+      "id": "wanna",
+      "target": "want to",
+      "category": "reduction",
+      "description": "Natural spoken reduction."
+    },
+    {
+      "id": "gotta",
+      "target": "got to",
+      "category": "reduction",
+      "description": "Natural spoken reduction."
+    },
+    {
+      "id": "kinda",
+      "target": "kind of",
+      "category": "reduction",
+      "description": "Natural spoken reduction."
+    },
+    {
+      "id": "sorta",
+      "target": "sort of",
+      "category": "reduction",
+      "description": "Natural spoken reduction."
+    },
+    {
+      "id": "outta",
+      "target": "out of",
+      "category": "reduction",
+      "description": "Natural spoken reduction."
+    }
+  ],
+
+  "categories": {
+    "vowel": "Words useful for monitoring general American and regional vowel characteristics.",
+    "device": "Smart-home device vocabulary.",
+    "location": "Smart-home room and location vocabulary.",
+    "action": "Smart-home control verbs and command phrases.",
+    "context": "Words used to express environmental conditions or implied requests.",
+    "reference": "Pronouns and demonstratives used to refer to devices.",
+    "grammar": "Articles, prepositions, and grammatical words needed for natural sentence construction.",
+    "regional": "Vocabulary and constructions associated with Southern/Appalachian conversational speech.",
+    "reduction": "Connected-speech reductions that should be spoken naturally rather than artificially represented in spelling.",
+    "phrase": "Common multi-word conversational phrases."
+  },
+
+  "recording_guidance": {
+    "transcription": "Use the standard written form of the intended words. Do not intentionally misspell words to represent an accent.",
+    "speech": "Speak naturally. Do not exaggerate a Southern or Appalachian accent.",
+    "variation": "Record targets in multiple natural sentence contexts whenever possible.",
+    "connected_speech": "Allow natural reductions and linking between words. Do not force every word to be pronounced in isolation.",
+    "regional_speech": "Regional vocabulary should occur naturally and should not be inserted into every recording.",
+    "articles": "Record articles such as 'the' naturally in connected phrases. Do not omit articles from ordinary commands.",
+    "prepositions": "Record location prepositions such as 'in', 'on', and 'at' naturally. Prefer complete phrases such as 'in the utility room' rather than unnatural compressed constructions such as 'utility room'.",
+    "device_location": "When a device is followed by a room location, prefer natural constructions such as 'the fan in the utility room', 'the AC in the house', and 'the light in the hallway'.",
+    "reference_resolution": "Record natural pronoun references such as 'it', 'that', 'them', and 'those' in complete conversational contexts.",
+    "smart_home_focus": "Prioritize common smart-home words and natural command structures such as 'turn on the light', 'turn off the AC in the house', 'start the fan in the utility room', 'shut off the bedroom light in the hallway', and 'dim the porch light'.",
+    "goal": "Capture natural acoustic and linguistic variation for robust smart-home speech recognition rather than teaching an artificial phonetic spelling system."
+  }
+}

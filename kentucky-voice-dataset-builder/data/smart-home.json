@@ -1,0 +1,1341 @@
+{
+"version": 3,
+"description": "Smart-home natural-language intent dataset for Home Assistant. Designed for American English with natural Southern and Appalachian-influenced conversational variation. Supports direct commands, noun-first commands, indirect requests, contextual implications, pronoun references, deictic references, fragmented speech, filler, profanity, and multi-clause conversational commands. The wake word is handled separately from intent parsing.",
+
+"processing": {
+"wake_word": {
+"enabled": true,
+"example": "hobo",
+"handling": "Remove the wake word before intent parsing. Do not include the wake word in the semantic intent."
+},
+
+```
+"pipeline": [
+  "wake_word_detection",
+  "speech_to_text",
+  "utterance_normalization",
+  "intent_detection",
+  "entity_resolution",
+  "context_resolution",
+  "action_validation",
+  "home_assistant_execution"
+],
+
+"important_rule": "Natural language may omit the action, device, location, or even the explicit request. Missing information may be inferred only when context makes the intended action sufficiently clear."
+```
+
+},
+
+"utterance_types": {
+"direct": {
+"description": "Explicit action and target.",
+"examples": [
+"turn on the living room lights",
+"turn the living room lights on",
+"turn off the bedroom light",
+"lock the front door"
+]
+},
+
+```
+"noun_first": {
+  "description": "Device or location appears before the requested state.",
+  "examples": [
+    "living room lights on",
+    "kitchen lights off",
+    "bedroom fan on",
+    "TV off",
+    "front door locked"
+  ]
+},
+
+"conversational": {
+  "description": "Natural request with filler, politeness, or conversational framing.",
+  "examples": [
+    "can you turn on the living room lights",
+    "how about you turn on the lights",
+    "I need you to turn off the TV",
+    "go ahead and turn on the porch lights"
+  ]
+},
+
+"reference": {
+  "description": "The target is referenced indirectly using pronouns or deictic expressions.",
+  "examples": [
+    "turn them on",
+    "turn that one off",
+    "turn it on",
+    "turn the one in the kitchen on",
+    "shut that one off"
+  ]
+},
+
+"regional_reference": {
+  "description": "Natural Southern/Appalachian reference constructions.",
+  "examples": [
+    "turn them lights on",
+    "turn them living room lights on",
+    "cut on them lights over there",
+    "turn that there light on",
+    "turn this here light off"
+  ]
+},
+
+"contextual": {
+  "description": "A condition implies the desired action.",
+  "examples": [
+    "it's dark in the living room",
+    "it's too damn dark in here",
+    "I can't see in the bedroom",
+    "it's freezing in here",
+    "it's getting pretty warm in the house"
+  ]
+},
+
+"multi_clause": {
+  "description": "The utterance contains a contextual statement followed by an explicit or implied request.",
+  "examples": [
+    "it's dark in here, turn on the lights",
+    "it's too damn dark in the living room, how about you turn on the lights in here",
+    "I can't see in the kitchen, go ahead and cut on the lights"
+  ]
+},
+
+"fragment": {
+  "description": "Incomplete or compressed conversational speech.",
+  "examples": [
+    "living room lights",
+    "the ones in here",
+    "that light over there",
+    "them lights",
+    "lights on in here"
+  ]
+}
+```
+
+},
+
+"intent_patterns": {
+
+```
+"direct": [
+  "{action} {device}",
+  "{action} {device} {state}",
+  "{action} {device} in {location}",
+  "{action} {device} in the {location}",
+  "{action} the {location} {device}",
+  "{action} {location} {device}",
+  "{action} the {device} in the {location}",
+  "{device} {action}",
+  "{device} {state}",
+  "{device} {location} {state}"
+],
+
+"noun_first": [
+  "{device} {state}",
+  "{device} {location} {state}",
+  "{location} {device} {state}",
+  "{device} in {location} {state}",
+  "the {location} {device} {state}",
+  "{location} {device} {action}",
+  "{device} on",
+  "{device} off"
+],
+
+"request": [
+  "{opening} {action} {device}",
+  "{opening} {action} {device} in {location}",
+  "{opening} {action} the {location} {device}",
+  "{opening}, {action} {device}",
+  "{opening}, {action} {device} in {location}",
+  "{opening} {device} {state}"
+],
+
+"question": [
+  "{question} {action} {device}",
+  "{question} {action} {device} in {location}",
+  "{question} you {action} {device}",
+  "{question} you {action} {device} in {location}"
+],
+
+"reference": [
+  "{opening} {action} it",
+  "{opening} {action} that",
+  "{opening} {action} that one",
+  "{opening} {action} this one",
+  "{opening} {action} them",
+  "{opening} {action} those",
+  "{opening} {action} the one in {location}",
+  "{opening} {action} that {device}",
+  "{opening} {action} them {device}",
+  "{opening} {action} them {device} over there"
+],
+
+"regional": [
+  "{opening} {action} them {device}",
+  "{opening} {action} them {device} over there",
+  "{opening} {action} that there {device}",
+  "{opening} {action} this here {device}",
+  "{opening} go on and {action} {device}",
+  "{opening} go on and {action} {device} in {location}",
+  "{opening} might as well {action} {device}",
+  "{opening} {action} {device} over yonder"
+],
+
+"contextual": [
+  "{context}",
+  "{context}, {action} {device}",
+  "{context}, {opening} {action} {device}",
+  "{context}, can you {action} {device}",
+  "{context}, how about you {action} {device}",
+  "{context}, go ahead and {action} {device}"
+],
+
+"multi_clause": [
+  "{context}, {action} {device}",
+  "{context}, {opening} {action} {device}",
+  "{context}, how about you {action} {device}",
+  "{context}, I need you to {action} {device}",
+  "{context}, go ahead and {action} {device}",
+  "{context}, might as well {action} {device}"
+]
+```
+
+},
+
+"intents": [
+
+```
+{
+  "id": "light_on",
+  "category": "lighting",
+  "description": "Turn one or more lights on.",
+  "actions": [
+    { "text": "turn on", "weight": 10 },
+    { "text": "turn", "weight": 7 },
+    { "text": "switch on", "weight": 6 },
+    { "text": "cut on", "weight": 5 },
+    { "text": "put on", "weight": 4 },
+    { "text": "power on", "weight": 2 },
+    { "text": "get on", "weight": 1 }
+  ],
+  "devices": [
+    { "text": "light", "weight": 8 },
+    { "text": "lights", "weight": 10 },
+    { "text": "light bulbs", "weight": 7 },
+    { "text": "bulbs", "weight": 6 },
+    { "text": "lamp", "weight": 6 },
+    { "text": "lamps", "weight": 4 }
+  ],
+  "states": ["on"],
+  "implied_action_allowed": true
+},
+
+{
+  "id": "light_off",
+  "category": "lighting",
+  "description": "Turn one or more lights off.",
+  "actions": [
+    { "text": "turn off", "weight": 10 },
+    { "text": "turn", "weight": 7 },
+    { "text": "shut off", "weight": 8 },
+    { "text": "switch off", "weight": 6 },
+    { "text": "cut off", "weight": 5 },
+    { "text": "power off", "weight": 2 },
+    { "text": "kill", "weight": 1 }
+  ],
+  "devices": [
+    { "text": "light", "weight": 8 },
+    { "text": "lights", "weight": 10 },
+    { "text": "light bulbs", "weight": 7 },
+    { "text": "bulbs", "weight": 6 },
+    { "text": "lamp", "weight": 6 },
+    { "text": "lamps", "weight": 4 }
+  ],
+  "states": ["off"],
+  "implied_action_allowed": true
+},
+
+{
+  "id": "light_dim",
+  "category": "lighting",
+  "description": "Decrease brightness.",
+  "actions": [
+    { "text": "dim", "weight": 10 },
+    { "text": "turn down", "weight": 7 },
+    { "text": "lower", "weight": 5 },
+    { "text": "make dimmer", "weight": 4 }
+  ],
+  "devices": [
+    { "text": "light", "weight": 8 },
+    { "text": "lights", "weight": 10 },
+    { "text": "lamp", "weight": 6 },
+    { "text": "lamps", "weight": 4 }
+  ],
+  "states": ["dim", "low"]
+},
+
+{
+  "id": "light_brighten",
+  "category": "lighting",
+  "description": "Increase brightness.",
+  "actions": [
+    { "text": "brighten", "weight": 8 },
+    { "text": "turn up", "weight": 8 },
+    { "text": "raise", "weight": 5 },
+    { "text": "make brighter", "weight": 5 }
+  ],
+  "devices": [
+    { "text": "light", "weight": 8 },
+    { "text": "lights", "weight": 10 },
+    { "text": "lamp", "weight": 6 },
+    { "text": "lamps", "weight": 4 }
+  ],
+  "states": ["bright", "high"]
+},
+
+{
+  "id": "light_brightness_set",
+  "category": "lighting",
+  "description": "Set a specific brightness level.",
+  "actions": [
+    { "text": "set", "weight": 10 },
+    { "text": "put", "weight": 5 },
+    { "text": "make", "weight": 5 },
+    { "text": "change", "weight": 3 }
+  ],
+  "devices": [
+    { "text": "light", "weight": 10 },
+    { "text": "lights", "weight": 8 },
+    { "text": "lamp", "weight": 6 }
+  ],
+  "values": [
+    "10 percent",
+    "20 percent",
+    "25 percent",
+    "30 percent",
+    "40 percent",
+    "50 percent",
+    "60 percent",
+    "70 percent",
+    "75 percent",
+    "80 percent",
+    "90 percent",
+    "100 percent",
+    "low",
+    "medium",
+    "high",
+    "halfway",
+    "full brightness"
+  ]
+},
+
+{
+  "id": "light_color",
+  "category": "lighting",
+  "description": "Change the color of a color-capable light.",
+  "actions": [
+    { "text": "make", "weight": 8 },
+    { "text": "change", "weight": 8 },
+    { "text": "set", "weight": 7 },
+    { "text": "turn", "weight": 4 }
+  ],
+  "devices": [
+    { "text": "light", "weight": 10 },
+    { "text": "lights", "weight": 8 },
+    { "text": "lamp", "weight": 6 }
+  ],
+  "colors": [
+    "red",
+    "orange",
+    "yellow",
+    "green",
+    "blue",
+    "purple",
+    "pink",
+    "white",
+    "warm white",
+    "cool white"
+  ]
+},
+
+{
+  "id": "fan_on",
+  "category": "climate",
+  "description": "Turn a fan on.",
+  "actions": [
+    { "text": "turn on", "weight": 10 },
+    { "text": "switch on", "weight": 6 },
+    { "text": "cut on", "weight": 5 },
+    { "text": "start", "weight": 4 }
+  ],
+  "devices": [
+    { "text": "fan", "weight": 10 },
+    { "text": "ceiling fan", "weight": 8 },
+    { "text": "bedroom fan", "weight": 6 },
+    { "text": "kitchen fan", "weight": 4 }
+  ],
+  "states": ["on"]
+},
+
+{
+  "id": "fan_off",
+  "category": "climate",
+  "description": "Turn a fan off.",
+  "actions": [
+    { "text": "turn off", "weight": 10 },
+    { "text": "shut off", "weight": 8 },
+    { "text": "switch off", "weight": 6 },
+    { "text": "cut off", "weight": 5 },
+    { "text": "stop", "weight": 4 }
+  ],
+  "devices": [
+    { "text": "fan", "weight": 10 },
+    { "text": "ceiling fan", "weight": 8 },
+    { "text": "bedroom fan", "weight": 6 },
+    { "text": "kitchen fan", "weight": 4 }
+  ],
+  "states": ["off"]
+},
+
+{
+  "id": "thermostat_set_temperature",
+  "category": "climate",
+  "description": "Set the desired indoor temperature.",
+  "actions": [
+    { "text": "set", "weight": 10 },
+    { "text": "put", "weight": 5 },
+    { "text": "make", "weight": 4 },
+    { "text": "change", "weight": 4 },
+    { "text": "raise", "weight": 3 },
+    { "text": "lower", "weight": 3 }
+  ],
+  "devices": [
+    { "text": "thermostat", "weight": 10 },
+    { "text": "temperature", "weight": 8 },
+    { "text": "heat", "weight": 4 },
+    { "text": "AC", "weight": 4 }
+  ],
+  "values": [
+    "55 degrees",
+    "60 degrees",
+    "62 degrees",
+    "65 degrees",
+    "68 degrees",
+    "70 degrees",
+    "72 degrees",
+    "74 degrees",
+    "75 degrees",
+    "78 degrees",
+    "80 degrees"
+  ]
+},
+
+{
+  "id": "heat_on",
+  "category": "climate",
+  "description": "Turn heating on.",
+  "actions": [
+    { "text": "turn on", "weight": 10 },
+    { "text": "cut on", "weight": 5 },
+    { "text": "start", "weight": 4 }
+  ],
+  "devices": [
+    { "text": "heat", "weight": 10 },
+    { "text": "heater", "weight": 8 },
+    { "text": "furnace", "weight": 5 }
+  ],
+  "states": ["on"]
+},
+
+{
+  "id": "heat_off",
+  "category": "climate",
+  "description": "Turn heating off.",
+  "actions": [
+    { "text": "turn off", "weight": 10 },
+    { "text": "shut off", "weight": 8 },
+    { "text": "cut off", "weight": 5 },
+    { "text": "stop", "weight": 4 }
+  ],
+  "devices": [
+    { "text": "heat", "weight": 10 },
+    { "text": "heater", "weight": 8 },
+    { "text": "furnace", "weight": 5 }
+  ],
+  "states": ["off"]
+},
+
+{
+  "id": "ac_on",
+  "category": "climate",
+  "description": "Turn air conditioning on.",
+  "actions": [
+    { "text": "turn on", "weight": 10 },
+    { "text": "cut on", "weight": 5 },
+    { "text": "start", "weight": 4 }
+  ],
+  "devices": [
+    { "text": "AC", "weight": 10 },
+    { "text": "air conditioner", "weight": 8 },
+    { "text": "air conditioning", "weight": 6 }
+  ],
+  "states": ["on"]
+},
+
+{
+  "id": "ac_off",
+  "category": "climate",
+  "description": "Turn air conditioning off.",
+  "actions": [
+    { "text": "turn off", "weight": 10 },
+    { "text": "shut off", "weight": 8 },
+    { "text": "cut off", "weight": 5 },
+    { "text": "stop", "weight": 4 }
+  ],
+  "devices": [
+    { "text": "AC", "weight": 10 },
+    { "text": "air conditioner", "weight": 8 },
+    { "text": "air conditioning", "weight": 6 }
+  ],
+  "states": ["off"]
+},
+
+{
+  "id": "tv_on",
+  "category": "media",
+  "description": "Turn television on.",
+  "actions": [
+    { "text": "turn on", "weight": 10 },
+    { "text": "cut on", "weight": 4 },
+    { "text": "start", "weight": 3 }
+  ],
+  "devices": [
+    { "text": "TV", "weight": 10 },
+    { "text": "television", "weight": 6 }
+  ],
+  "states": ["on"]
+},
+
+{
+  "id": "tv_off",
+  "category": "media",
+  "description": "Turn television off.",
+  "actions": [
+    { "text": "turn off", "weight": 10 },
+    { "text": "shut off", "weight": 8 },
+    { "text": "cut off", "weight": 5 },
+    { "text": "stop", "weight": 3 }
+  ],
+  "devices": [
+    { "text": "TV", "weight": 10 },
+    { "text": "television", "weight": 6 }
+  ],
+  "states": ["off"]
+},
+
+{
+  "id": "door_lock",
+  "category": "security",
+  "description": "Lock a door.",
+  "actions": [
+    { "text": "lock", "weight": 10 },
+    { "text": "secure", "weight": 3 }
+  ],
+  "devices": [
+    { "text": "door", "weight": 10 },
+    { "text": "front door", "weight": 9 },
+    { "text": "back door", "weight": 7 }
+  ],
+  "states": ["locked"]
+},
+
+{
+  "id": "door_unlock",
+  "category": "security",
+  "description": "Unlock a door.",
+  "actions": [
+    { "text": "unlock", "weight": 10 }
+  ],
+  "devices": [
+    { "text": "door", "weight": 10 },
+    { "text": "front door", "weight": 9 },
+    { "text": "back door", "weight": 7 }
+  ],
+  "states": ["unlocked"]
+},
+
+{
+  "id": "garage_open",
+  "category": "security",
+  "description": "Open the garage door.",
+  "actions": [
+    { "text": "open", "weight": 10 },
+    { "text": "raise", "weight": 6 }
+  ],
+  "devices": [
+    { "text": "garage door", "weight": 10 },
+    { "text": "garage", "weight": 5 }
+  ],
+  "states": ["open"]
+},
+
+{
+  "id": "garage_close",
+  "category": "security",
+  "description": "Close the garage door.",
+  "actions": [
+    { "text": "close", "weight": 10 },
+    { "text": "shut", "weight": 7 },
+    { "text": "lower", "weight": 6 }
+  ],
+  "devices": [
+    { "text": "garage door", "weight": 10 },
+    { "text": "garage", "weight": 5 }
+  ],
+  "states": ["closed"]
+},
+
+{
+  "id": "blinds_open",
+  "category": "covers",
+  "description": "Open blinds or curtains.",
+  "actions": [
+    { "text": "open", "weight": 10 },
+    { "text": "raise", "weight": 6 },
+    { "text": "pull open", "weight": 4 }
+  ],
+  "devices": [
+    { "text": "blinds", "weight": 10 },
+    { "text": "curtains", "weight": 7 }
+  ],
+  "states": ["open"]
+},
+
+{
+  "id": "blinds_close",
+  "category": "covers",
+  "description": "Close blinds or curtains.",
+  "actions": [
+    { "text": "close", "weight": 10 },
+    { "text": "shut", "weight": 7 },
+    { "text": "lower", "weight": 6 },
+    { "text": "pull closed", "weight": 4 }
+  ],
+  "devices": [
+    { "text": "blinds", "weight": 10 },
+    { "text": "curtains", "weight": 7 }
+  ],
+  "states": ["closed"]
+},
+
+{
+  "id": "outlet_on",
+  "category": "power",
+  "description": "Turn a smart outlet or switch on.",
+  "actions": [
+    { "text": "turn on", "weight": 10 },
+    { "text": "switch on", "weight": 6 },
+    { "text": "cut on", "weight": 4 },
+    { "text": "power on", "weight": 2 }
+  ],
+  "devices": [
+    { "text": "outlet", "weight": 10 },
+    { "text": "plug", "weight": 7 },
+    { "text": "switch", "weight": 5 }
+  ],
+  "states": ["on"]
+},
+
+{
+  "id": "outlet_off",
+  "category": "power",
+  "description": "Turn a smart outlet or switch off.",
+  "actions": [
+    { "text": "turn off", "weight": 10 },
+    { "text": "shut off", "weight": 8 },
+    { "text": "switch off", "weight": 6 },
+    { "text": "cut off", "weight": 5 },
+    { "text": "power off", "weight": 2 }
+  ],
+  "devices": [
+    { "text": "outlet", "weight": 10 },
+    { "text": "plug", "weight": 7 },
+    { "text": "switch", "weight": 5 }
+  ],
+  "states": ["off"]
+},
+
+{
+  "id": "lighting_context_dark",
+  "category": "lighting",
+  "description": "Implicit request to turn on appropriate lighting because the speaker indicates insufficient light.",
+  "context_patterns": [
+    "it's dark in the {location}",
+    "it's too dark in the {location}",
+    "it's pretty dark in the {location}",
+    "it's really dark in the {location}",
+    "it's so dark in the {location}",
+    "it's mighty dark in the {location}",
+    "it's a little dark in the {location}",
+    "it's kind of dark in the {location}",
+    "it's a bit dark in the {location}",
+    "it's dark in here",
+    "it's too dark in here",
+    "it's pretty dark in here",
+    "it's really dark in here",
+    "it's fucking dark in here",
+    "it's fucking dark in the {location}",
+    "I can't see in the {location}",
+    "I can't see in here",
+    "I can't see shit in the {location}",
+    "I can't see shit in here"
+  ],
+  "default_action": "turn_on",
+  "default_device": "lights",
+  "location_from_context": true,
+  "confidence_rule": "Only execute automatically when the contextual lighting inference is enabled."
+},
+
+{
+  "id": "contextual_lighting_request",
+  "category": "lighting",
+  "description": "Indirect lighting request containing both a condition and an explicit or implied action.",
+  "context_patterns": [
+    "it's dark in the {location}",
+    "it's too dark in the {location}",
+    "it's pretty dark in the {location}",
+    "it's mighty dark in the {location}",
+    "it's dark in here",
+    "it's too dark in here",
+    "it's getting dark in the {location}",
+    "I can't see in the {location}",
+    "I can't see in here"
+  ],
+  "request_patterns": [
+    "turn on {device}",
+    "turn {device} on",
+    "cut on {device}",
+    "switch on {device}",
+    "go ahead and turn on {device}",
+    "how about you turn on {device}",
+    "can you turn on {device}",
+    "I need you to turn on {device}",
+    "might as well turn on {device}"
+  ]
+},
+
+{
+  "id": "contextual_problem_request",
+  "category": "general",
+  "description": "A condition implies that a climate-related device should be adjusted.",
+  "conditions": [
+    {
+      "pattern": "it's cold in the {location}",
+      "likely_action": "increase_heat"
+    },
+    {
+      "pattern": "it's too cold in the {location}",
+      "likely_action": "increase_heat"
+    },
+    {
+      "pattern": "it's hot in the {location}",
+      "likely_action": "increase_cooling"
+    },
+    {
+      "pattern": "it's too hot in the {location}",
+      "likely_action": "increase_cooling"
+    },
+    {
+      "pattern": "it's warm in the {location}",
+      "likely_action": "increase_cooling"
+    },
+    {
+      "pattern": "it's too warm in the {location}",
+      "likely_action": "increase_cooling"
+    },
+    {
+      "pattern": "it's stuffy in the {location}",
+      "likely_action": "start_fan_or_ventilation"
+    },
+    {
+      "pattern": "it's cold in here",
+      "likely_action": "increase_heat"
+    },
+    {
+      "pattern": "it's hot in here",
+      "likely_action": "increase_cooling"
+    },
+    {
+      "pattern": "it's too warm in here",
+      "likely_action": "increase_cooling"
+    }
+  ],
+  "requires_confirmation_when_ambiguous": true
+}
+```
+
+],
+
+"devices": [
+{ "text": "light", "domain": "light", "weight": 10 },
+{ "text": "lights", "domain": "light", "weight": 10 },
+{ "text": "light bulb", "domain": "light", "weight": 8 },
+{ "text": "light bulbs", "domain": "light", "weight": 8 },
+{ "text": "bulb", "domain": "light", "weight": 7 },
+{ "text": "bulbs", "domain": "light", "weight": 7 },
+{ "text": "lamp", "domain": "light", "weight": 7 },
+{ "text": "lamps", "domain": "light", "weight": 5 },
+
+```
+{ "text": "living room light", "domain": "light", "weight": 8 },
+{ "text": "living room lights", "domain": "light", "weight": 9 },
+{ "text": "kitchen light", "domain": "light", "weight": 7 },
+{ "text": "kitchen lights", "domain": "light", "weight": 8 },
+{ "text": "bedroom light", "domain": "light", "weight": 6 },
+{ "text": "bedroom lights", "domain": "light", "weight": 7 },
+{ "text": "porch light", "domain": "light", "weight": 7 },
+{ "text": "porch lights", "domain": "light", "weight": 6 },
+{ "text": "hallway light", "domain": "light", "weight": 6 },
+{ "text": "bathroom light", "domain": "light", "weight": 5 },
+{ "text": "garage light", "domain": "light", "weight": 5 },
+{ "text": "basement light", "domain": "light", "weight": 4 },
+
+{ "text": "fan", "domain": "fan", "weight": 7 },
+{ "text": "ceiling fan", "domain": "fan", "weight": 8 },
+{ "text": "bedroom fan", "domain": "fan", "weight": 6 },
+{ "text": "kitchen fan", "domain": "fan", "weight": 4 },
+
+{ "text": "thermostat", "domain": "climate", "weight": 8 },
+{ "text": "temperature", "domain": "climate", "weight": 7 },
+{ "text": "heat", "domain": "climate", "weight": 6 },
+{ "text": "heater", "domain": "climate", "weight": 6 },
+{ "text": "furnace", "domain": "climate", "weight": 4 },
+{ "text": "AC", "domain": "climate", "weight": 7 },
+{ "text": "air conditioner", "domain": "climate", "weight": 6 },
+{ "text": "air conditioning", "domain": "climate", "weight": 5 },
+
+{ "text": "TV", "domain": "media_player", "weight": 7 },
+{ "text": "television", "domain": "media_player", "weight": 5 },
+
+{ "text": "door", "domain": "lock", "weight": 7 },
+{ "text": "front door", "domain": "lock", "weight": 8 },
+{ "text": "back door", "domain": "lock", "weight": 6 },
+
+{ "text": "garage door", "domain": "cover", "weight": 7 },
+{ "text": "blinds", "domain": "cover", "weight": 6 },
+{ "text": "curtains", "domain": "cover", "weight": 5 },
+
+{ "text": "outlet", "domain": "switch", "weight": 6 },
+{ "text": "plug", "domain": "switch", "weight": 5 },
+{ "text": "switch", "domain": "switch", "weight": 5 }
+```
+
+],
+
+"locations": [
+{ "text": "living room", "weight": 10 },
+{ "text": "kitchen", "weight": 9 },
+{ "text": "bedroom", "weight": 8 },
+{ "text": "bathroom", "weight": 7 },
+{ "text": "hallway", "weight": 6 },
+{ "text": "hall", "weight": 5 },
+{ "text": "porch", "weight": 7 },
+{ "text": "front porch", "weight": 5 },
+{ "text": "back porch", "weight": 5 },
+{ "text": "garage", "weight": 6 },
+{ "text": "basement", "weight": 4 },
+{ "text": "upstairs", "weight": 5 },
+{ "text": "downstairs", "weight": 5 },
+{ "text": "outside", "weight": 5 },
+{ "text": "house", "weight": 6 },
+{ "text": "inside", "weight": 5 },
+{ "text": "here", "weight": 5 },
+{ "text": "there", "weight": 4 },
+{ "text": "in here", "weight": 5 },
+{ "text": "in there", "weight": 4 },
+{ "text": "over there", "weight": 4 },
+{ "text": "out back", "weight": 4 },
+{ "text": "up front", "weight": 4 },
+{ "text": "over yonder", "weight": 2 },
+{ "text": "back yonder", "weight": 1 }
+],
+
+"states": [
+"on",
+"off",
+"open",
+"closed",
+"locked",
+"unlocked",
+"dim",
+"bright",
+"low",
+"medium",
+"high"
+],
+
+"colors": [
+"red",
+"orange",
+"yellow",
+"green",
+"blue",
+"purple",
+"pink",
+"white",
+"warm white",
+"cool white"
+],
+
+"brightness_values": [
+"10 percent",
+"20 percent",
+"25 percent",
+"30 percent",
+"40 percent",
+"50 percent",
+"60 percent",
+"70 percent",
+"75 percent",
+"80 percent",
+"90 percent",
+"100 percent",
+"ten percent",
+"twenty percent",
+"half",
+"halfway",
+"low",
+"medium",
+"high",
+"full brightness",
+"all the way up",
+"all the way down"
+],
+
+"temperature_values": [
+"55 degrees",
+"60 degrees",
+"62 degrees",
+"65 degrees",
+"68 degrees",
+"70 degrees",
+"72 degrees",
+"74 degrees",
+"75 degrees",
+"78 degrees",
+"80 degrees"
+],
+
+"regional_references": [
+"over yonder",
+"back yonder",
+"out back",
+"up front",
+"right here",
+"right there",
+"in here",
+"in there",
+"over there",
+"them lights",
+"them lights over there",
+"them living room lights",
+"them kitchen lights",
+"this here",
+"this here light",
+"that there",
+"that there light",
+"that thing over there",
+"the one over there"
+],
+
+"pronouns": [
+"it",
+"that",
+"that one",
+"this one",
+"those",
+"these",
+"them",
+"the one",
+"that thing",
+"the other one"
+],
+
+"openings": [
+"can you",
+"could you",
+"would you",
+"how about you",
+"why don't you",
+"would you mind",
+"go ahead and",
+"I need you to",
+"I want you to",
+"just",
+"hey",
+"hey can you",
+"hey go ahead and",
+"might as well",
+"go on and",
+"I reckon you could"
+],
+
+"questions": [
+"can you",
+"could you",
+"would you",
+"how about you",
+"why don't you",
+"you reckon you could",
+"would you mind",
+"can we",
+"could we"
+],
+
+"filler": [
+"hey",
+"well",
+"you know",
+"I mean",
+"just",
+"go ahead",
+"go on",
+"real quick",
+"for me",
+"while you're at it",
+"while you're in there"
+],
+
+"intensifiers": [
+"pretty",
+"really",
+"so",
+"too",
+"a little",
+"kind of",
+"a bit",
+"mighty",
+"damn",
+"damned",
+"fucking"
+],
+
+"context_phrases": [
+"it's dark in the {location}",
+"it's too dark in the {location}",
+"it's pretty dark in the {location}",
+"it's really dark in the {location}",
+"it's mighty dark in the {location}",
+"it's a little dark in the {location}",
+"it's kind of dark in the {location}",
+"it's a bit dark in the {location}",
+"it's damn dark in the {location}",
+"it's fucking dark in the {location}",
+"it's dark in here",
+"it's too dark in here",
+"it's pretty dark in here",
+"it's really dark in here",
+"it's fucking dark in here",
+"I can't see in the {location}",
+"I can't see in here",
+"I can't see shit in the {location}",
+"I can't see shit in here",
+
+```
+"it's cold in the {location}",
+"it's too cold in the {location}",
+"it's hot in the {location}",
+"it's too hot in the {location}",
+"it's warm in the {location}",
+"it's too warm in the {location}",
+"it's stuffy in the {location}"
+```
+
+],
+
+"reference_resolution": {
+"description": "Rules for resolving pronouns and deictic references against previously identified entities or current conversational context.",
+
+```
+"priority": [
+  "explicit_entity",
+  "explicit_location",
+  "previously_referenced_entity",
+  "currently_active_room",
+  "default_room",
+  "ambiguous"
+],
+
+"examples": [
+  {
+    "input": "turn on the living room lights",
+    "context_result": {
+      "device": "living room lights",
+      "location": "living room"
+    }
+  },
+  {
+    "input": "turn them off",
+    "context_result": {
+      "device": "living room lights",
+      "location": "living room"
+    }
+  },
+  {
+    "input": "turn that one on",
+    "context_result": {
+      "device": "previously_referenced_entity"
+    }
+  },
+  {
+    "input": "turn the ones in there off",
+    "context_result": {
+      "device": "lights",
+      "location": "current_context_location"
+    }
+  }
+],
+
+"ambiguity_rule": "Do not execute a command when a pronoun or reference could resolve to multiple entities with materially different actions."
+```
+
+},
+
+"implicit_actions": {
+"enabled": true,
+
+```
+"lighting": {
+  "dark": {
+    "default_intent": "light_on",
+    "confidence": 0.92
+  },
+  "cannot_see": {
+    "default_intent": "light_on",
+    "confidence": 0.90
+  }
+},
+
+"climate": {
+  "cold": {
+    "default_intent": "increase_heat",
+    "confidence": 0.70,
+    "confirmation": true
+  },
+  "hot": {
+    "default_intent": "increase_cooling",
+    "confidence": 0.70,
+    "confirmation": true
+  },
+  "stuffy": {
+    "default_intent": "fan_on",
+    "confidence": 0.65,
+    "confirmation": true
+  }
+}
+```
+
+},
+
+"negative_commands": {
+"description": "Commands that contain negation should not be interpreted as positive actions.",
+"patterns": [
+"don't turn on {device}",
+"do not turn on {device}",
+"don't turn off {device}",
+"do not turn off {device}",
+"I don't want {device} on",
+"I don't want {device} off",
+"leave {device} alone",
+"don't mess with {device}"
+],
+"action": "reject_or_parse_as_negative_intent",
+"execution_rule": "Never execute the opposite action merely because the utterance contains an action keyword."
+},
+
+"multi_command": {
+"enabled": true,
+
+```
+"connectors": [
+  "and",
+  "then",
+  "while you're at it",
+  "while you're in there",
+  "since you're there",
+  "also",
+  "too",
+  "and then"
+],
+
+"examples": [
+  "turn on the living room lights and turn off the TV",
+  "turn off the kitchen lights then turn on the porch light",
+  "turn on the living room lights and while you're at it turn on the fan",
+  "lock the front door and shut off the lights"
+],
+
+"execution_rule": "Split independent commands into separate intents. Preserve ordering when the user explicitly uses sequential language such as then or after that."
+```
+
+},
+
+"natural_examples": {
+
+```
+"direct": [
+  "turn on the living room lights",
+  "turn on the lights in the kitchen",
+  "turn off the bedroom lights",
+  "shut off the porch light",
+  "cut on the kitchen lights",
+  "switch off the hallway light",
+  "turn on the fan in the bedroom",
+  "turn off the TV",
+  "lock the front door",
+  "open the garage door"
+],
+
+"noun_first": [
+  "living room lights on",
+  "kitchen lights on",
+  "bedroom light off",
+  "porch lights on",
+  "living room lamp on",
+  "kitchen lights off",
+  "living room lights dim",
+  "bedroom lights bright",
+  "living room fan on",
+  "bedroom fan off",
+  "TV on",
+  "TV off",
+  "front door locked",
+  "garage door open"
+],
+
+"conversational": [
+  "can you turn on the living room lights",
+  "how about you turn on the lights in the kitchen",
+  "go ahead and turn on the porch lights",
+  "I need you to turn off the bedroom light",
+  "why don't you cut on the living room lights",
+  "would you turn off the TV",
+  "could you turn on the fan in the bedroom",
+  "you reckon you could turn on the kitchen lights",
+  "might as well turn on the living room lights"
+],
+
+"reference": [
+  "turn them lights on",
+  "turn them living room lights on",
+  "turn that light on",
+  "turn that one off",
+  "turn the one in the kitchen on",
+  "cut on them lights over there",
+  "shut that one off",
+  "turn it on in the living room",
+  "turn it off in there",
+  "turn them lights off"
+],
+
+"contextual": [
+  "it's dark in the living room",
+  "it's too dark in the kitchen, turn on the lights",
+  "it's pretty dark in here, can you turn on the lights",
+  "it's fucking dark in the living room, how about you turn on the lights in here",
+  "I can't see in the bedroom, turn the lights on",
+  "it's getting dark in the living room, go ahead and cut on the lights",
+  "it's mighty dark in here, turn them lights on",
+  "I can't see shit in the kitchen, go ahead and cut on the lights"
+],
+
+"regional": [
+  "turn them living room lights on",
+  "cut on them lights over there",
+  "turn that there light on",
+  "shut this here light off",
+  "go on and turn them lights on",
+  "might as well cut on them lights",
+  "turn the lights on over yonder"
+],
+
+"multi_command": [
+  "turn on the living room lights and turn off the TV",
+  "turn off the kitchen lights then turn on the porch light",
+  "turn on the living room lights and while you're at it turn on the fan",
+  "lock the front door and shut off the lights"
+]
+```
+
+},
+
+"transcription_rules": {
+"standard_spelling": true,
+"preserve_intended_words": true,
+"do_not_force_accent_spelling": true,
+"allow_profanity": true,
+"allow_natural_reductions": true,
+"allow_fragmented_speech": true,
+"allow_regional_grammar": true,
+"allow_filler": true,
+"important": "The transcript should preserve what was actually said while maintaining normal written spelling. Accent and reductions belong in the audio, not artificial misspellings."
+},
+
+"generation_rules": {
+"naturalness_over_coverage": true,
+"avoid_ungrammatical_combinations": true,
+"avoid_random_slot_combination": true,
+"avoid_forced_regionalisms": true,
+"avoid_repeating_the_same_sentence_structure": true,
+
+```
+"regional_frequency": {
+  "general_american": 0.65,
+  "southern": 0.20,
+  "appalachian": 0.15
+},
+
+"profanity_frequency": {
+  "none": 0.92,
+  "mild": 0.05,
+  "strong": 0.03
+},
+
+"fragment_frequency": 0.08,
+"contextual_command_frequency": 0.15,
+"reference_command_frequency": 0.12,
+"noun_first_frequency": 0.10,
+"multi_command_frequency": 0.08
+```
+
+},
+
+"validation": {
+"reject_if": [
+"action_missing_when_intent_requires_explicit_action",
+"device_missing_when_no_context_can_resolve_device",
+"location_conflict",
+"multiple_unresolved_pronouns",
+"ambiguous_security_action",
+"negative_command_misinterpreted_as_positive",
+"ungrammatical_generated_phrase"
+],
+
+```
+"security_commands": {
+  "require_explicit_target": true,
+  "allow_context_inference": false
+},
+
+"climate_commands": {
+  "implicit_requests_require_confirmation": true
+},
+
+"lighting_commands": {
+  "allow_darkness_inference": true
+}
+```
+
+}
+}

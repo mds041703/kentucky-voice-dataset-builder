@@ -1,0 +1,619 @@
+{
+  "version": 1,
+  "description": "Smart-home intents, devices, locations, states, and values for Home Assistant voice-command dataset generation.",
+
+  "intents": [
+    {
+      "id": "light_on",
+      "category": "lighting",
+      "description": "Turn one or more lights on.",
+      "actions": [
+        { "text": "turn on", "weight": 10 },
+        { "text": "switch on", "weight": 6 },
+        { "text": "cut on", "weight": 4 },
+        { "text": "turn up", "weight": 2 },
+        { "text": "put on", "weight": 2 }
+      ],
+      "devices": [
+        { "text": "the light", "weight": 8 },
+        { "text": "the lights", "weight": 10 },
+        { "text": "the lamp", "weight": 6 },
+        { "text": "the lamps", "weight": 4 }
+      ],
+      "locations": [
+        { "text": "in the living room", "weight": 10 },
+        { "text": "in the kitchen", "weight": 8 },
+        { "text": "in the bedroom", "weight": 7 },
+        { "text": "in the bathroom", "weight": 5 },
+        { "text": "in the hallway", "weight": 5 },
+        { "text": "on the porch", "weight": 6 },
+        { "text": "outside", "weight": 4 }
+      ]
+    },
+
+    {
+      "id": "light_off",
+      "category": "lighting",
+      "description": "Turn one or more lights off.",
+      "actions": [
+        { "text": "turn off", "weight": 10 },
+        { "text": "shut off", "weight": 8 },
+        { "text": "switch off", "weight": 6 },
+        { "text": "cut off", "weight": 5 },
+        { "text": "kill", "weight": 2 }
+      ],
+      "devices": [
+        { "text": "the light", "weight": 8 },
+        { "text": "the lights", "weight": 10 },
+        { "text": "the lamp", "weight": 6 },
+        { "text": "the lamps", "weight": 4 }
+      ],
+      "locations": [
+        { "text": "in the living room", "weight": 10 },
+        { "text": "in the kitchen", "weight": 8 },
+        { "text": "in the bedroom", "weight": 7 },
+        { "text": "in the bathroom", "weight": 5 },
+        { "text": "in the hallway", "weight": 5 },
+        { "text": "on the porch", "weight": 6 },
+        { "text": "outside", "weight": 4 }
+      ]
+    },
+
+    {
+      "id": "light_dim",
+      "category": "lighting",
+      "description": "Dim a light.",
+      "actions": [
+        { "text": "dim", "weight": 10 },
+        { "text": "turn down", "weight": 6 },
+        { "text": "lower", "weight": 5 },
+        { "text": "make dimmer", "weight": 4 }
+      ],
+      "devices": [
+        { "text": "the light", "weight": 10 },
+        { "text": "the lights", "weight": 8 },
+        { "text": "the lamp", "weight": 6 }
+      ],
+      "locations": [
+        { "text": "in the living room", "weight": 10 },
+        { "text": "in the bedroom", "weight": 8 },
+        { "text": "in the kitchen", "weight": 5 }
+      ]
+    },
+
+    {
+      "id": "light_brighten",
+      "category": "lighting",
+      "description": "Increase light brightness.",
+      "actions": [
+        { "text": "brighten", "weight": 8 },
+        { "text": "turn up", "weight": 8 },
+        { "text": "raise", "weight": 5 },
+        { "text": "make brighter", "weight": 5 }
+      ],
+      "devices": [
+        { "text": "the light", "weight": 10 },
+        { "text": "the lights", "weight": 8 },
+        { "text": "the lamp", "weight": 6 }
+      ],
+      "locations": [
+        { "text": "in the living room", "weight": 10 },
+        { "text": "in the bedroom", "weight": 8 },
+        { "text": "in the kitchen", "weight": 5 }
+      ]
+    },
+
+    {
+      "id": "light_brightness_set",
+      "category": "lighting",
+      "description": "Set a specific brightness level.",
+      "actions": [
+        { "text": "set", "weight": 10 },
+        { "text": "put", "weight": 5 },
+        { "text": "make", "weight": 5 }
+      ],
+      "devices": [
+        { "text": "the light", "weight": 10 },
+        { "text": "the lights", "weight": 8 },
+        { "text": "the lamp", "weight": 6 }
+      ],
+      "locations": [
+        { "text": "in the living room", "weight": 10 },
+        { "text": "in the bedroom", "weight": 8 },
+        { "text": "in the kitchen", "weight": 5 }
+      ],
+      "values": [
+        "10 percent",
+        "25 percent",
+        "50 percent",
+        "75 percent",
+        "100 percent",
+        "low",
+        "halfway",
+        "bright",
+        "dim"
+      ]
+    },
+
+    {
+      "id": "light_color",
+      "category": "lighting",
+      "description": "Change the color of a color-capable light.",
+      "actions": [
+        { "text": "make", "weight": 8 },
+        { "text": "change", "weight": 8 },
+        { "text": "set", "weight": 7 },
+        { "text": "turn", "weight": 4 }
+      ],
+      "devices": [
+        { "text": "the light", "weight": 10 },
+        { "text": "the lights", "weight": 8 },
+        { "text": "the lamp", "weight": 6 }
+      ],
+      "locations": [
+        { "text": "in the living room", "weight": 10 },
+        { "text": "in the bedroom", "weight": 8 },
+        { "text": "in the kitchen", "weight": 5 }
+      ],
+      "values": [
+        "red",
+        "blue",
+        "green",
+        "purple",
+        "orange",
+        "yellow",
+        "pink",
+        "white",
+        "warm white",
+        "cool white"
+      ]
+    },
+
+    {
+      "id": "fan_on",
+      "category": "climate",
+      "description": "Turn a fan on.",
+      "actions": [
+        { "text": "turn on", "weight": 10 },
+        { "text": "switch on", "weight": 6 },
+        { "text": "cut on", "weight": 4 },
+        { "text": "start", "weight": 4 }
+      ],
+      "devices": [
+        { "text": "the fan", "weight": 10 },
+        { "text": "the ceiling fan", "weight": 8 },
+        { "text": "the bedroom fan", "weight": 6 }
+      ],
+      "locations": [
+        { "text": "in the living room", "weight": 10 },
+        { "text": "in the bedroom", "weight": 8 },
+        { "text": "in the kitchen", "weight": 5 }
+      ]
+    },
+
+    {
+      "id": "fan_off",
+      "category": "climate",
+      "description": "Turn a fan off.",
+      "actions": [
+        { "text": "turn off", "weight": 10 },
+        { "text": "shut off", "weight": 8 },
+        { "text": "switch off", "weight": 6 },
+        { "text": "cut off", "weight": 5 },
+        { "text": "stop", "weight": 4 }
+      ],
+      "devices": [
+        { "text": "the fan", "weight": 10 },
+        { "text": "the ceiling fan", "weight": 8 },
+        { "text": "the bedroom fan", "weight": 6 }
+      ],
+      "locations": [
+        { "text": "in the living room", "weight": 10 },
+        { "text": "in the bedroom", "weight": 8 },
+        { "text": "in the kitchen", "weight": 5 }
+      ]
+    },
+
+    {
+      "id": "thermostat_set_temperature",
+      "category": "climate",
+      "description": "Set the thermostat to a temperature.",
+      "actions": [
+        { "text": "set", "weight": 10 },
+        { "text": "put", "weight": 5 },
+        { "text": "make", "weight": 4 },
+        { "text": "change", "weight": 4 }
+      ],
+      "devices": [
+        { "text": "the thermostat", "weight": 10 },
+        { "text": "the temperature", "weight": 8 },
+        { "text": "the heat", "weight": 4 },
+        { "text": "the AC", "weight": 4 }
+      ],
+      "locations": [
+        { "text": "in the house", "weight": 10 },
+        { "text": "in here", "weight": 6 },
+        { "text": "inside", "weight": 5 }
+      ],
+      "values": [
+        "60 degrees",
+        "65 degrees",
+        "68 degrees",
+        "70 degrees",
+        "72 degrees",
+        "74 degrees",
+        "75 degrees",
+        "78 degrees"
+      ]
+    },
+
+    {
+      "id": "heat_on",
+      "category": "climate",
+      "description": "Turn the heat on.",
+      "actions": [
+        { "text": "turn on", "weight": 10 },
+        { "text": "cut on", "weight": 5 },
+        { "text": "start", "weight": 4 }
+      ],
+      "devices": [
+        { "text": "the heat", "weight": 10 },
+        { "text": "the heater", "weight": 8 },
+        { "text": "the furnace", "weight": 5 }
+      ],
+      "locations": [
+        { "text": "in the house", "weight": 10 },
+        { "text": "in here", "weight": 7 }
+      ]
+    },
+
+    {
+      "id": "heat_off",
+      "category": "climate",
+      "description": "Turn the heat off.",
+      "actions": [
+        { "text": "turn off", "weight": 10 },
+        { "text": "shut off", "weight": 8 },
+        { "text": "cut off", "weight": 5 },
+        { "text": "stop", "weight": 4 }
+      ],
+      "devices": [
+        { "text": "the heat", "weight": 10 },
+        { "text": "the heater", "weight": 8 },
+        { "text": "the furnace", "weight": 5 }
+      ],
+      "locations": [
+        { "text": "in the house", "weight": 10 },
+        { "text": "in here", "weight": 7 }
+      ]
+    },
+
+    {
+      "id": "ac_on",
+      "category": "climate",
+      "description": "Turn the air conditioning on.",
+      "actions": [
+        { "text": "turn on", "weight": 10 },
+        { "text": "cut on", "weight": 5 },
+        { "text": "start", "weight": 4 }
+      ],
+      "devices": [
+        { "text": "the AC", "weight": 10 },
+        { "text": "the air conditioner", "weight": 8 },
+        { "text": "the air", "weight": 3 }
+      ],
+      "locations": [
+        { "text": "in the house", "weight": 10 },
+        { "text": "in here", "weight": 7 }
+      ]
+    },
+
+    {
+      "id": "ac_off",
+      "category": "climate",
+      "description": "Turn the air conditioning off.",
+      "actions": [
+        { "text": "turn off", "weight": 10 },
+        { "text": "shut off", "weight": 8 },
+        { "text": "cut off", "weight": 5 },
+        { "text": "stop", "weight": 4 }
+      ],
+      "devices": [
+        { "text": "the AC", "weight": 10 },
+        { "text": "the air conditioner", "weight": 8 },
+        { "text": "the air", "weight": 3 }
+      ],
+      "locations": [
+        { "text": "in the house", "weight": 10 },
+        { "text": "in here", "weight": 7 }
+      ]
+    },
+
+    {
+      "id": "tv_on",
+      "category": "media",
+      "description": "Turn the television on.",
+      "actions": [
+        { "text": "turn on", "weight": 10 },
+        { "text": "cut on", "weight": 4 },
+        { "text": "start", "weight": 3 }
+      ],
+      "devices": [
+        { "text": "the TV", "weight": 10 },
+        { "text": "the television", "weight": 6 }
+      ],
+      "locations": [
+        { "text": "in the living room", "weight": 10 },
+        { "text": "in the bedroom", "weight": 6 }
+      ]
+    },
+
+    {
+      "id": "tv_off",
+      "category": "media",
+      "description": "Turn the television off.",
+      "actions": [
+        { "text": "turn off", "weight": 10 },
+        { "text": "shut off", "weight": 8 },
+        { "text": "cut off", "weight": 5 },
+        { "text": "stop", "weight": 3 }
+      ],
+      "devices": [
+        { "text": "the TV", "weight": 10 },
+        { "text": "the television", "weight": 6 }
+      ],
+      "locations": [
+        { "text": "in the living room", "weight": 10 },
+        { "text": "in the bedroom", "weight": 6 }
+      ]
+    },
+
+    {
+      "id": "door_lock",
+      "category": "security",
+      "description": "Lock a door.",
+      "actions": [
+        { "text": "lock", "weight": 10 },
+        { "text": "secure", "weight": 3 }
+      ],
+      "devices": [
+        { "text": "the door", "weight": 10 },
+        { "text": "the front door", "weight": 9 },
+        { "text": "the back door", "weight": 7 },
+        { "text": "the garage door", "weight": 5 }
+      ],
+      "locations": [
+        { "text": "up front", "weight": 5 },
+        { "text": "out back", "weight": 5 },
+        { "text": "over there", "weight": 3 }
+      ]
+    },
+
+    {
+      "id": "door_unlock",
+      "category": "security",
+      "description": "Unlock a door.",
+      "actions": [
+        { "text": "unlock", "weight": 10 },
+        { "text": "open", "weight": 3 }
+      ],
+      "devices": [
+        { "text": "the door", "weight": 10 },
+        { "text": "the front door", "weight": 9 },
+        { "text": "the back door", "weight": 7 },
+        { "text": "the garage door", "weight": 5 }
+      ],
+      "locations": [
+        { "text": "up front", "weight": 5 },
+        { "text": "out back", "weight": 5 },
+        { "text": "over there", "weight": 3 }
+      ]
+    },
+
+    {
+      "id": "blinds_open",
+      "category": "covers",
+      "description": "Open blinds or curtains.",
+      "actions": [
+        { "text": "open", "weight": 10 },
+        { "text": "raise", "weight": 6 },
+        { "text": "pull open", "weight": 4 }
+      ],
+      "devices": [
+        { "text": "the blinds", "weight": 10 },
+        { "text": "the curtains", "weight": 7 }
+      ],
+      "locations": [
+        { "text": "in the living room", "weight": 8 },
+        { "text": "in the bedroom", "weight": 7 },
+        { "text": "in the kitchen", "weight": 5 }
+      ]
+    },
+
+    {
+      "id": "blinds_close",
+      "category": "covers",
+      "description": "Close blinds or curtains.",
+      "actions": [
+        { "text": "close", "weight": 10 },
+        { "text": "shut", "weight": 7 },
+        { "text": "lower", "weight": 6 },
+        { "text": "pull closed", "weight": 4 }
+      ],
+      "devices": [
+        { "text": "the blinds", "weight": 10 },
+        { "text": "the curtains", "weight": 7 }
+      ],
+      "locations": [
+        { "text": "in the living room", "weight": 8 },
+        { "text": "in the bedroom", "weight": 7 },
+        { "text": "in the kitchen", "weight": 5 }
+      ]
+    },
+
+    {
+      "id": "outlet_on",
+      "category": "power",
+      "description": "Turn a smart outlet on.",
+      "actions": [
+        { "text": "turn on", "weight": 10 },
+        { "text": "switch on", "weight": 6 },
+        { "text": "cut on", "weight": 4 }
+      ],
+      "devices": [
+        { "text": "the outlet", "weight": 10 },
+        { "text": "the plug", "weight": 7 },
+        { "text": "that outlet", "weight": 5 }
+      ],
+      "locations": [
+        { "text": "in the kitchen", "weight": 8 },
+        { "text": "in the living room", "weight": 7 },
+        { "text": "in the bedroom", "weight": 5 },
+        { "text": "on the porch", "weight": 5 }
+      ]
+    },
+
+    {
+      "id": "outlet_off",
+      "category": "power",
+      "description": "Turn a smart outlet off.",
+      "actions": [
+        { "text": "turn off", "weight": 10 },
+        { "text": "shut off", "weight": 8 },
+        { "text": "switch off", "weight": 6 },
+        { "text": "cut off", "weight": 5 }
+      ],
+      "devices": [
+        { "text": "the outlet", "weight": 10 },
+        { "text": "the plug", "weight": 7 },
+        { "text": "that outlet", "weight": 5 }
+      ],
+      "locations": [
+        { "text": "in the kitchen", "weight": 8 },
+        { "text": "in the living room", "weight": 7 },
+        { "text": "in the bedroom", "weight": 5 },
+        { "text": "on the porch", "weight": 5 }
+      ]
+    }
+  ],
+
+  "devices": [
+    { "text": "the light", "domain": "light", "weight": 10 },
+    { "text": "the lights", "domain": "light", "weight": 10 },
+    { "text": "the lamp", "domain": "light", "weight": 7 },
+    { "text": "the lamps", "domain": "light", "weight": 5 },
+    { "text": "the fan", "domain": "fan", "weight": 7 },
+    { "text": "the ceiling fan", "domain": "fan", "weight": 8 },
+    { "text": "the thermostat", "domain": "climate", "weight": 8 },
+    { "text": "the heater", "domain": "climate", "weight": 6 },
+    { "text": "the furnace", "domain": "climate", "weight": 4 },
+    { "text": "the AC", "domain": "climate", "weight": 7 },
+    { "text": "the air conditioner", "domain": "climate", "weight": 6 },
+    { "text": "the TV", "domain": "media_player", "weight": 7 },
+    { "text": "the television", "domain": "media_player", "weight": 5 },
+    { "text": "the front door", "domain": "lock", "weight": 8 },
+    { "text": "the back door", "domain": "lock", "weight": 6 },
+    { "text": "the garage door", "domain": "cover", "weight": 5 },
+    { "text": "the blinds", "domain": "cover", "weight": 6 },
+    { "text": "the curtains", "domain": "cover", "weight": 5 },
+    { "text": "the outlet", "domain": "switch", "weight": 6 },
+    { "text": "the plug", "domain": "switch", "weight": 5 }
+  ],
+
+  "locations": [
+    { "text": "living room", "weight": 10 },
+    { "text": "kitchen", "weight": 9 },
+    { "text": "bedroom", "weight": 8 },
+    { "text": "bathroom", "weight": 7 },
+    { "text": "hallway", "weight": 6 },
+    { "text": "hall", "weight": 5 },
+    { "text": "porch", "weight": 7 },
+    { "text": "front porch", "weight": 5 },
+    { "text": "back porch", "weight": 5 },
+    { "text": "garage", "weight": 6 },
+    { "text": "basement", "weight": 4 },
+    { "text": "upstairs", "weight": 5 },
+    { "text": "downstairs", "weight": 5 },
+    { "text": "outside", "weight": 5 },
+    { "text": "in here", "weight": 5 },
+    { "text": "in there", "weight": 4 },
+    { "text": "over there", "weight": 4 },
+    { "text": "out back", "weight": 4 },
+    { "text": "up front", "weight": 4 }
+  ],
+
+  "states": [
+    "on",
+    "off",
+    "open",
+    "closed",
+    "locked",
+    "unlocked",
+    "dim",
+    "bright",
+    "low",
+    "medium",
+    "high"
+  ],
+
+  "colors": [
+    "red",
+    "orange",
+    "yellow",
+    "green",
+    "blue",
+    "purple",
+    "pink",
+    "white",
+    "warm white",
+    "cool white"
+  ],
+
+  "brightness_values": [
+    "10 percent",
+    "20 percent",
+    "25 percent",
+    "30 percent",
+    "40 percent",
+    "50 percent",
+    "60 percent",
+    "70 percent",
+    "75 percent",
+    "80 percent",
+    "90 percent",
+    "100 percent",
+    "low",
+    "medium",
+    "high",
+    "halfway",
+    "full brightness"
+  ],
+
+  "temperature_values": [
+    "55 degrees",
+    "60 degrees",
+    "62 degrees",
+    "65 degrees",
+    "68 degrees",
+    "70 degrees",
+    "72 degrees",
+    "74 degrees",
+    "75 degrees",
+    "78 degrees",
+    "80 degrees"
+  ],
+
+  "regional_references": [
+    "over yonder",
+    "back yonder",
+    "out back",
+    "up front",
+    "right here",
+    "right there",
+    "in here",
+    "in there",
+    "them lights",
+    "this here",
+    "that there"
+  ]
+}

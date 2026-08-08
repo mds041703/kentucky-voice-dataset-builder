@@ -1,0 +1,507 @@
+{
+"version": 2,
+"description": "Sentence templates for natural Kentucky, Southern, Appalachian-influenced, and general smart-home speech. Devices are bare noun phrases such as 'fan', 'AC', or 'living room light'. Locations are complete location phrases such as 'in the kitchen', 'in the utility room', 'on the porch', 'upstairs', or 'out back'.",
+
+"patterns": [
+
+```
+{
+  "id": "direct_action_device",
+  "category": "general",
+  "styles": ["direct", "neutral", "casual"],
+  "pattern": "{action} the {device}"
+},
+
+{
+  "id": "direct_action_device_location",
+  "category": "general",
+  "styles": ["direct", "neutral", "casual"],
+  "pattern": "{action} the {device} {location}"
+},
+
+{
+  "id": "opening_action_device",
+  "category": "general",
+  "styles": ["neutral", "casual", "conversational"],
+  "pattern": "{opening} {action} the {device}"
+},
+
+{
+  "id": "opening_action_device_location",
+  "category": "general",
+  "styles": ["neutral", "casual", "conversational"],
+  "pattern": "{opening} {action} the {device} {location}"
+},
+
+{
+  "id": "opening_location_action_device",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "{opening}, {location}, {action} the {device}"
+},
+
+{
+  "id": "polite_request",
+  "category": "general",
+  "styles": ["polite", "neutral"],
+  "pattern": "{opening} you {action} the {device}"
+},
+
+{
+  "id": "polite_request_location",
+  "category": "general",
+  "styles": ["polite", "neutral"],
+  "pattern": "{opening} you {action} the {device} {location}"
+},
+
+{
+  "id": "can_you",
+  "category": "general",
+  "styles": ["polite", "conversational"],
+  "pattern": "Can you {action} the {device}"
+},
+
+{
+  "id": "can_you_location",
+  "category": "general",
+  "styles": ["polite", "conversational"],
+  "pattern": "Can you {action} the {device} {location}"
+},
+
+{
+  "id": "would_you",
+  "category": "general",
+  "styles": ["polite", "conversational"],
+  "pattern": "Would you {action} the {device}"
+},
+
+{
+  "id": "would_you_location",
+  "category": "general",
+  "styles": ["polite", "conversational"],
+  "pattern": "Would you {action} the {device} {location}"
+},
+
+{
+  "id": "could_you",
+  "category": "general",
+  "styles": ["polite", "conversational"],
+  "pattern": "Could you {action} the {device}"
+},
+
+{
+  "id": "could_you_location",
+  "category": "general",
+  "styles": ["polite", "conversational"],
+  "pattern": "Could you {action} the {device} {location}"
+},
+
+{
+  "id": "need_you",
+  "category": "general",
+  "styles": ["direct", "conversational"],
+  "pattern": "I need you to {action} the {device}"
+},
+
+{
+  "id": "need_you_location",
+  "category": "general",
+  "styles": ["direct", "conversational"],
+  "pattern": "I need you to {action} the {device} {location}"
+},
+
+{
+  "id": "want_you",
+  "category": "general",
+  "styles": ["direct", "conversational"],
+  "pattern": "I want you to {action} the {device}"
+},
+
+{
+  "id": "want_you_location",
+  "category": "general",
+  "styles": ["direct", "conversational"],
+  "pattern": "I want you to {action} the {device} {location}"
+},
+
+{
+  "id": "question_action",
+  "category": "general",
+  "styles": ["conversational"],
+  "pattern": "{question} {action} the {device}"
+},
+
+{
+  "id": "question_location",
+  "category": "general",
+  "styles": ["conversational"],
+  "pattern": "{question} {action} the {device} {location}"
+},
+
+{
+  "id": "location_action_device",
+  "category": "general",
+  "styles": ["direct", "casual", "conversational"],
+  "pattern": "{location}, {action} the {device}"
+},
+
+{
+  "id": "opening_location_action",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "{opening}, {location}, {action} the {device}"
+},
+
+{
+  "id": "opening_action_that_device",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "{opening} {action} that {device}"
+},
+
+{
+  "id": "opening_action_that_device_location",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "{opening} {action} that {device} {location}"
+},
+
+{
+  "id": "right_there",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "{opening} {action} the {device} right there"
+},
+
+{
+  "id": "right_here",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "{opening} {action} the {device} right here"
+},
+
+{
+  "id": "over_there",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "{opening} {action} the {device} over there"
+},
+
+{
+  "id": "upstairs_device",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "{opening} {action} the {device} upstairs"
+},
+
+{
+  "id": "downstairs_device",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "{opening} {action} the {device} downstairs"
+},
+
+{
+  "id": "context_dark",
+  "category": "lighting",
+  "styles": ["casual", "conversational"],
+  "pattern": "It's {modifier} {location}"
+},
+
+{
+  "id": "context_dark_request",
+  "category": "lighting",
+  "styles": ["casual", "conversational"],
+  "pattern": "It's {modifier} {location}, {action} the {device}"
+},
+
+{
+  "id": "context_dark_question",
+  "category": "lighting",
+  "styles": ["casual", "conversational"],
+  "pattern": "It's {modifier} in here, can you {action} the {device}"
+},
+
+{
+  "id": "context_dark_question_location",
+  "category": "lighting",
+  "styles": ["casual", "conversational"],
+  "pattern": "It's {modifier} {location}, can you {action} the {device}"
+},
+
+{
+  "id": "context_problem",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "It's {modifier} in here, {action} the {device}"
+},
+
+{
+  "id": "context_need",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "I could use the {device} {location}"
+},
+
+{
+  "id": "context_need_action",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "I could use the {device} {location}, {action} it"
+},
+
+{
+  "id": "question_here",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "You see the {device} {location}"
+},
+
+{
+  "id": "question_here_action",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "You see the {device} {location}, {action} it"
+},
+
+{
+  "id": "question_there",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "You see that {device} over there"
+},
+
+{
+  "id": "question_there_action",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "You see that {device} over there, {action} it"
+},
+
+{
+  "id": "modifier_request",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "{opening}, it's {modifier}, {action} the {device}"
+},
+
+{
+  "id": "modifier_location_request",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "{opening}, it's {modifier} {location}, {action} the {device}"
+},
+
+{
+  "id": "conversational_that_device",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "{opening} {action} that {device}"
+},
+
+{
+  "id": "conversational_that_device_location",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "{opening} {action} that {device} {location}"
+},
+
+{
+  "id": "go_ahead_action",
+  "category": "general",
+  "styles": ["casual", "conversational", "direct"],
+  "pattern": "Go ahead and {action} the {device}"
+},
+
+{
+  "id": "go_ahead_action_location",
+  "category": "general",
+  "styles": ["casual", "conversational", "direct"],
+  "pattern": "Go ahead and {action} the {device} {location}"
+},
+
+{
+  "id": "opening_go_ahead_action",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "{opening}, go ahead and {action} the {device}"
+},
+
+{
+  "id": "opening_go_ahead_action_location",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "{opening}, go ahead and {action} the {device} {location}"
+},
+
+{
+  "id": "southern_conversational",
+  "category": "general",
+  "styles": ["rural", "folksy", "conversational"],
+  "pattern": "{opening} {action} that {device} {location}"
+},
+
+{
+  "id": "southern_request",
+  "category": "general",
+  "styles": ["rural", "folksy", "conversational"],
+  "pattern": "{opening} go on and {action} the {device}"
+},
+
+{
+  "id": "southern_request_location",
+  "category": "general",
+  "styles": ["rural", "folksy", "conversational"],
+  "pattern": "{opening} go on and {action} the {device} {location}"
+},
+
+{
+  "id": "southern_need",
+  "category": "general",
+  "styles": ["rural", "folksy", "conversational"],
+  "pattern": "I need you to go ahead and {action} the {device}"
+},
+
+{
+  "id": "southern_need_location",
+  "category": "general",
+  "styles": ["rural", "folksy", "conversational"],
+  "pattern": "I need you to go ahead and {action} the {device} {location}"
+},
+
+{
+  "id": "southern_question",
+  "category": "general",
+  "styles": ["rural", "folksy", "conversational"],
+  "pattern": "How about you {action} the {device}"
+},
+
+{
+  "id": "southern_question_location",
+  "category": "general",
+  "styles": ["rural", "folksy", "conversational"],
+  "pattern": "How about you {action} the {device} {location}"
+},
+
+{
+  "id": "southern_dark",
+  "category": "lighting",
+  "styles": ["rural", "folksy", "conversational"],
+  "pattern": "It's mighty {modifier} {location}"
+},
+
+{
+  "id": "southern_dark_request",
+  "category": "lighting",
+  "styles": ["rural", "folksy", "conversational"],
+  "pattern": "It's mighty {modifier} {location}, go ahead and {action} the {device}"
+},
+
+{
+  "id": "southern_dark_here",
+  "category": "lighting",
+  "styles": ["rural", "folksy", "conversational"],
+  "pattern": "It's {modifier} in here, how about you {action} the {device}"
+},
+
+{
+  "id": "southern_direct",
+  "category": "general",
+  "styles": ["rural", "folksy", "direct"],
+  "pattern": "Go ahead and {action} the {device}"
+},
+
+{
+  "id": "southern_direct_location",
+  "category": "general",
+  "styles": ["rural", "folksy", "direct"],
+  "pattern": "Go ahead and {action} the {device} {location}"
+},
+
+{
+  "id": "regional_connector",
+  "category": "general",
+  "styles": ["rural", "folksy", "conversational"],
+  "pattern": "{opening} {connector} {action} the {device}"
+},
+
+{
+  "id": "regional_connector_location",
+  "category": "general",
+  "styles": ["rural", "folksy", "conversational"],
+  "pattern": "{opening} {connector} {action} the {device} {location}"
+},
+
+{
+  "id": "short_command",
+  "category": "general",
+  "styles": ["direct", "casual"],
+  "pattern": "{action} it"
+},
+
+{
+  "id": "short_command_device",
+  "category": "general",
+  "styles": ["direct", "casual"],
+  "pattern": "{action} that {device}"
+},
+
+{
+  "id": "short_command_location",
+  "category": "general",
+  "styles": ["direct", "casual"],
+  "pattern": "{action} the one {location}"
+},
+
+{
+  "id": "device_location_action_request",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "The {device} {location}, {action} it"
+},
+
+{
+  "id": "that_device_location_action",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "That {device} {location}, {action} it"
+},
+
+{
+  "id": "context_location_request",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "It's {location}, {action} the {device}"
+},
+
+{
+  "id": "natural_here_request",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "{action} the {device} in here"
+},
+
+{
+  "id": "natural_there_request",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "{action} the {device} over there"
+},
+
+{
+  "id": "natural_location_first",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "{location}, go ahead and {action} the {device}"
+},
+
+{
+  "id": "natural_location_first_opening",
+  "category": "general",
+  "styles": ["casual", "conversational"],
+  "pattern": "{opening}, {location}, go ahead and {action} the {device}"
+}
+```
+
+]
+}
