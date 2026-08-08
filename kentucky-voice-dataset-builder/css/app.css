@@ -13,6 +13,7 @@
     --accent-hover: #edab3d;
 
     --danger: #c94b4b;
+    --danger-hover: #e05b5b;
     --success: #4da36a;
 
     --radius: 8px;
@@ -29,7 +30,6 @@
         Arial,
         sans-serif;
 }
-
 
 /* =========================================================
    RESET
@@ -65,7 +65,6 @@ button {
     cursor: pointer;
 }
 
-
 /* =========================================================
    APP
    ========================================================= */
@@ -76,7 +75,6 @@ button {
     display: flex;
     flex-direction: column;
 }
-
 
 /* =========================================================
    HEADER
@@ -89,31 +87,55 @@ button {
     align-items: center;
     justify-content: space-between;
 
-    padding: 18px 28px;
+    padding: 22px 30px;
 
-    background: var(--surface);
+    background:
+        linear-gradient(
+            135deg,
+            var(--surface),
+            var(--surface-2)
+        );
 
     border-bottom: 1px solid var(--border);
+
+    box-shadow:
+        0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.app-title {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
 }
 
 .app-title h1 {
     margin: 0;
 
-    font-size: 22px;
-    font-weight: 650;
+    font-size: 25px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
 }
 
 .app-title p {
-    margin: 3px 0 0;
+    margin: 0;
 
     color: var(--text-muted);
 
     font-size: 13px;
+    line-height: 1.4;
 }
 
 .app-status {
     display: flex;
     align-items: center;
+
+    padding: 7px 11px;
+
+    background: var(--surface-3);
+
+    border: 1px solid var(--border);
+    border-radius: 999px;
 }
 
 .status-indicator {
@@ -124,6 +146,7 @@ button {
     color: var(--text-muted);
 
     font-size: 13px;
+    font-weight: 600;
 }
 
 .status-indicator::before {
@@ -135,8 +158,10 @@ button {
     border-radius: 50%;
 
     background: var(--success);
-}
 
+    box-shadow:
+        0 0 0 3px rgba(77, 163, 106, 0.12);
+}
 
 /* =========================================================
    NAVIGATION
@@ -194,7 +219,6 @@ button {
     background: var(--accent);
 }
 
-
 /* =========================================================
    MAIN
    ========================================================= */
@@ -235,13 +259,15 @@ button {
     color: var(--text-muted);
 }
 
-
 /* =========================================================
    BUTTONS
    ========================================================= */
 
 .primary-button,
-.secondary-button {
+.secondary-button,
+.danger-button,
+.icon-button,
+.dataset-play-button {
     min-height: 42px;
 
     padding: 9px 17px;
@@ -253,7 +279,17 @@ button {
     transition:
         background 0.15s ease,
         border-color 0.15s ease,
-        opacity 0.15s ease;
+        color 0.15s ease,
+        opacity 0.15s ease,
+        transform 0.05s ease;
+}
+
+.primary-button:active,
+.secondary-button:active,
+.danger-button:active,
+.icon-button:active,
+.dataset-play-button:active {
+    transform: translateY(1px);
 }
 
 .primary-button {
@@ -279,8 +315,23 @@ button {
     background: var(--surface-3);
 }
 
+.danger-button {
+    border: 1px solid var(--danger);
+
+    background: var(--danger);
+    color: #fff;
+}
+
+.danger-button:hover {
+    background: var(--danger-hover);
+    border-color: var(--danger-hover);
+}
+
 .primary-button:disabled,
-.secondary-button:disabled {
+.secondary-button:disabled,
+.danger-button:disabled,
+.icon-button:disabled,
+.dataset-play-button:disabled {
     opacity: 0.4;
 
     cursor: not-allowed;
@@ -288,11 +339,13 @@ button {
 
 .primary-button:focus-visible,
 .secondary-button:focus-visible,
+.danger-button:focus-visible,
+.icon-button:focus-visible,
+.dataset-play-button:focus-visible,
 .nav-button:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
 }
-
 
 /* =========================================================
    RECORDING PROGRESS
@@ -313,7 +366,6 @@ button {
 .recording-progress strong {
     color: var(--text);
 }
-
 
 /* =========================================================
    SENTENCE CARD
@@ -365,7 +417,6 @@ button {
     font-size: 13px;
 }
 
-
 /* =========================================================
    RECORDING DISPLAY
    ========================================================= */
@@ -391,7 +442,6 @@ button {
 
     font-size: 14px;
 }
-
 
 /* =========================================================
    AUDIO METER
@@ -431,7 +481,6 @@ button {
     transition: width 0.05s linear;
 }
 
-
 /* =========================================================
    RECORDING CONTROLS
    ========================================================= */
@@ -446,6 +495,15 @@ button {
     margin-bottom: 25px;
 }
 
+/*
+ * The recorder workflow now uses:
+ *
+ *   Record -> Stop -> next sentence
+ *   Record Again -> discard previous recording and
+ *                   return its sentence to the recorder
+ *
+ * Keep Recording is intentionally not styled or supported.
+ */
 
 /* =========================================================
    RECORDING RESULT
@@ -476,8 +534,8 @@ button {
 .recording-result-controls {
     display: flex;
     gap: 10px;
+    flex-wrap: wrap;
 }
-
 
 /* =========================================================
    GENERATOR
@@ -573,14 +631,43 @@ button {
 
     border: 1px solid var(--border);
     border-radius: var(--radius-small);
+
+    cursor: pointer;
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.generated-sentence:hover {
+    background: var(--surface-3);
+    border-color: var(--accent);
+}
+
+.generated-sentence.selected {
+    background: rgba(217, 154, 50, 0.12);
+
+    border-color: var(--accent);
+
+    box-shadow:
+        0 0 0 1px rgba(217, 154, 50, 0.15);
 }
 
 .generated-sentence input {
     margin-top: 4px;
+
+    flex: 0 0 auto;
+
+    accent-color: var(--accent);
+
+    cursor: pointer;
 }
 
 .generated-sentence-text {
     flex: 1;
+
+    cursor: pointer;
 }
 
 .custom-sentence {
@@ -606,7 +693,6 @@ button {
 
     margin-top: 10px;
 }
-
 
 /* =========================================================
    FORMS
@@ -690,7 +776,6 @@ fieldset input[type="checkbox"] {
     flex-wrap: wrap;
 }
 
-
 /* =========================================================
    DATASET STATISTICS
    ========================================================= */
@@ -731,7 +816,6 @@ fieldset input[type="checkbox"] {
     font-size: 24px;
 }
 
-
 /* =========================================================
    DATASET TOOLBAR
    ========================================================= */
@@ -747,7 +831,6 @@ fieldset input[type="checkbox"] {
 
     margin-bottom: 15px;
 }
-
 
 /* =========================================================
    DATASET LIST
@@ -767,7 +850,7 @@ fieldset input[type="checkbox"] {
         90px
         110px
         minmax(0, 1fr)
-        100px;
+        auto;
 
     gap: 12px;
 
@@ -807,12 +890,105 @@ fieldset input[type="checkbox"] {
 }
 
 .dataset-entry-text {
+    min-width: 0;
+
     overflow: hidden;
 
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
+/* =========================================================
+   DATASET ACTIONS
+   ========================================================= */
+
+.dataset-entry-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    gap: 6px;
+
+    white-space: nowrap;
+}
+
+.dataset-play-button {
+    min-width: 42px;
+    min-height: 38px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 7px 12px;
+
+    border: 1px solid var(--border);
+
+    background: var(--surface-2);
+    color: var(--text);
+}
+
+.dataset-play-button:hover {
+    background: var(--surface-3);
+    border-color: var(--accent);
+}
+
+.dataset-rerecord-button {
+    min-height: 38px;
+
+    padding: 7px 12px;
+}
+
+.dataset-delete-button {
+    width: 38px;
+    height: 38px;
+
+    min-height: 38px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    border: 1px solid var(--danger);
+    border-radius: var(--radius-small);
+
+    background: transparent;
+    color: var(--danger);
+
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1;
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease,
+        opacity 0.15s ease;
+}
+
+.dataset-delete-button:hover {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #fff;
+}
+
+.dataset-delete-button:disabled {
+    opacity: 0.4;
+
+    cursor: not-allowed;
+}
+
+/*
+ * Hide native audio controls if the Dataset renderer
+ * leaves an audio element in the DOM. Playback should
+ * be controlled by the compact play button instead.
+ */
+
+.dataset-entry audio {
+    display: none;
+}
 
 /* =========================================================
    IMPORT / EXPORT
@@ -857,7 +1033,6 @@ fieldset input[type="checkbox"] {
     color: var(--danger);
 }
 
-
 /* =========================================================
    EMPTY STATES
    ========================================================= */
@@ -870,7 +1045,6 @@ fieldset input[type="checkbox"] {
     text-align: center;
 }
 
-
 /* =========================================================
    UTILITY
    ========================================================= */
@@ -878,7 +1052,6 @@ fieldset input[type="checkbox"] {
 .hidden {
     display: none !important;
 }
-
 
 /* =========================================================
    FOOTER
@@ -900,13 +1073,11 @@ fieldset input[type="checkbox"] {
     font-size: 12px;
 }
 
-
 /* =========================================================
    RESPONSIVE
    ========================================================= */
 
 @media (max-width: 900px) {
-
     .generator-layout {
         grid-template-columns: 1fr;
     }
@@ -919,17 +1090,35 @@ fieldset input[type="checkbox"] {
     .import-export-grid {
         grid-template-columns: 1fr;
     }
+
+    .dataset-entry {
+        grid-template-columns:
+            80px
+            100px
+            minmax(0, 1fr)
+            auto;
+    }
+
+    .dataset-entry-actions {
+        flex-wrap: wrap;
+    }
 }
 
-
 @media (max-width: 650px) {
-
     .app-header {
-        padding: 15px 18px;
+        padding: 17px 18px;
     }
 
     .app-title h1 {
-        font-size: 18px;
+        font-size: 20px;
+    }
+
+    .app-title p {
+        font-size: 12px;
+    }
+
+    .app-status {
+        padding: 6px 9px;
     }
 
     .main-nav {
@@ -967,6 +1156,12 @@ fieldset input[type="checkbox"] {
         grid-template-columns:
             70px
             1fr;
+
+        gap: 8px;
+    }
+
+    .dataset-entry-id {
+        grid-column: 1;
     }
 
     .dataset-entry-status {
@@ -975,6 +1170,16 @@ fieldset input[type="checkbox"] {
 
     .dataset-entry-text {
         grid-column: 1 / -1;
+
+        white-space: normal;
+    }
+
+    .dataset-entry-actions {
+        grid-column: 1 / -1;
+
+        justify-content: flex-start;
+
+        padding-top: 5px;
     }
 
     .custom-sentence-controls {
@@ -983,6 +1188,10 @@ fieldset input[type="checkbox"] {
 
     .recording-result-controls {
         flex-direction: column;
+    }
+
+    .recording-result-controls button {
+        width: 100%;
     }
 
     .app-footer {
