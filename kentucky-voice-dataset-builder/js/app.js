@@ -85,9 +85,15 @@ window.App = (() => {
 
     async function init() {
 
+        if (state.initialized) {
+            return;
+        }
+
+
         console.log(
             `Kentucky Voice Dataset Builder v${VERSION}`
         );
+
 
         setVersion();
 
@@ -103,25 +109,27 @@ window.App = (() => {
 
         updateGeneratorUI();
 
+        syncDatasetFromModule();
+
         updateDatasetStatistics();
 
-        showPage("record");
+        showPage(
+            state.currentPage || "record"
+        );
+
 
         /*
-         * Explicitly initialize the recorder here.
+         * Recorder may already have initialized itself
+         * through its own DOMContentLoaded handler.
          *
-         * recorder.js also contains its own DOMContentLoaded
-         * startup handler, but Recorder.init() is protected
-         * against duplicate initialization.
-         *
-         * Keeping initialization here guarantees that the
-         * Record / Stop / Redo / Skip buttons are connected
-         * as part of the main application startup.
+         * Recorder.init() is intentionally safe to call
+         * more than once.
          */
 
         if (
             window.Recorder &&
-            typeof window.Recorder.init === "function"
+            typeof window.Recorder.init ===
+                "function"
         ) {
 
             try {
@@ -150,7 +158,10 @@ window.App = (() => {
 
         state.initialized = true;
 
-        setStorageStatus("Local");
+        setStorageStatus(
+            "Local"
+        );
+
 
         console.log(
             "Application initialized."
@@ -169,6 +180,7 @@ window.App = (() => {
                 "app-version"
             );
 
+
         if (element) {
 
             element.textContent =
@@ -183,22 +195,175 @@ window.App = (() => {
 
     function setupApplicationEvents() {
 
+        /*
+         * Prevent duplicate listeners if init() is ever
+         * called manually before the normal application
+         * startup sequence.
+         */
+
+        if (state._eventsInitialized) {
+            return;
+        }
+
+
+        state._eventsInitialized =
+            true;
+
+
         window.addEventListener(
             "kvdb:sentence-skipped",
-            () => {
+            event => {
+
+                syncDatasetFromModule();
 
                 updateDatasetStatistics();
+
+                /*
+                 * Dataset normally advances the current
+                 * sentence after a skip. Keep App's
+                 * reference synchronized with it.
+                 */
+
+                syncCurrentSentence();
             }
         );
 
 
         window.addEventListener(
             "kvdb:recording-ready",
+            event => {
+
+                syncDatasetFromModule();
+
+                updateDatasetStatistics();
+
+                /*
+                 * Dataset is responsible for committing
+                 * the recording. App only refreshes its
+                 * local view here.
+                 */
+
+                syncCurrentSentence();
+            }
+        );
+
+
+        window.addEventListener(
+            "kvdb:save-recording",
             () => {
+
+                syncDatasetFromModule();
 
                 updateDatasetStatistics();
             }
         );
+
+
+        window.addEventListener(
+            "kvdb:dataset-changed",
+            () => {
+
+                syncDatasetFromModule();
+
+                updateDatasetStatistics();
+
+                syncCurrentSentence();
+            }
+        );
+    }
+
+
+    /* =====================================================
+       DATASET SYNCHRONIZATION
+       ===================================================== */
+
+    function syncDatasetFromModule() {
+
+        if (
+            window.Dataset &&
+            typeof window.Dataset.getEntries ===
+                "function"
+        ) {
+
+            try {
+
+                const entries =
+                    window.Dataset.getEntries();
+
+
+                if (Array.isArray(entries)) {
+
+                    state.dataset =
+                        entries;
+                }
+
+            } catch (error) {
+
+                console.warn(
+                    "Unable to synchronize dataset:",
+                    error
+                );
+            }
+        }
+    }
+
+
+    function syncCurrentSentence() {
+
+        let sentence =
+            null;
+
+
+        if (
+            window.Dataset &&
+            typeof window.Dataset.getCurrentSentence ===
+                "function"
+        ) {
+
+            try {
+
+                sentence =
+                    window.Dataset
+                        .getCurrentSentence();
+
+            } catch (error) {
+
+                console.warn(
+                    "Unable to get current dataset sentence:",
+                    error
+                );
+            }
+        }
+
+
+        if (
+            !sentence &&
+            window.Dataset &&
+            typeof window.Dataset.getCurrentEntry ===
+                "function"
+        ) {
+
+            try {
+
+                sentence =
+                    window.Dataset
+                        .getCurrentEntry();
+
+            } catch (error) {
+
+                console.warn(
+                    "Unable to get current dataset entry:",
+                    error
+                );
+            }
+        }
+
+
+        if (sentence) {
+
+            state.currentSentence =
+                sentence;
+        }
     }
 
 
@@ -213,8 +378,27 @@ window.App = (() => {
                 ".nav-button[data-page]"
             );
 
+
         buttons.forEach(
             button => {
+
+                /*
+                 * Avoid attaching the same handler more
+                 * than once if setupNavigation() is called.
+                 */
+
+                if (
+                    button.dataset.kvdbNavigationBound ===
+                    "true"
+                ) {
+
+                    return;
+                }
+
+
+                button.dataset.kvdbNavigationBound =
+                    "true";
+
 
                 button.addEventListener(
                     "click",
@@ -230,7 +414,9 @@ window.App = (() => {
     }
 
 
-    function showPage(pageName) {
+    function showPage(
+        pageName
+    ) {
 
         const pages =
             document.querySelectorAll(
@@ -243,13 +429,19 @@ window.App = (() => {
             );
 
 
+        const targetPage =
+            String(
+                pageName || "record"
+            );
+
+
         pages.forEach(
             page => {
 
                 page.classList.toggle(
                     "active",
                     page.dataset.pageContent ===
-                    pageName
+                        targetPage
                 );
             }
         );
@@ -261,14 +453,14 @@ window.App = (() => {
                 button.classList.toggle(
                     "active",
                     button.dataset.page ===
-                    pageName
+                        targetPage
                 );
             }
         );
 
 
         state.currentPage =
-            pageName;
+            targetPage;
     }
 
 
@@ -316,20 +508,38 @@ window.App = (() => {
                 }
 
 
-                const update = () => {
+                if (
+                    input.dataset.kvdbRangeBound ===
+                    "true"
+                ) {
 
-                    output.textContent =
-                        `${input.value}%`;
-                };
+                    updateRangeOutput(
+                        item.input,
+                        item.output
+                    );
+
+                    return;
+                }
+
+
+                input.dataset.kvdbRangeBound =
+                    "true";
 
 
                 input.addEventListener(
                     "input",
-                    update
+                    () => {
+
+                        output.textContent =
+                            `${input.value}%`;
+                    }
                 );
 
 
-                update();
+                updateRangeOutput(
+                    item.input,
+                    item.output
+                );
             }
         );
     }
@@ -350,6 +560,19 @@ window.App = (() => {
         if (!form) {
             return;
         }
+
+
+        if (
+            form.dataset.kvdbSettingsBound ===
+            "true"
+        ) {
+
+            return;
+        }
+
+
+        form.dataset.kvdbSettingsBound =
+            "true";
 
 
         form.addEventListener(
@@ -378,25 +601,40 @@ window.App = (() => {
 
         if (resetButton) {
 
-            resetButton.addEventListener(
-                "click",
-                () => {
+            if (
+                resetButton.dataset.kvdbResetBound !==
+                "true"
+            ) {
 
-                    state.config =
-                        structuredClone(
-                            DEFAULT_CONFIG
+                resetButton.dataset.kvdbResetBound =
+                    "true";
+
+
+                resetButton.addEventListener(
+                    "click",
+                    event => {
+
+                        event.preventDefault();
+
+
+                        state.config =
+                            structuredClone(
+                                DEFAULT_CONFIG
+                            );
+
+
+                        loadConfigIntoUI();
+
+                        saveConfig();
+
+
+                        showOperationStatus(
+                            "Settings reset to defaults.",
+                            "success"
                         );
-
-                    loadConfigIntoUI();
-
-                    saveConfig();
-
-                    showOperationStatus(
-                        "Settings reset to defaults.",
-                        "success"
-                    );
-                }
-            );
+                    }
+                );
+            }
         }
     }
 
@@ -412,70 +650,90 @@ window.App = (() => {
             config.dataset.name
         );
 
+
         setValue(
             "setting-speaker-id",
             config.dataset.speakerId
         );
+
 
         setValue(
             "setting-countdown",
             config.recording.countdownSeconds
         );
 
+
         setValue(
             "setting-silence",
             config.recording.silenceBeforeStop
         );
+
 
         setValue(
             "setting-min-duration",
             config.recording.minimumDuration
         );
 
+
         setValue(
             "setting-max-duration",
             config.recording.maximumDuration
         );
+
 
         setValue(
             "setting-preroll",
             config.recording.preRollMs
         );
 
+
+        setValue(
+            "setting-silence-threshold",
+            config.recording.silenceThreshold
+        );
+
+
         setValue(
             "setting-format",
             config.audio.format
         );
+
 
         setValue(
             "setting-sample-rate",
             config.audio.sampleRate
         );
 
+
         setValue(
             "setting-channels",
             config.audio.channels
         );
+
 
         setValue(
             "setting-bit-depth",
             config.audio.bitDepth
         );
 
+
         setChecked(
             "setting-whisper-export",
             config.whisper.enabled
         );
+
 
         setValue(
             "setting-whisper-profile",
             config.whisper.profile
         );
 
+
         setValue(
             "setting-whisper-delimiter",
             config.whisper.delimiter
         );
+
 
         updateGeneratorUI();
     }
@@ -525,6 +783,27 @@ window.App = (() => {
             );
 
 
+        /*
+         * The recorder uses this setting directly.
+         * Older HTML versions may not contain the field,
+         * in which case the existing value is preserved.
+         */
+
+        const silenceThresholdElement =
+            document.getElementById(
+                "setting-silence-threshold"
+            );
+
+
+        if (silenceThresholdElement) {
+
+            state.config.recording.silenceThreshold =
+                getNumber(
+                    "setting-silence-threshold"
+                );
+        }
+
+
         state.config.audio.format =
             getValue(
                 "setting-format"
@@ -567,6 +846,87 @@ window.App = (() => {
             );
 
 
+        /*
+         * Generator settings are part of the same
+         * application configuration and must be read
+         * when Settings is saved.
+         */
+
+        const generatorCategory =
+            document.getElementById(
+                "generator-category"
+            );
+
+
+        if (generatorCategory) {
+
+            state.config.generator.category =
+                getValue(
+                    "generator-category"
+                );
+        }
+
+
+        const generatorCount =
+            document.getElementById(
+                "generator-count"
+            );
+
+
+        if (generatorCount) {
+
+            state.config.generator.count =
+                getNumber(
+                    "generator-count"
+                );
+        }
+
+
+        const generatorSouthern =
+            document.getElementById(
+                "generator-southern"
+            );
+
+
+        if (generatorSouthern) {
+
+            state.config.generator.southernInfluence =
+                getNumber(
+                    "generator-southern"
+                );
+        }
+
+
+        const generatorAppalachian =
+            document.getElementById(
+                "generator-appalachian"
+            );
+
+
+        if (generatorAppalachian) {
+
+            state.config.generator.appalachianInfluence =
+                getNumber(
+                    "generator-appalachian"
+                );
+        }
+
+
+        const generatorInformality =
+            document.getElementById(
+                "generator-informality"
+            );
+
+
+        if (generatorInformality) {
+
+            state.config.generator.informality =
+                getNumber(
+                    "generator-informality"
+                );
+        }
+
+
         updateGeneratorUI();
     }
 
@@ -582,12 +942,37 @@ window.App = (() => {
                 )
             );
 
+
+            /*
+             * Let other application modules know that
+             * configuration changed.
+             */
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "kvdb:config-changed",
+                    {
+                        detail: {
+                            config:
+                                structuredClone(
+                                    state.config
+                                )
+                        }
+                    }
+                )
+            );
+
+
+            return true;
+
         } catch (error) {
 
             console.warn(
                 "Could not save configuration:",
                 error
             );
+
+            return false;
         }
     }
 
@@ -603,12 +988,32 @@ window.App = (() => {
 
 
             if (!saved) {
+
+                state.config =
+                    structuredClone(
+                        DEFAULT_CONFIG
+                    );
+
                 return;
             }
 
 
             const parsed =
-                JSON.parse(saved);
+                JSON.parse(
+                    saved
+                );
+
+
+            if (
+                !parsed ||
+                typeof parsed !== "object" ||
+                Array.isArray(parsed)
+            ) {
+
+                throw new Error(
+                    "Saved configuration is invalid."
+                );
+            }
 
 
             state.config =
@@ -624,6 +1029,7 @@ window.App = (() => {
                 error
             );
 
+
             state.config =
                 structuredClone(
                     DEFAULT_CONFIG
@@ -637,31 +1043,38 @@ window.App = (() => {
         saved
     ) {
 
+        const safeSaved =
+            saved &&
+            typeof saved === "object"
+                ? saved
+                : {};
+
+
         return {
 
             dataset: {
                 ...defaults.dataset,
-                ...(saved.dataset || {})
+                ...(safeSaved.dataset || {})
             },
 
             recording: {
                 ...defaults.recording,
-                ...(saved.recording || {})
+                ...(safeSaved.recording || {})
             },
 
             audio: {
                 ...defaults.audio,
-                ...(saved.audio || {})
+                ...(safeSaved.audio || {})
             },
 
             whisper: {
                 ...defaults.whisper,
-                ...(saved.whisper || {})
+                ...(safeSaved.whisper || {})
             },
 
             generator: {
                 ...defaults.generator,
-                ...(saved.generator || {})
+                ...(safeSaved.generator || {})
             }
         };
     }
@@ -682,20 +1095,24 @@ window.App = (() => {
             config.category
         );
 
+
         setValue(
             "generator-count",
             config.count
         );
+
 
         setValue(
             "generator-southern",
             config.southernInfluence
         );
 
+
         setValue(
             "generator-appalachian",
             config.appalachianInfluence
         );
+
 
         setValue(
             "generator-informality",
@@ -708,10 +1125,12 @@ window.App = (() => {
             "generator-southern-value"
         );
 
+
         updateRangeOutput(
             "generator-appalachian",
             "generator-appalachian-value"
         );
+
 
         updateRangeOutput(
             "generator-informality",
@@ -756,19 +1175,27 @@ window.App = (() => {
     ) {
 
         const element =
-            document.getElementById(id);
+            document.getElementById(
+                id
+            );
 
 
         if (element) {
-            element.value = value;
+
+            element.value =
+                value ?? "";
         }
     }
 
 
-    function getValue(id) {
+    function getValue(
+        id
+    ) {
 
         const element =
-            document.getElementById(id);
+            document.getElementById(
+                id
+            );
 
 
         return element
@@ -777,7 +1204,9 @@ window.App = (() => {
     }
 
 
-    function getNumber(id) {
+    function getNumber(
+        id
+    ) {
 
         const value =
             Number(
@@ -797,20 +1226,27 @@ window.App = (() => {
     ) {
 
         const element =
-            document.getElementById(id);
+            document.getElementById(
+                id
+            );
 
 
         if (element) {
+
             element.checked =
                 Boolean(checked);
         }
     }
 
 
-    function getChecked(id) {
+    function getChecked(
+        id
+    ) {
 
         const element =
-            document.getElementById(id);
+            document.getElementById(
+                id
+            );
 
 
         return element
@@ -830,6 +1266,7 @@ window.App = (() => {
 
 
         if (element) {
+
             element.textContent =
                 message;
         }
@@ -847,6 +1284,7 @@ window.App = (() => {
 
 
         if (element) {
+
             element.textContent =
                 message;
         }
@@ -878,7 +1316,10 @@ window.App = (() => {
 
 
         if (type) {
-            element.classList.add(type);
+
+            element.classList.add(
+                type
+            );
         }
     }
 
@@ -889,8 +1330,15 @@ window.App = (() => {
 
     function updateDatasetStatistics() {
 
+        syncDatasetFromModule();
+
+
         const dataset =
-            state.dataset;
+            Array.isArray(
+                state.dataset
+            )
+                ? state.dataset
+                : [];
 
 
         const total =
@@ -900,24 +1348,27 @@ window.App = (() => {
         const recorded =
             dataset.filter(
                 item =>
+                    item &&
                     item.status ===
-                    "recorded"
+                        "recorded"
             ).length;
 
 
         const pending =
             dataset.filter(
                 item =>
+                    item &&
                     item.status ===
-                    "pending"
+                        "pending"
             ).length;
 
 
         const skipped =
             dataset.filter(
                 item =>
+                    item &&
                     item.status ===
-                    "skipped"
+                        "skipped"
             ).length;
 
 
@@ -926,15 +1377,18 @@ window.App = (() => {
             total
         );
 
+
         setText(
             "stat-recorded",
             recorded
         );
 
+
         setText(
             "stat-pending",
             pending
         );
+
 
         setText(
             "stat-skipped",
@@ -947,21 +1401,46 @@ window.App = (() => {
                 (
                     totalDuration,
                     item
-                ) =>
-                    totalDuration +
-                    (
-                        item.recording &&
+                ) => {
+
+                    if (
+                        !item ||
+                        !item.recording
+                    ) {
+
+                        return totalDuration;
+                    }
+
+
+                    const itemDuration =
                         Number(
                             item.recording.duration
-                        ) || 0
-                    ),
+                        );
+
+
+                    return (
+                        totalDuration +
+                        (
+                            Number.isFinite(
+                                itemDuration
+                            )
+                                ? Math.max(
+                                    0,
+                                    itemDuration
+                                )
+                                : 0
+                        )
+                    );
+                },
                 0
             );
 
 
         setText(
             "stat-duration",
-            formatDuration(duration)
+            formatDuration(
+                duration
+            )
         );
     }
 
@@ -972,10 +1451,13 @@ window.App = (() => {
     ) {
 
         const element =
-            document.getElementById(id);
+            document.getElementById(
+                id
+            );
 
 
         if (element) {
+
             element.textContent =
                 value;
         }
@@ -986,16 +1468,23 @@ window.App = (() => {
         seconds
     ) {
 
+        const value =
+            Number(seconds);
+
+
         if (
-            !Number.isFinite(seconds) ||
-            seconds <= 0
+            !Number.isFinite(value) ||
+            value <= 0
         ) {
+
             return "0:00";
         }
 
 
         const totalSeconds =
-            Math.floor(seconds);
+            Math.floor(
+                value
+            );
 
 
         const minutes =
@@ -1012,7 +1501,10 @@ window.App = (() => {
             `${minutes}:` +
             `${String(
                 remaining
-            ).padStart(2, "0")}`
+            ).padStart(
+                2,
+                "0"
+            )}`
         );
     }
 
@@ -1041,7 +1533,11 @@ window.App = (() => {
 
         setStorageStatus,
 
-        showOperationStatus
+        showOperationStatus,
+
+        syncDatasetFromModule,
+
+        syncCurrentSentence
     };
 
 })();
@@ -1051,17 +1547,65 @@ window.App = (() => {
    START APPLICATION
    ========================================================= */
 
-document.addEventListener(
-    "DOMContentLoaded",
-    async () => {
+function startApplication() {
 
-        /*
-         * Configuration MUST be loaded before
-         * Recorder or Generator uses it.
-         */
+    if (
+        !window.App ||
+        typeof window.App.init !==
+            "function"
+    ) {
 
-        App.loadSavedConfig();
+        console.error(
+            "App is not available."
+        );
 
-        await App.init();
+        return;
     }
-);
+
+
+    /*
+     * Configuration MUST be loaded before
+     * Recorder, Generator, or other modules
+     * use App.state.config.
+     */
+
+    App.loadSavedConfig();
+
+
+    Promise.resolve(
+        App.init()
+    ).catch(
+        error => {
+
+            console.error(
+                "Application initialization failed:",
+                error
+            );
+        }
+    );
+}
+
+
+if (
+    document.readyState ===
+    "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        startApplication,
+        {
+            once: true
+        }
+    );
+
+} else {
+
+    /*
+     * Handles scripts loaded after DOMContentLoaded.
+     * Humans have invented several ways to load JavaScript;
+     * apparently one event handler was too simple.
+     */
+
+    startApplication();
+}
