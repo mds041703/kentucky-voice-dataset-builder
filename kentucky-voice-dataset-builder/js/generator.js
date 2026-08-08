@@ -4,11 +4,11 @@
  *
  * Generates varied smart-home utterances using:
  *
- *  - templates
- *  - vocabulary
- *  - regional/Appalachian language
- *  - smart-home intents
- *  - weighted random selection
+ * - templates
+ * - vocabulary
+ * - regional/Appalachian language
+ * - smart-home intents
+ * - weighted random selection
  */
 
 "use strict";
@@ -1947,8 +1947,14 @@ window.Generator = (() => {
                     );
 
 
+                /*
+                 * Keep the class used by app.css so the
+                 * complete sentence row receives the
+                 * selection styling.
+                 */
+
                 row.className =
-                    "generated-entry";
+                    "generated-sentence";
 
 
                 /* -----------------------------------------
@@ -1994,7 +2000,7 @@ window.Generator = (() => {
 
 
                 number.textContent =
-                    index + 1;
+                    `${index + 1}:`;
 
 
                 /* -----------------------------------------
@@ -2016,32 +2022,6 @@ window.Generator = (() => {
 
 
                 /* -----------------------------------------
-                   Metadata
-                   ----------------------------------------- */
-
-                const metadata =
-                    document.createElement(
-                        "span"
-                    );
-
-
-                metadata.className =
-                    "generated-entry-metadata";
-
-
-                metadata.textContent =
-                    [
-                        sentence.category,
-                        sentence.intent,
-                        sentence.style
-                    ]
-                        .filter(Boolean)
-                        .join(
-                            " • "
-                        );
-
-
-                /* -----------------------------------------
                    Build row
                    ----------------------------------------- */
 
@@ -2060,8 +2040,56 @@ window.Generator = (() => {
                 );
 
 
-                row.appendChild(
-                    metadata
+                /*
+                 * Make the entire sentence row clickable.
+                 * Clicking the checkbox itself is ignored so
+                 * the browser's normal checkbox behavior is
+                 * not toggled twice.
+                 */
+
+                row.addEventListener(
+                    "click",
+                    event => {
+
+                        if (
+                            event.target ===
+                            select
+                        ) {
+                            row.classList.toggle(
+                                "selected",
+                                select.checked
+                            );
+
+                            return;
+                        }
+
+
+                        select.checked =
+                            !select.checked;
+
+
+                        row.classList.toggle(
+                            "selected",
+                            select.checked
+                        );
+                    }
+                );
+
+
+                /*
+                 * Keep keyboard checkbox changes in sync
+                 * with the row's visual selection state.
+                 */
+
+                select.addEventListener(
+                    "change",
+                    () => {
+
+                        row.classList.toggle(
+                            "selected",
+                            select.checked
+                        );
+                    }
                 );
 
 
