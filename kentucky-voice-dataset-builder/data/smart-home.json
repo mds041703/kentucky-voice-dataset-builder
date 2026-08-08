@@ -9,7 +9,6 @@
 "handling": "Remove the wake word before intent parsing. Do not include the wake word in the semantic intent."
 },
 
-```
 "pipeline": [
   "wake_word_detection",
   "speech_to_text",
@@ -22,7 +21,6 @@
 ],
 
 "important_rule": "Natural language may omit the action, device, location, or even the explicit request. Missing information may be inferred only when context makes the intended action sufficiently clear."
-```
 
 },
 
@@ -37,7 +35,6 @@
 ]
 },
 
-```
 "noun_first": {
   "description": "Device or location appears before the requested state.",
   "examples": [
@@ -111,13 +108,11 @@
     "lights on in here"
   ]
 }
-```
 
 },
 
 "intent_patterns": {
 
-```
 "direct": [
   "{action} {device}",
   "{action} {device} {state}",
@@ -199,13 +194,11 @@
   "{context}, go ahead and {action} {device}",
   "{context}, might as well {action} {device}"
 ]
-```
 
 },
 
 "intents": [
 
-```
 {
   "id": "light_on",
   "category": "lighting",
@@ -773,7 +766,6 @@
   ],
   "requires_confirmation_when_ambiguous": true
 }
-```
 
 ],
 
@@ -787,7 +779,6 @@
 { "text": "lamp", "domain": "light", "weight": 7 },
 { "text": "lamps", "domain": "light", "weight": 5 },
 
-```
 { "text": "living room light", "domain": "light", "weight": 8 },
 { "text": "living room lights", "domain": "light", "weight": 9 },
 { "text": "kitchen light", "domain": "light", "weight": 7 },
@@ -829,7 +820,6 @@
 { "text": "outlet", "domain": "switch", "weight": 6 },
 { "text": "plug", "domain": "switch", "weight": 5 },
 { "text": "switch", "domain": "switch", "weight": 5 }
-```
 
 ],
 
@@ -1042,7 +1032,6 @@
 "I can't see shit in the {location}",
 "I can't see shit in here",
 
-```
 "it's cold in the {location}",
 "it's too cold in the {location}",
 "it's hot in the {location}",
@@ -1050,14 +1039,12 @@
 "it's warm in the {location}",
 "it's too warm in the {location}",
 "it's stuffy in the {location}"
-```
 
 ],
 
 "reference_resolution": {
 "description": "Rules for resolving pronouns and deictic references against previously identified entities or current conversational context.",
 
-```
 "priority": [
   "explicit_entity",
   "explicit_location",
@@ -1098,14 +1085,12 @@
 ],
 
 "ambiguity_rule": "Do not execute a command when a pronoun or reference could resolve to multiple entities with materially different actions."
-```
 
 },
 
 "implicit_actions": {
 "enabled": true,
 
-```
 "lighting": {
   "dark": {
     "default_intent": "light_on",
@@ -1134,7 +1119,6 @@
     "confirmation": true
   }
 }
-```
 
 },
 
@@ -1157,7 +1141,6 @@
 "multi_command": {
 "enabled": true,
 
-```
 "connectors": [
   "and",
   "then",
@@ -1177,13 +1160,11 @@
 ],
 
 "execution_rule": "Split independent commands into separate intents. Preserve ordering when the user explicitly uses sequential language such as then or after that."
-```
 
 },
 
 "natural_examples": {
 
-```
 "direct": [
   "turn on the living room lights",
   "turn on the lights in the kitchen",
@@ -1266,7 +1247,6 @@
   "turn on the living room lights and while you're at it turn on the fan",
   "lock the front door and shut off the lights"
 ]
-```
 
 },
 
@@ -1289,7 +1269,6 @@
 "avoid_forced_regionalisms": true,
 "avoid_repeating_the_same_sentence_structure": true,
 
-```
 "regional_frequency": {
   "general_american": 0.65,
   "southern": 0.20,
@@ -1307,7 +1286,6 @@
 "reference_command_frequency": 0.12,
 "noun_first_frequency": 0.10,
 "multi_command_frequency": 0.08
-```
 
 },
 
@@ -1322,7 +1300,6 @@
 "ungrammatical_generated_phrase"
 ],
 
-```
 "security_commands": {
   "require_explicit_target": true,
   "allow_context_inference": false
@@ -1335,7 +1312,6 @@
 "lighting_commands": {
   "allow_darkness_inference": true
 }
-```
 
 }
 }
