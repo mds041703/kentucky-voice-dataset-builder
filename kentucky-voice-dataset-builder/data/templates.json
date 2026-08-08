@@ -1,10 +1,9 @@
 {
-"version": 2,
+"version": 3,
 "description": "Sentence templates for natural Kentucky, Southern, Appalachian-influenced, and general smart-home speech. Devices are bare noun phrases such as 'fan', 'AC', or 'living room light'. Locations are complete location phrases such as 'in the kitchen', 'in the utility room', 'on the porch', 'upstairs', or 'out back'.",
 
 "patterns": [
 
-```
 {
   "id": "direct_action_device",
   "category": "general",
@@ -501,7 +500,6 @@
   "styles": ["casual", "conversational"],
   "pattern": "{opening}, {location}, go ahead and {action} the {device}"
 }
-```
 
 ]
 }
