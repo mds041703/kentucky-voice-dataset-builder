@@ -149,7 +149,34 @@ window.App = (() => {
         setupSettingsForm();
 
         setupApplicationEvents();
+function setupCustomSentence() {
+    const button = document.getElementById(
+        "add-custom-sentence-button"
+    );
 
+    if (!button) {
+        return;
+    }
+
+    if (button.dataset.kvdbCustomSentenceBound === "true") {
+        return;
+    }
+
+    button.dataset.kvdbCustomSentenceBound = "true";
+
+    button.addEventListener(
+        "click",
+        () => {
+            if (
+                window.Dataset &&
+                typeof window.Dataset.addCustomSentence ===
+                    "function"
+            ) {
+                window.Dataset.addCustomSentence();
+            }
+        }
+    );
+}
 
         /*
          * Load the dataset from IndexedDB through Dataset.
