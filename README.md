@@ -34,6 +34,142 @@ The current application includes:
 
 ---
 
+# Running the Application
+
+There are two ways to run the application.
+
+## Local Version
+
+The application can be run from your own computer using a local HTTP server.
+
+This is the recommended method when building a private speech dataset.
+
+The application should be run through a local HTTP server.
+
+Do not open `index.html` directly with:
+
+```text
+file://
+```
+
+The application uses browser APIs such as IndexedDB, Web Audio, microphone access, and `fetch()` for its local JSON data.
+
+A local HTTP server provides the environment the browser expects.
+
+### Linux
+
+```bash
+cd /path/to/kentucky-voice-dataset-builder
+python3 -m http.server 8000
+```
+
+Open:
+
+```text
+http://localhost:8000
+```
+
+### macOS
+
+```bash
+cd /path/to/kentucky-voice-dataset-builder
+python3 -m http.server 8000
+```
+
+Open:
+
+```text
+http://localhost:8000
+```
+
+You can also type:
+
+```bash
+cd 
+```
+
+and drag the project folder into Terminal to insert its path.
+
+### Windows
+
+```powershell
+cd C:\path\to\kentucky-voice-dataset-builder
+py -m http.server 8000
+```
+
+Open:
+
+```text
+http://localhost:8000
+```
+
+If `py` is unavailable:
+
+```powershell
+python -m http.server 8000
+```
+
+### Stopping the Server
+
+Press:
+
+```text
+Ctrl+C
+```
+
+in the terminal running the server.
+
+The local server does not connect the application to the Internet. It simply provides HTTP access to the application files.
+
+---
+
+# GitHub Pages Version
+
+The application is also available as a live website through GitHub Pages:
+
+**https://mds041703.github.io/kentucky-voice-dataset-builder/**
+
+This version is **not running locally**.
+
+The website files are hosted by GitHub Pages and served from GitHub over HTTPS. The application is therefore considered the **non-local version** when accessed through the GitHub Pages address.
+
+The GitHub Pages version still uses the browser's local storage systems, including IndexedDB, for application data and recordings. The fact that the website is hosted by GitHub does not mean that recordings are automatically uploaded to GitHub.
+
+The basic data flow is:
+
+```text
+GitHub Pages
+      ↓
+Browser
+      ↓
+Application
+      ↓
+IndexedDB
+      ↓
+Recordings stored in the browser
+```
+
+Exporting a dataset creates a ZIP file that can be saved wherever you choose.
+
+The GitHub Pages version is useful for accessing the application without starting a local HTTP server, but it should not be confused with a locally hosted copy.
+
+### Local vs GitHub Pages
+
+|                                  | Local Version          | GitHub Pages Version  |
+| -------------------------------- | ---------------------- | --------------------- |
+| Application files                | Local computer         | GitHub                |
+| Address                          | `localhost`            | `mds041703.github.io` |
+| Requires local HTTP server       | Yes                    | No                    |
+| Uses browser IndexedDB           | Yes                    | Yes                   |
+| Recordings stored in browser     | Yes                    | Yes                   |
+| Automatically uploads recordings | No                     | No                    |
+| Website itself hosted locally    | Yes                    | No                    |
+| HTTPS                            | Depends on local setup | Yes                   |
+
+For private dataset work, the local version is generally the preferred option because the application files and data workflow remain entirely on your own computer.
+
+---
+
 # What the Application Does
 
 The application combines several systems:
@@ -61,89 +197,6 @@ The generator is rule-based. It does not use an AI language model to create or v
 It combines predefined templates, vocabulary, smart-home intents, regional vocabulary, pronunciation targets, and weighted selections.
 
 That keeps the application lightweight and able to run locally, but it also means the generator can create sentences that are technically assembled correctly while still being ridiculous. Computers remain excellent at following rules and terrible at knowing when the rules produced nonsense.
-
----
-
-# Running the Application
-
-The application should be run through a local HTTP server.
-
-Do not open `index.html` directly with:
-
-```text
-file://
-```
-
-The application uses browser APIs such as IndexedDB, Web Audio, microphone access, and `fetch()` for its local JSON data.
-
-A local HTTP server provides the environment the browser expects.
-
-## Linux
-
-```bash
-cd /path/to/kentucky-voice-dataset-builder
-python3 -m http.server 8000
-```
-
-Open:
-
-```text
-http://localhost:8000
-```
-
-## macOS
-
-```bash
-cd /path/to/kentucky-voice-dataset-builder
-python3 -m http.server 8000
-```
-
-Open:
-
-```text
-http://localhost:8000
-```
-
-You can also type:
-
-```bash
-cd 
-```
-
-and drag the project folder into Terminal to insert its path.
-
-## Windows
-
-```powershell
-cd C:\path\to\kentucky-voice-dataset-builder
-py -m http.server 8000
-```
-
-Open:
-
-```text
-http://localhost:8000
-```
-
-If `py` is unavailable:
-
-```powershell
-python -m http.server 8000
-```
-
-## Stopping the Server
-
-Press:
-
-```text
-Ctrl+C
-```
-
-in the terminal running the server.
-
-The local server does not connect the application to the Internet. It simply provides HTTP access to the application files.
-
-Once the application and its local dependencies are available, the application is designed to operate locally.
 
 ---
 
@@ -1538,6 +1591,8 @@ Voice recordings can contain identifying information.
 
 The application is designed to operate locally and does not require uploading recordings to a remote service.
 
+The GitHub Pages version is hosted remotely, but its browser data is still stored by the browser for that website origin. Recordings are not automatically committed to the GitHub repository or uploaded to GitHub.
+
 However, exported ZIP files contain the actual recordings.
 
 Treat exported datasets as private files unless you intentionally want to share them.
@@ -1675,6 +1730,37 @@ The human speaker and the quality of the resulting recordings are what ultimatel
 
 # License
 
-No license has currently been selected for the project.
+Kentucky Voice Dataset Builder is licensed under the GNU General Public License v3.0 (GPL-3.0).
 
-Choose and add an appropriate license before distributing the project under an open-source license.
+See the [LICENSE](LICENSE) file for the complete license text.
+
+Under the GPL-3.0, you are free to use, study, modify, copy, distribute, and commercially use this software, subject to the terms of the license.
+
+If you distribute a modified version of this application, the GPL-3.0 requires you to provide the corresponding source code under the applicable GPL terms. This helps ensure that improvements and modified versions remain open source.
+
+## Third-Party Software
+
+This project includes third-party software that was not written by the project author.
+
+### JSZip
+
+This project includes `js/jszip.min.js`, which is used for ZIP file creation and extraction.
+
+JSZip is dual-licensed under the MIT License or GNU General Public License v3.0. This project uses JSZip under the GPLv3 option.
+
+JSZip is Copyright © JS Foundation and other contributors.
+
+The JSZip project and its source code are available here:
+
+https://github.com/Stuk/jszip
+
+The applicable JSZip license information is included with the JSZip project.
+
+## Voice Recordings and Datasets
+
+The GPL-3.0 license for the application does not automatically apply to voice recordings or other datasets created using the application.
+
+Voice recordings, transcripts, and other datasets may have separate ownership and licensing terms.
+
+If you distribute recordings or datasets created with this application, you are responsible for determining the appropriate rights and license for that material.
+
