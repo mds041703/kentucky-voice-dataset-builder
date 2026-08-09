@@ -142,13 +142,33 @@ window.App = (() => {
         setVersion();
 
 
-        setupNavigation();
+       setupNavigation();
 
-        setupRangeInputs();
+setupRangeInputs();
 
-        setupSettingsForm();
+setupSettingsForm();
 
-        setupApplicationEvents();
+setupApplicationEvents();
+
+setupCustomSentence();
+
+        function setupApplicationEvents() {
+
+    if (state._eventsInitialized) {
+        return;
+    }
+
+    state._eventsInitialized =
+        true;
+
+    // existing event listeners...
+}
+
+
+/* =====================================================
+   CUSTOM SENTENCE
+   ===================================================== */
+
 function setupCustomSentence() {
     const button = document.getElementById(
         "add-custom-sentence-button"
