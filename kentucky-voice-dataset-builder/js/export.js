@@ -74,6 +74,7 @@ function syncConfigFromApp() {
             return;
         }
 
+        syncConfigFromApp();
         setupControls();
 
         initialized = true;
