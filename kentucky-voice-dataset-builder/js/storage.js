@@ -10,25 +10,47 @@
  * - Application settings
  * - Dataset configuration
  * - Dataset entries
- * - Generated sentence history
+ * - Generated sentence history / metadata
  *
- * Audio blobs are stored in IndexedDB rather than localStorage.
- * localStorage is fine for a few settings. It is a terrible place
- * to put hundreds of WAV files, because apparently browsers enjoy
- * having arbitrary storage limits.
+ * Audio blobs are stored directly in IndexedDB.
+ *
+ * The storage layer intentionally keeps compatibility with both:
+ *
+ *   entry.audioBlob
+ *
+ * and:
+ *
+ *   entry.recording.blob
+ *
+ * so imported recordings, newly recorded recordings, generated
+ * entries, and exported datasets all use the same underlying data.
  */
 
 const Storage = (() => {
 
-    const DB_NAME = "kentucky_voice_dataset_builder";
-    const DB_VERSION = 1;
+    const DB_NAME =
+        "kentucky_voice_dataset_builder";
 
-    const STORE_ENTRIES = "entries";
-    const STORE_SETTINGS = "settings";
-    const STORE_META = "meta";
+    /*
+     * Version 2 adds compatibility indexes and normalizes the
+     * recording structure without destroying existing data.
+     */
+    const DB_VERSION = 2;
 
-    const SETTINGS_KEY = "app_settings";
-    const CONFIG_KEY = "dataset_config";
+    const STORE_ENTRIES =
+        "entries";
+
+    const STORE_SETTINGS =
+        "settings";
+
+    const STORE_META =
+        "meta";
+
+    const SETTINGS_KEY =
+        "app_settings";
+
+    const CONFIG_KEY =
+        "dataset_config";
 
     let db = null;
     let initialized = false;
@@ -40,13 +62,39 @@ const Storage = (() => {
 
     async function init() {
 
-        if (initialized && db) {
+        if (
+            initialized &&
+            db
+        ) {
+
             return db;
         }
 
-        db = await openDatabase();
+        db =
+            await openDatabase();
 
-        initialized = true;
+        initialized =
+            true;
+
+        /*
+         * If another tab upgrades the database, this connection
+         * must be discarded so the next operation can reopen it.
+         */
+        db.onversionchange =
+            () => {
+
+                try {
+                    db.close();
+                } catch (error) {
+                    console.warn(
+                        "Unable to close IndexedDB connection:",
+                        error
+                    );
+                }
+
+                db = null;
+                initialized = false;
+            };
 
         return db;
     }
@@ -58,149 +106,226 @@ const Storage = (() => {
 
     function openDatabase() {
 
-        return new Promise((resolve, reject) => {
+        return new Promise(
+            (
+                resolve,
+                reject
+            ) => {
 
-            if (!("indexedDB" in window)) {
-
-                reject(
-                    new Error(
-                        "IndexedDB is not supported by this browser."
-                    )
-                );
-
-                return;
-            }
-
-
-            const request =
-                indexedDB.open(
-                    DB_NAME,
-                    DB_VERSION
-                );
-
-
-            request.onupgradeneeded =
-                event => {
-
-                    const database =
-                        event.target.result;
-
-
-                    /*
-                     * Dataset recordings.
-                     */
-
-                    if (
-                        !database.objectStoreNames.contains(
-                            STORE_ENTRIES
-                        )
-                    ) {
-
-                        const entries =
-                            database.createObjectStore(
-                                STORE_ENTRIES,
-                                {
-                                    keyPath: "id"
-                                }
-                            );
-
-
-                        entries.createIndex(
-                            "createdAt",
-                            "createdAt",
-                            {
-                                unique: false
-                            }
-                        );
-
-
-                        entries.createIndex(
-                            "text",
-                            "text",
-                            {
-                                unique: false
-                            }
-                        );
-
-
-                        entries.createIndex(
-                            "category",
-                            "category",
-                            {
-                                unique: false
-                            }
-                        );
-
-
-                        entries.createIndex(
-                            "intent",
-                            "intent",
-                            {
-                                unique: false
-                            }
-                        );
-                    }
-
-
-                    /*
-                     * Application settings and dataset config.
-                     */
-
-                    if (
-                        !database.objectStoreNames.contains(
-                            STORE_SETTINGS
-                        )
-                    ) {
-
-                        database.createObjectStore(
-                            STORE_SETTINGS,
-                            {
-                                keyPath: "key"
-                            }
-                        );
-                    }
-
-
-                    /*
-                     * Miscellaneous metadata.
-                     */
-
-                    if (
-                        !database.objectStoreNames.contains(
-                            STORE_META
-                        )
-                    ) {
-
-                        database.createObjectStore(
-                            STORE_META,
-                            {
-                                keyPath: "key"
-                            }
-                        );
-                    }
-                };
-
-
-            request.onsuccess =
-                event => {
-
-                    resolve(
-                        event.target.result
-                    );
-                };
-
-
-            request.onerror =
-                () => {
+                if (
+                    !("indexedDB" in window)
+                ) {
 
                     reject(
-                        request.error ||
                         new Error(
-                            "Unable to open IndexedDB."
+                            "IndexedDB is not supported by this browser."
                         )
                     );
-                };
-        });
+
+                    return;
+                }
+
+                const request =
+                    indexedDB.open(
+                        DB_NAME,
+                        DB_VERSION
+                    );
+
+
+                request.onupgradeneeded =
+                    event => {
+
+                        const database =
+                            event.target.result;
+
+                        const oldVersion =
+                            event.oldVersion || 0;
+
+
+                        /* ---------------------------------
+                           DATASET ENTRIES
+                           --------------------------------- */
+
+                        let entries;
+
+                        if (
+                            database.objectStoreNames.contains(
+                                STORE_ENTRIES
+                            )
+                        ) {
+
+                            entries =
+                                event.target.transaction.objectStore(
+                                    STORE_ENTRIES
+                                );
+
+                        } else {
+
+                            entries =
+                                database.createObjectStore(
+                                    STORE_ENTRIES,
+                                    {
+                                        keyPath: "id"
+                                    }
+                                );
+                        }
+
+
+                        /*
+                         * Create indexes only when they do not
+                         * already exist. This keeps upgrades safe.
+                         */
+
+                        createIndexIfMissing(
+                            entries,
+                            "createdAt",
+                            "createdAt"
+                        );
+
+                        createIndexIfMissing(
+                            entries,
+                            "text",
+                            "text"
+                        );
+
+                        createIndexIfMissing(
+                            entries,
+                            "category",
+                            "category"
+                        );
+
+                        createIndexIfMissing(
+                            entries,
+                            "intent",
+                            "intent"
+                        );
+
+                        createIndexIfMissing(
+                            entries,
+                            "generated",
+                            "generated"
+                        );
+
+                        createIndexIfMissing(
+                            entries,
+                            "imported",
+                            "imported"
+                        );
+
+
+                        /* ---------------------------------
+                           SETTINGS
+                           --------------------------------- */
+
+                        if (
+                            !database.objectStoreNames.contains(
+                                STORE_SETTINGS
+                            )
+                        ) {
+
+                            database.createObjectStore(
+                                STORE_SETTINGS,
+                                {
+                                    keyPath: "key"
+                                }
+                            );
+                        }
+
+
+                        /* ---------------------------------
+                           META
+                           --------------------------------- */
+
+                        if (
+                            !database.objectStoreNames.contains(
+                                STORE_META
+                            )
+                        ) {
+
+                            database.createObjectStore(
+                                STORE_META,
+                                {
+                                    keyPath: "key"
+                                }
+                            );
+                        }
+
+
+                        /*
+                         * Existing version 1 records are left intact.
+                         * normalizeEntry() handles compatibility when
+                         * they are read or saved.
+                         */
+
+                        if (
+                            oldVersion < 2
+                        ) {
+
+                            console.log(
+                                "Upgraded dataset storage from version 1 to version 2."
+                            );
+                        }
+                    };
+
+
+                request.onsuccess =
+                    event => {
+
+                        const database =
+                            event.target.result;
+
+                        resolve(
+                            database
+                        );
+                    };
+
+
+                request.onerror =
+                    () => {
+
+                        reject(
+                            request.error ||
+                            new Error(
+                                "Unable to open IndexedDB."
+                            )
+                        );
+                    };
+
+
+                request.onblocked =
+                    () => {
+
+                        reject(
+                            new Error(
+                                "Opening the database was blocked by another tab. Close other copies of the application and try again."
+                            )
+                        );
+                    };
+            }
+        );
+    }
+
+
+    function createIndexIfMissing(
+        store,
+        name,
+        keyPath
+    ) {
+
+        if (
+            !store.indexNames.contains(
+                name
+            )
+        ) {
+
+            store.createIndex(
+                name,
+                keyPath,
+                {
+                    unique: false
+                }
+            );
+        }
     }
 
 
@@ -212,6 +337,13 @@ const Storage = (() => {
 
         if (!db) {
             await init();
+        }
+
+        if (!db) {
+
+            throw new Error(
+                "IndexedDB is unavailable."
+            );
         }
 
         return db;
@@ -230,15 +362,10 @@ const Storage = (() => {
             );
         }
 
-
-        const tx =
-            db.transaction(
-                storeName,
-                mode
-            );
-
-
-        return tx.objectStore(
+        return db.transaction(
+            storeName,
+            mode
+        ).objectStore(
             storeName
         );
     }
@@ -251,20 +378,24 @@ const Storage = (() => {
     function createId() {
 
         if (
-            typeof crypto !== "undefined" &&
-            typeof crypto.randomUUID === "function"
+            typeof crypto !==
+                "undefined" &&
+            typeof crypto.randomUUID ===
+                "function"
         ) {
 
             return crypto.randomUUID();
         }
-
 
         return (
             Date.now().toString(36) +
             "-" +
             Math.random()
                 .toString(36)
-                .substring(2, 12)
+                .substring(
+                    2,
+                    12
+                )
         );
     }
 
@@ -279,21 +410,35 @@ const Storage = (() => {
 
         await ensureReady();
 
-
         const normalized =
             normalizeEntry(
                 entry
             );
 
-
         return new Promise(
-            (resolve, reject) => {
+            (
+                resolve,
+                reject
+            ) => {
 
-                const store =
-                    transaction(
-                        STORE_ENTRIES,
-                        "readwrite"
+                let store;
+
+                try {
+
+                    store =
+                        transaction(
+                            STORE_ENTRIES,
+                            "readwrite"
+                        );
+
+                } catch (error) {
+
+                    reject(
+                        error
                     );
+
+                    return;
+                }
 
 
                 const request =
@@ -315,7 +460,10 @@ const Storage = (() => {
                     () => {
 
                         reject(
-                            request.error
+                            request.error ||
+                            new Error(
+                                "Unable to save dataset entry."
+                            )
                         );
                     };
             }
@@ -333,9 +481,11 @@ const Storage = (() => {
 
         await ensureReady();
 
-
         return new Promise(
-            (resolve, reject) => {
+            (
+                resolve,
+                reject
+            ) => {
 
                 const store =
                     transaction(
@@ -343,28 +493,31 @@ const Storage = (() => {
                         "readonly"
                     );
 
-
                 const request =
                     store.get(
                         id
                     );
 
-
                 request.onsuccess =
                     () => {
 
                         resolve(
-                            request.result ||
-                            null
+                            request.result
+                                ? normalizeLoadedEntry(
+                                    request.result
+                                )
+                                : null
                         );
                     };
-
 
                 request.onerror =
                     () => {
 
                         reject(
-                            request.error
+                            request.error ||
+                            new Error(
+                                "Unable to load dataset entry."
+                            )
                         );
                     };
             }
@@ -380,9 +533,11 @@ const Storage = (() => {
 
         await ensureReady();
 
-
         return new Promise(
-            (resolve, reject) => {
+            (
+                resolve,
+                reject
+            ) => {
 
                 const store =
                     transaction(
@@ -390,47 +545,61 @@ const Storage = (() => {
                         "readonly"
                     );
 
-
                 const request =
                     store.getAll();
-
 
                 request.onsuccess =
                     () => {
 
                         const entries =
-                            request.result || [];
+                            request.result ||
+                            [];
 
+                        const normalized =
+                            entries.map(
+                                normalizeLoadedEntry
+                            );
 
-                        entries.sort(
+                        normalized.sort(
                             (
                                 a,
                                 b
                             ) => {
 
+                                const aDate =
+                                    new Date(
+                                        a.createdAt ||
+                                        a.recordedAt ||
+                                        0
+                                    ).getTime();
+
+                                const bDate =
+                                    new Date(
+                                        b.createdAt ||
+                                        b.recordedAt ||
+                                        0
+                                    ).getTime();
+
                                 return (
-                                    new Date(
-                                        a.createdAt || 0
-                                    ) -
-                                    new Date(
-                                        b.createdAt || 0
-                                    )
+                                    aDate -
+                                    bDate
                                 );
                             }
                         );
 
-
                         resolve(
-                            entries
+                            normalized
                         );
                     };
-
 
                 request.onerror =
                     () => {
 
                         reject(
-                            request.error
+                            request.error ||
+                            new Error(
+                                "Unable to load dataset entries."
+                            )
                         );
                     };
             }
@@ -448,9 +617,11 @@ const Storage = (() => {
 
         await ensureReady();
 
-
         return new Promise(
-            (resolve, reject) => {
+            (
+                resolve,
+                reject
+            ) => {
 
                 const store =
                     transaction(
@@ -458,12 +629,10 @@ const Storage = (() => {
                         "readwrite"
                     );
 
-
                 const request =
                     store.delete(
                         id
                     );
-
 
                 request.onsuccess =
                     () => {
@@ -473,12 +642,14 @@ const Storage = (() => {
                         );
                     };
 
-
                 request.onerror =
                     () => {
 
                         reject(
-                            request.error
+                            request.error ||
+                            new Error(
+                                "Unable to delete dataset entry."
+                            )
                         );
                     };
             }
@@ -494,9 +665,11 @@ const Storage = (() => {
 
         await ensureReady();
 
-
         return new Promise(
-            (resolve, reject) => {
+            (
+                resolve,
+                reject
+            ) => {
 
                 const store =
                     transaction(
@@ -504,10 +677,8 @@ const Storage = (() => {
                         "readwrite"
                     );
 
-
                 const request =
                     store.clear();
-
 
                 request.onsuccess =
                     () => {
@@ -517,12 +688,14 @@ const Storage = (() => {
                         );
                     };
 
-
                 request.onerror =
                     () => {
 
                         reject(
-                            request.error
+                            request.error ||
+                            new Error(
+                                "Unable to clear dataset entries."
+                            )
                         );
                     };
             }
@@ -538,9 +711,11 @@ const Storage = (() => {
 
         await ensureReady();
 
-
         return new Promise(
-            (resolve, reject) => {
+            (
+                resolve,
+                reject
+            ) => {
 
                 const store =
                     transaction(
@@ -548,25 +723,28 @@ const Storage = (() => {
                         "readonly"
                     );
 
-
                 const request =
                     store.count();
-
 
                 request.onsuccess =
                     () => {
 
                         resolve(
-                            request.result || 0
+                            Number(
+                                request.result ||
+                                0
+                            )
                         );
                     };
-
 
                 request.onerror =
                     () => {
 
                         reject(
-                            request.error
+                            request.error ||
+                            new Error(
+                                "Unable to count dataset entries."
+                            )
                         );
                     };
             }
@@ -583,7 +761,6 @@ const Storage = (() => {
     ) {
 
         await ensureReady();
-
 
         return saveKeyValue(
             STORE_SETTINGS,
@@ -603,24 +780,22 @@ const Storage = (() => {
 
         await ensureReady();
 
-
         const value =
             await loadKeyValue(
                 STORE_SETTINGS,
                 SETTINGS_KEY
             );
 
-
         if (
             value === null ||
-            typeof value === "undefined"
+            typeof value ===
+                "undefined"
         ) {
 
             return structuredCloneSafe(
                 defaultValue
             );
         }
-
 
         return value;
     }
@@ -635,7 +810,6 @@ const Storage = (() => {
     ) {
 
         await ensureReady();
-
 
         return saveKeyValue(
             STORE_SETTINGS,
@@ -655,24 +829,22 @@ const Storage = (() => {
 
         await ensureReady();
 
-
         const value =
             await loadKeyValue(
                 STORE_SETTINGS,
                 CONFIG_KEY
             );
 
-
         if (
             value === null ||
-            typeof value === "undefined"
+            typeof value ===
+                "undefined"
         ) {
 
             return structuredCloneSafe(
                 defaultValue
             );
         }
-
 
         return value;
     }
@@ -689,14 +861,29 @@ const Storage = (() => {
     ) {
 
         return new Promise(
-            (resolve, reject) => {
+            (
+                resolve,
+                reject
+            ) => {
 
-                const store =
-                    transaction(
-                        storeName,
-                        "readwrite"
+                let store;
+
+                try {
+
+                    store =
+                        transaction(
+                            storeName,
+                            "readwrite"
+                        );
+
+                } catch (error) {
+
+                    reject(
+                        error
                     );
 
+                    return;
+                }
 
                 const request =
                     store.put({
@@ -710,7 +897,6 @@ const Storage = (() => {
                                 .toISOString()
                     });
 
-
                 request.onsuccess =
                     () => {
 
@@ -719,12 +905,14 @@ const Storage = (() => {
                         );
                     };
 
-
                 request.onerror =
                     () => {
 
                         reject(
-                            request.error
+                            request.error ||
+                            new Error(
+                                `Unable to save ${key}.`
+                            )
                         );
                     };
             }
@@ -738,20 +926,34 @@ const Storage = (() => {
     ) {
 
         return new Promise(
-            (resolve, reject) => {
+            (
+                resolve,
+                reject
+            ) => {
 
-                const store =
-                    transaction(
-                        storeName,
-                        "readonly"
+                let store;
+
+                try {
+
+                    store =
+                        transaction(
+                            storeName,
+                            "readonly"
+                        );
+
+                } catch (error) {
+
+                    reject(
+                        error
                     );
 
+                    return;
+                }
 
                 const request =
                     store.get(
                         key
                     );
-
 
                 request.onsuccess =
                     () => {
@@ -763,12 +965,14 @@ const Storage = (() => {
                         );
                     };
 
-
                 request.onerror =
                     () => {
 
                         reject(
-                            request.error
+                            request.error ||
+                            new Error(
+                                `Unable to load ${key}.`
+                            )
                         );
                     };
             }
@@ -787,7 +991,6 @@ const Storage = (() => {
 
         await ensureReady();
 
-
         return saveKeyValue(
             STORE_META,
             key,
@@ -803,13 +1006,11 @@ const Storage = (() => {
 
         await ensureReady();
 
-
         const value =
             await loadKeyValue(
                 STORE_META,
                 key
             );
-
 
         return value === null
             ? defaultValue
@@ -825,9 +1026,64 @@ const Storage = (() => {
         entry
     ) {
 
+        if (
+            !entry ||
+            typeof entry !==
+                "object"
+        ) {
+
+            throw new Error(
+                "Cannot save an invalid dataset entry."
+            );
+        }
+
         const now =
             new Date()
                 .toISOString();
+
+
+        /*
+         * Accept audio from all structures used by the
+         * application:
+         *
+         * entry.recording.blob
+         * entry.audioBlob
+         * entry.blob
+         * entry.audio
+         */
+        const audioBlob =
+            getAudioBlob(
+                entry
+            );
+
+
+        const mimeType =
+            entry.mimeType ||
+            entry.recording?.mimeType ||
+            (
+                audioBlob &&
+                audioBlob.type
+            ) ||
+            "audio/webm";
+
+
+        const duration =
+            getDuration(
+                entry
+            );
+
+
+        const createdAt =
+            entry.createdAt ||
+            entry.recordedAt ||
+            entry.recording?.createdAt ||
+            now;
+
+
+        const recordedAt =
+            entry.recordedAt ||
+            entry.recording?.createdAt ||
+            createdAt;
 
 
         const normalized = {
@@ -842,32 +1098,47 @@ const Storage = (() => {
                     ""
                 ).trim(),
 
+            /*
+             * Keep the legacy top-level field.
+             */
             audioBlob:
-                entry.audioBlob ||
-                entry.blob ||
-                null,
+                audioBlob,
 
             mimeType:
-                entry.mimeType ||
-                (
-                    entry.audioBlob &&
-                    entry.audioBlob.type
-                ) ||
-                "audio/webm",
+                mimeType,
 
             duration:
-                Number(
-                    entry.duration ||
-                    0
-                ),
+                duration,
 
             category:
                 entry.category ||
-                "",
+                "general",
 
             intent:
                 entry.intent ||
                 "",
+
+            style:
+                entry.style ||
+                "neutral",
+
+            template:
+                entry.template ||
+                null,
+
+            regionalInfluence:
+                Array.isArray(
+                    entry.regionalInfluence
+                )
+                    ? entry.regionalInfluence
+                    : [],
+
+            pronunciationTargets:
+                Array.isArray(
+                    entry.pronunciationTargets
+                )
+                    ? entry.pronunciationTargets
+                    : [],
 
             generated:
                 Boolean(
@@ -875,69 +1146,336 @@ const Storage = (() => {
                 ),
 
             recordedAt:
-                entry.recordedAt ||
-                now,
+                recordedAt,
 
             createdAt:
-                entry.createdAt ||
-                now,
+                createdAt,
 
             updatedAt:
                 now,
 
             source:
                 entry.source ||
-                "recorder",
+                (
+                    entry.imported
+                        ? "import"
+                        : "recorder"
+                ),
 
             imported:
                 Boolean(
                     entry.imported
-                )
+                ),
+
+            /*
+             * Keep a normalized recording object as well.
+             * This matches the structure used by exporter.js
+             * and imported dataset entries.
+             */
+            recording: {
+
+                blob:
+                    audioBlob,
+
+                duration:
+                    duration,
+
+                mimeType:
+                    mimeType,
+
+                createdAt:
+                    createdAt
+            }
         };
 
 
         /*
-         * Preserve any extra metadata the generator
-         * or dataset manager gives us.
+         * Preserve generator variables and other optional
+         * metadata without storing undefined values.
          */
 
         if (
-            entry.template
-        ) {
-
-            normalized.template =
-                entry.template;
-        }
-
-
-        if (
-            entry.variables
+            entry.variables !==
+            undefined
         ) {
 
             normalized.variables =
-                entry.variables;
+                structuredCloneSafe(
+                    entry.variables
+                );
         }
 
 
         if (
-            entry.pronunciation
+            entry.pronunciation !==
+            undefined
         ) {
 
             normalized.pronunciation =
-                entry.pronunciation;
+                structuredCloneSafe(
+                    entry.pronunciation
+                );
         }
 
 
         if (
-            entry.tags
+            entry.tags !==
+            undefined
         ) {
 
             normalized.tags =
-                entry.tags;
+                structuredCloneSafe(
+                    entry.tags
+                );
+        }
+
+
+        if (
+            entry.generatedAt
+        ) {
+
+            normalized.generatedAt =
+                entry.generatedAt;
         }
 
 
         return normalized;
+    }
+
+
+    /* =====================================================
+       LOADED ENTRY NORMALIZATION
+       ===================================================== */
+
+    function normalizeLoadedEntry(
+        entry
+    ) {
+
+        if (
+            !entry ||
+            typeof entry !==
+                "object"
+        ) {
+
+            return entry;
+        }
+
+
+        /*
+         * Old database records may only contain audioBlob.
+         * New records contain both audioBlob and recording.blob.
+         */
+        const audioBlob =
+            getAudioBlob(
+                entry
+            );
+
+
+        const duration =
+            getDuration(
+                entry
+            );
+
+
+        const mimeType =
+            entry.mimeType ||
+            entry.recording?.mimeType ||
+            (
+                audioBlob &&
+                audioBlob.type
+            ) ||
+            "audio/webm";
+
+
+        const createdAt =
+            entry.createdAt ||
+            entry.recordedAt ||
+            entry.recording?.createdAt ||
+            new Date()
+                .toISOString();
+
+
+        /*
+         * Do not mutate the object returned by IndexedDB.
+         */
+        const normalized = {
+
+            ...entry,
+
+            audioBlob,
+
+            mimeType,
+
+            duration,
+
+            createdAt,
+
+            recordedAt:
+                entry.recordedAt ||
+                createdAt,
+
+            category:
+                entry.category ||
+                "general",
+
+            intent:
+                entry.intent ||
+                "",
+
+            style:
+                entry.style ||
+                "neutral",
+
+            template:
+                entry.template ||
+                null,
+
+            regionalInfluence:
+                Array.isArray(
+                    entry.regionalInfluence
+                )
+                    ? entry.regionalInfluence
+                    : [],
+
+            pronunciationTargets:
+                Array.isArray(
+                    entry.pronunciationTargets
+                )
+                    ? entry.pronunciationTargets
+                    : [],
+
+            recording: {
+
+                ...(entry.recording || {}),
+
+                blob:
+                    audioBlob,
+
+                duration,
+
+                mimeType,
+
+                createdAt:
+                    entry.recording?.createdAt ||
+                    createdAt
+            }
+        };
+
+
+        return normalized;
+    }
+
+
+    /* =====================================================
+       AUDIO HELPERS
+       ===================================================== */
+
+    function getAudioBlob(
+        entry
+    ) {
+
+        if (
+            !entry ||
+            typeof entry !==
+                "object"
+        ) {
+
+            return null;
+        }
+
+
+        const candidates = [
+
+            entry.recording?.blob,
+
+            entry.audioBlob,
+
+            entry.blob,
+
+            entry.audio
+
+        ];
+
+
+        for (
+            const candidate of candidates
+        ) {
+
+            if (
+                candidate instanceof Blob
+            ) {
+
+                return candidate;
+            }
+        }
+
+
+        /*
+         * IndexedDB may return Blob-like objects in some
+         * browser implementations. Only accept them when
+         * they provide the required Blob interface.
+         */
+        for (
+            const candidate of candidates
+        ) {
+
+            if (
+                candidate &&
+                typeof candidate ===
+                    "object" &&
+                typeof candidate.slice ===
+                    "function" &&
+                typeof candidate.size ===
+                    "number"
+            ) {
+
+                return candidate;
+            }
+        }
+
+
+        return null;
+    }
+
+
+    function getDuration(
+        entry
+    ) {
+
+        const candidates = [
+
+            entry &&
+                entry.duration,
+
+            entry &&
+                entry.recording &&
+                entry.recording.duration
+        ];
+
+
+        for (
+            const value of candidates
+        ) {
+
+            const number =
+                Number(
+                    value
+                );
+
+
+            if (
+                Number.isFinite(
+                    number
+                ) &&
+                number >= 0
+            ) {
+
+                return number;
+            }
+        }
+
+
+        return 0;
     }
 
 
@@ -949,16 +1487,13 @@ const Storage = (() => {
 
         await ensureReady();
 
-
         const entries =
             await getAllEntries();
-
 
         const settings =
             await loadSettings(
                 {}
             );
-
 
         const datasetConfig =
             await loadConfig(
@@ -1028,6 +1563,10 @@ const Storage = (() => {
         }
 
 
+        let importedCount =
+            0;
+
+
         for (
             const entry of backup.entries
         ) {
@@ -1035,10 +1574,19 @@ const Storage = (() => {
             await saveEntry(
                 entry
             );
+
+            importedCount++;
         }
 
 
-        return true;
+        return {
+
+            success:
+                true,
+
+            count:
+                importedCount
+        };
     }
 
 
@@ -1049,7 +1597,6 @@ const Storage = (() => {
     async function getDatabaseInfo() {
 
         await ensureReady();
-
 
         return {
 
@@ -1073,7 +1620,14 @@ const Storage = (() => {
 
         if (db) {
 
-            db.close();
+            try {
+                db.close();
+            } catch (error) {
+                console.warn(
+                    "Unable to close database before deletion:",
+                    error
+                );
+            }
 
             db = null;
 
@@ -1083,7 +1637,24 @@ const Storage = (() => {
 
 
         return new Promise(
-            (resolve, reject) => {
+            (
+                resolve,
+                reject
+            ) => {
+
+                if (
+                    !("indexedDB" in window)
+                ) {
+
+                    reject(
+                        new Error(
+                            "IndexedDB is not supported by this browser."
+                        )
+                    );
+
+                    return;
+                }
+
 
                 const request =
                     indexedDB.deleteDatabase(
@@ -1104,7 +1675,10 @@ const Storage = (() => {
                     () => {
 
                         reject(
-                            request.error
+                            request.error ||
+                            new Error(
+                                "Unable to delete database."
+                            )
                         );
                     };
 
@@ -1133,7 +1707,7 @@ const Storage = (() => {
 
         if (
             typeof structuredClone ===
-            "function"
+                "function"
         ) {
 
             return structuredClone(
@@ -1142,6 +1716,11 @@ const Storage = (() => {
         }
 
 
+        /*
+         * JSON fallback cannot preserve Blob objects.
+         * This is only used for metadata/configuration,
+         * not for the actual recording blob.
+         */
         return JSON.parse(
             JSON.stringify(
                 value
