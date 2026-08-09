@@ -20,21 +20,16 @@ window.Generator = (() => {
        ===================================================== */
 
     const state = {
-
         initialized: false,
 
         templates: null,
-
         vocabulary: null,
-
         pronunciation: null,
-
         smartHome: null,
 
         loaded: false,
 
         lastGenerated: [],
-
         generationCount: 0
     };
 
@@ -44,7 +39,6 @@ window.Generator = (() => {
        ===================================================== */
 
     const DEFAULT_DATA = {
-
         templates: {
             patterns: []
         },
@@ -84,15 +78,11 @@ window.Generator = (() => {
             return;
         }
 
-
         await loadData();
-
 
         setupControls();
 
-
         state.initialized = true;
-
 
         console.log(
             "Generator initialized."
@@ -112,13 +102,11 @@ window.Generator = (() => {
                 DEFAULT_DATA.templates
             );
 
-
         state.vocabulary =
             await loadJson(
                 "data/vocabulary.json",
                 DEFAULT_DATA.vocabulary
             );
-
 
         state.pronunciation =
             await loadJson(
@@ -126,13 +114,11 @@ window.Generator = (() => {
                 DEFAULT_DATA.pronunciation
             );
 
-
         state.smartHome =
             await loadJson(
                 "data/smart-home.json",
                 DEFAULT_DATA.smartHome
             );
-
 
         state.loaded = true;
     }
@@ -148,7 +134,6 @@ window.Generator = (() => {
             const response =
                 await fetch(path);
 
-
             if (!response.ok) {
 
                 throw new Error(
@@ -156,23 +141,31 @@ window.Generator = (() => {
                 );
             }
 
-
             const data =
                 await response.json();
 
+            if (
+                data === null ||
+                data === undefined
+            ) {
+
+                throw new Error(
+                    "JSON file returned no data."
+                );
+            }
 
             return data;
-
 
         } catch (error) {
 
             console.warn(
-                `Could not load ${path}:`,
+                `Could not load ${path}. Using fallback data:`,
                 error
             );
 
-
-            return fallback;
+            return cloneValue(
+                fallback
+            );
         }
     }
 
@@ -188,7 +181,6 @@ window.Generator = (() => {
                 "generate-button"
             );
 
-
         if (generateButton) {
 
             generateButton.addEventListener(
@@ -197,12 +189,10 @@ window.Generator = (() => {
             );
         }
 
-
         const addButton =
             document.getElementById(
                 "add-generated-button"
             );
-
 
         if (addButton) {
 
@@ -212,12 +202,10 @@ window.Generator = (() => {
             );
         }
 
-
         const addAllButton =
             document.getElementById(
                 "add-all-generated-button"
             );
-
 
         if (addAllButton) {
 
@@ -238,16 +226,12 @@ window.Generator = (() => {
         const options =
             readGeneratorOptions();
 
-
         const count =
-            Math.max(
+            clamp(
+                options.count,
                 1,
-                Math.min(
-                    1000,
-                    options.count
-                )
+                1000
             );
-
 
         const sentences =
             generate(
@@ -255,15 +239,12 @@ window.Generator = (() => {
                 options
             );
 
-
         state.lastGenerated =
             sentences;
-
 
         renderGenerated(
             sentences
         );
-
 
         setStatus(
             `Generated ${sentences.length} sentences.`
@@ -288,21 +269,84 @@ window.Generator = (() => {
                 ),
 
             southernInfluence:
-                getNumber(
-                    "generator-southern",
-                    50
+                clamp(
+                    getNumber(
+                        "generator-southern",
+                        50
+                    ),
+                    0,
+                    100
                 ),
 
             appalachianInfluence:
-                getNumber(
-                    "generator-appalachian",
-                    50
+                clamp(
+                    getNumber(
+                        "generator-appalachian",
+                        50
+                    ),
+                    0,
+                    100
                 ),
 
             informality:
-                getNumber(
-                    "generator-informality",
-                    70
+                clamp(
+                    getNumber(
+                        "generator-informality",
+                        70
+                    ),
+                    0,
+                    100
+                )
+        };
+    }
+
+
+    function normalizeOptions(
+        options = {}
+    ) {
+
+        return {
+
+            category:
+                String(
+                    options.category ||
+                    "general"
+                ),
+
+            count:
+                clamp(
+                    Number(
+                        options.count
+                    ) || 1,
+                    1,
+                    1000
+                ),
+
+            southernInfluence:
+                clamp(
+                    Number(
+                        options.southernInfluence
+                    ) || 0,
+                    0,
+                    100
+                ),
+
+            appalachianInfluence:
+                clamp(
+                    Number(
+                        options.appalachianInfluence
+                    ) || 0,
+                    0,
+                    100
+                ),
+
+            informality:
+                clamp(
+                    Number(
+                        options.informality
+                    ) || 0,
+                    0,
+                    100
                 )
         };
     }
@@ -317,25 +361,35 @@ window.Generator = (() => {
         options = {}
     ) {
 
-        const safeCount =
-            Math.max(
-                1,
-                Number(count) || 1
+        const safeOptions =
+            normalizeOptions(
+                options
             );
 
+        const safeCount =
+            clamp(
+                Number(count) || 1,
+                1,
+                1000
+            );
 
         const results = [];
-
-        const usedTexts =
-            new Set();
-
+        const usedTexts = new Set();
 
         let attempts = 0;
 
+        /*
+         * Allow enough attempts for heavily constrained
+         * datasets, but never allow an accidental infinite
+         * loop when the source data contains only a few
+         * unique sentences.
+         */
 
         const maximumAttempts =
-            safeCount * 20;
-
+            Math.max(
+                safeCount * 30,
+                100
+            );
 
         while (
             results.length <
@@ -346,23 +400,23 @@ window.Generator = (() => {
 
             attempts++;
 
-
             const result =
                 generateOne(
-                    options
+                    safeOptions
                 );
-
 
             if (!result) {
                 continue;
             }
-
 
             const normalized =
                 normalizeForComparison(
                     result.text
                 );
 
+            if (!normalized) {
+                continue;
+            }
 
             if (
                 usedTexts.has(
@@ -372,21 +426,17 @@ window.Generator = (() => {
                 continue;
             }
 
-
             usedTexts.add(
                 normalized
             );
-
 
             results.push(
                 result
             );
         }
 
-
         state.generationCount +=
             results.length;
-
 
         return results;
     }
@@ -397,108 +447,124 @@ window.Generator = (() => {
        ===================================================== */
 
     function generateOne(
-        options
+        options = {}
     ) {
+
+        const safeOptions =
+            normalizeOptions(
+                options
+            );
 
         const intent =
             selectIntent(
-                options.category
+                safeOptions.category
             );
-
 
         if (!intent) {
 
             return generateFallback(
-                options
+                safeOptions
             );
         }
-
 
         const context =
             buildContext(
                 intent,
-                options
+                safeOptions
             );
-
 
         const template =
             selectTemplate(
                 context,
-                options
+                safeOptions
             );
-
 
         if (!template) {
 
             return generateFallback(
-                options
+                safeOptions
             );
         }
 
-
-        let text;
-
+        let templateText = "";
 
         if (
             typeof template ===
             "string"
         ) {
 
-            text =
-                renderTemplate(
-                    template,
-                    context
-                );
+            templateText =
+                template;
 
-        } else {
+        } else if (
+            template &&
+            typeof template ===
+                "object"
+        ) {
 
-            text =
-                renderTemplate(
-                    template.pattern ||
-                    template.text ||
-                    "",
-                    context
-                );
+            templateText =
+                template.pattern ||
+                template.text ||
+                "";
         }
 
+        let text =
+            renderTemplate(
+                templateText,
+                context
+            );
 
         text =
             cleanSentence(
                 text
             );
-
 
         if (!text) {
             return null;
         }
 
-
         /*
-         * Apply optional regional phrasing after the main
+         * Apply regional phrasing after the primary
          * sentence has been constructed.
+         *
+         * This is intentionally probabilistic. A dataset
+         * full of exaggerated regional phrases is less
+         * useful than natural variation.
          */
 
         text =
             applyRegionalStyle(
                 text,
-                options
+                safeOptions
             );
-
 
         text =
             cleanSentence(
                 text
             );
 
+        const templateId =
+            typeof template === "object" &&
+            template
+                ? (
+                    template.id ||
+                    template.name ||
+                    null
+                )
+                : null;
 
         return {
 
             text,
 
             category:
-                options.category ||
-                intent.category ||
-                "general",
+                safeOptions.category !==
+                    "general"
+                    ? safeOptions.category
+                    : (
+                        intent.category ||
+                        "general"
+                    ),
 
             intent:
                 intent.id ||
@@ -510,7 +576,11 @@ window.Generator = (() => {
                 "neutral",
 
             regionalInfluence:
-                context.regionalInfluence,
+                Array.isArray(
+                    context.regionalInfluence
+                )
+                    ? context.regionalInfluence
+                    : [],
 
             pronunciationTargets:
                 findPronunciationTargets(
@@ -518,9 +588,10 @@ window.Generator = (() => {
                 ),
 
             template:
-                template.id ||
-                template.name ||
-                null,
+                templateId,
+
+            generated:
+                true,
 
             generatedAt:
                 new Date().toISOString()
@@ -542,24 +613,20 @@ window.Generator = (() => {
                 intent
             );
 
-
         const location =
             selectLocation(
                 intent
             );
-
 
         const action =
             selectAction(
                 intent
             );
 
-
         const opening =
             selectOpening(
                 options
             );
-
 
         const connector =
             selectVocabulary(
@@ -567,13 +634,11 @@ window.Generator = (() => {
                 options
             );
 
-
         const modifier =
             selectVocabulary(
                 "modifiers",
                 options
             );
-
 
         const pronoun =
             selectVocabulary(
@@ -581,25 +646,21 @@ window.Generator = (() => {
                 options
             );
 
-
         const question =
             selectVocabulary(
                 "questions",
                 options
             );
 
-
         const regionalWords =
             selectRegionalWords(
                 options
             );
 
-
         const style =
             selectStyle(
                 options
             );
-
 
         return {
 
@@ -632,10 +693,12 @@ window.Generator = (() => {
             regionalInfluence:
                 regionalWords.map(
                     item =>
-                        item.id ||
-                        item.word ||
-                        item
-                )
+                        getText(
+                            item.id ||
+                            item.word ||
+                            item
+                        )
+                ).filter(Boolean)
         };
     }
 
@@ -651,30 +714,51 @@ window.Generator = (() => {
         const intents =
             getIntents();
 
-
         if (!intents.length) {
             return null;
         }
 
-
         let candidates =
             intents;
 
+        const requestedCategory =
+            String(
+                category ||
+                "general"
+            );
 
         if (
-            category &&
-            category !== "general"
+            requestedCategory !==
+            "general"
         ) {
 
             const categoryMatches =
                 intents.filter(
-                    intent =>
-                        intent.category ===
-                        category ||
-                        intent.id ===
-                        category
-                );
+                    intent => {
 
+                        if (
+                            !intent ||
+                            typeof intent !==
+                                "object"
+                        ) {
+                            return false;
+                        }
+
+                        return (
+                            String(
+                                intent.category ||
+                                ""
+                            ).toLowerCase() ===
+                            requestedCategory.toLowerCase()
+                        ) ||
+                        String(
+                            intent.id ||
+                            intent.intent ||
+                            ""
+                        ).toLowerCase() ===
+                        requestedCategory.toLowerCase();
+                    }
+                );
 
             if (
                 categoryMatches.length
@@ -684,7 +768,6 @@ window.Generator = (() => {
                     categoryMatches;
             }
         }
-
 
         return weightedChoice(
             candidates
@@ -697,7 +780,6 @@ window.Generator = (() => {
         const data =
             state.smartHome;
 
-
         if (
             !data ||
             !Array.isArray(
@@ -708,8 +790,9 @@ window.Generator = (() => {
             return [];
         }
 
-
-        return data.intents;
+        return data.intents.filter(
+            Boolean
+        );
     }
 
 
@@ -733,7 +816,6 @@ window.Generator = (() => {
                 intent.actions
             );
         }
-
 
         return selectVocabulary(
             "actions"
@@ -762,7 +844,6 @@ window.Generator = (() => {
             );
         }
 
-
         const devices =
             state.smartHome &&
             Array.isArray(
@@ -771,14 +852,14 @@ window.Generator = (() => {
                 ? state.smartHome.devices
                 : [];
 
-
-        if (devices.length) {
+        if (
+            devices.length
+        ) {
 
             return weightedChoice(
                 devices
             );
         }
-
 
         return selectVocabulary(
             "devices"
@@ -807,7 +888,6 @@ window.Generator = (() => {
             );
         }
 
-
         const locations =
             state.smartHome &&
             Array.isArray(
@@ -816,14 +896,14 @@ window.Generator = (() => {
                 ? state.smartHome.locations
                 : [];
 
-
-        if (locations.length) {
+        if (
+            locations.length
+        ) {
 
             return weightedChoice(
                 locations
             );
         }
-
 
         return selectVocabulary(
             "locations"
@@ -836,7 +916,7 @@ window.Generator = (() => {
        ===================================================== */
 
     function selectOpening(
-        options
+        options = {}
     ) {
 
         const openings =
@@ -844,46 +924,98 @@ window.Generator = (() => {
                 "openings"
             );
 
-
-        if (!openings.length) {
+        if (
+            !openings.length
+        ) {
             return "";
         }
 
+        const informality =
+            clamp(
+                Number(
+                    options.informality
+                ) || 0,
+                0,
+                100
+            );
 
         /*
-         * Informal speech gets more conversational
-         * openings.
+         * Items whose informality is close to the
+         * requested setting are favored. The previous
+         * implementation effectively used a random 50/100
+         * gate, making the slider much less meaningful.
          */
 
-        const filtered =
-            openings.filter(
+        const weighted =
+            openings.map(
                 item => {
 
-                    const informality =
-                        getWeight(
-                            item,
-                            "informality",
-                            50
+                    const itemInformality =
+                        clamp(
+                            getWeight(
+                                item,
+                                "informality",
+                                50
+                            ),
+                            0,
+                            100
                         );
 
+                    const distance =
+                        Math.abs(
+                            informality -
+                            itemInformality
+                        );
 
-                    return (
-                        Math.random() * 100
-                    ) <=
-                    (
-                        options.informality >=
-                        informality
-                            ? 100
-                            : 50
-                    );
+                    const matchWeight =
+                        Math.max(
+                            1,
+                            101 -
+                            distance
+                        );
+
+                    const baseWeight =
+                        Math.max(
+                            0,
+                            getWeight(
+                                item,
+                                "weight",
+                                1
+                            )
+                        );
+
+                    return {
+
+                        value:
+                            item,
+
+                        weight:
+                            baseWeight *
+                            matchWeight
+                    };
                 }
             );
 
-
         return weightedChoice(
-            filtered.length
-                ? filtered
-                : openings
+            weighted.map(
+                item => ({
+                    ...item.value &&
+                        typeof item.value ===
+                            "object"
+                        ? item.value
+                        : {
+                            value:
+                                item.value
+                        },
+
+                    weight:
+                        item.weight,
+
+                    __generatorValue:
+                        item.value
+                })
+            ),
+            "__generatorValue"
         );
     }
 
@@ -902,11 +1034,11 @@ window.Generator = (() => {
                 category
             );
 
-
-        if (!values.length) {
+        if (
+            !values.length
+        ) {
             return "";
         }
-
 
         return weightedChoice(
             values
@@ -921,7 +1053,6 @@ window.Generator = (() => {
         const data =
             state.vocabulary;
 
-
         if (
             !data ||
             !Array.isArray(
@@ -932,8 +1063,11 @@ window.Generator = (() => {
             return [];
         }
 
-
-        return data[category];
+        return data[category].filter(
+            value =>
+                value !== null &&
+                value !== undefined
+        );
     }
 
 
@@ -942,7 +1076,7 @@ window.Generator = (() => {
        ===================================================== */
 
     function selectRegionalWords(
-        options
+        options = {}
     ) {
 
         const regional =
@@ -950,78 +1084,83 @@ window.Generator = (() => {
                 "regional"
             );
 
-
-        if (!regional.length) {
+        if (
+            !regional.length
+        ) {
             return [];
         }
 
-
         const influence =
-            Math.max(
+            clamp(
+                Number(
+                    options.southernInfluence
+                ) || 0,
                 0,
-                Math.min(
-                    100,
-                    Number(
-                        options.southernInfluence ||
-                        0
-                    )
-                )
+                100
             );
-
 
         const appalachian =
-            Math.max(
+            clamp(
+                Number(
+                    options.appalachianInfluence
+                ) || 0,
                 0,
-                Math.min(
-                    100,
-                    Number(
-                        options.appalachianInfluence ||
-                        0
-                    )
-                )
+                100
             );
 
-
         const selected = [];
-
 
         regional.forEach(
             item => {
 
                 const southern =
-                    getWeight(
-                        item,
-                        "southern",
-                        0
+                    clamp(
+                        getWeight(
+                            item,
+                            "southern",
+                            0
+                        ),
+                        0,
+                        100
                     );
-
 
                 const app =
-                    getWeight(
-                        item,
-                        "appalachian",
-                        0
+                    clamp(
+                        getWeight(
+                            item,
+                            "appalachian",
+                            0
+                        ),
+                        0,
+                        100
                     );
 
+                /*
+                 * Each influence value is 0-100.
+                 * The resulting probability is also clamped
+                 * to 0-1 so malformed JSON cannot cause every
+                 * regional item to be selected.
+                 */
 
-                const score =
-                    (
-                        southern *
-                        influence
-                    ) +
-                    (
-                        app *
-                        appalachian
+                const probability =
+                    clamp(
+                        (
+                            (
+                                southern *
+                                influence
+                            ) +
+                            (
+                                app *
+                                appalachian
+                            )
+                        ) / 20000,
+                        0,
+                        1
                     );
-
-
-                const normalized =
-                    score / 200;
-
 
                 if (
                     Math.random() <
-                    normalized
+                    probability
                 ) {
 
                     selected.push(
@@ -1030,7 +1169,6 @@ window.Generator = (() => {
                 }
             }
         );
-
 
         return selected;
     }
@@ -1041,15 +1179,17 @@ window.Generator = (() => {
        ===================================================== */
 
     function selectStyle(
-        options
+        options = {}
     ) {
 
         const informality =
-            Number(
-                options.informality ||
-                0
+            clamp(
+                Number(
+                    options.informality
+                ) || 0,
+                0,
+                100
             );
-
 
         if (
             informality >= 80
@@ -1057,15 +1197,40 @@ window.Generator = (() => {
 
             return weightedChoice(
                 [
-                    "casual",
-                    "conversational",
-                    "rural",
-                    "direct",
-                    "folksy"
-                ]
+                    {
+                        value:
+                            "casual",
+                        weight:
+                            3
+                    },
+                    {
+                        value:
+                            "conversational",
+                        weight:
+                            3
+                    },
+                    {
+                        value:
+                            "rural",
+                        weight:
+                            2
+                    },
+                    {
+                        value:
+                            "direct",
+                        weight:
+                            2
+                    },
+                    {
+                        value:
+                            "folksy",
+                        weight:
+                            1
+                    }
+                ],
+                "value"
             );
         }
-
 
         if (
             informality >= 50
@@ -1073,20 +1238,51 @@ window.Generator = (() => {
 
             return weightedChoice(
                 [
-                    "neutral",
-                    "conversational",
-                    "casual"
-                ]
+                    {
+                        value:
+                            "neutral",
+                        weight:
+                            3
+                    },
+                    {
+                        value:
+                            "conversational",
+                        weight:
+                            3
+                    },
+                    {
+                        value:
+                            "casual",
+                        weight:
+                            2
+                    }
+                ],
+                "value"
             );
         }
 
-
         return weightedChoice(
             [
-                "neutral",
-                "direct",
-                "polite"
-            ]
+                {
+                    value:
+                        "neutral",
+                    weight:
+                        4
+                },
+                {
+                    value:
+                        "direct",
+                    weight:
+                        3
+                },
+                {
+                    value:
+                        "polite",
+                    weight:
+                        2
+                }
+            ],
+            "value"
         );
     }
 
@@ -1103,11 +1299,11 @@ window.Generator = (() => {
         const templates =
             getTemplates();
 
-
-        if (!templates.length) {
+        if (
+            !templates.length
+        ) {
             return null;
         }
-
 
         const compatible =
             templates.filter(
@@ -1119,14 +1315,14 @@ window.Generator = (() => {
                     )
             );
 
-
-        if (!compatible.length) {
+        if (
+            !compatible.length
+        ) {
 
             return weightedChoice(
                 templates
             );
         }
-
 
         return weightedChoice(
             compatible
@@ -1142,16 +1338,16 @@ window.Generator = (() => {
             return [];
         }
 
-
         if (
             Array.isArray(
                 state.templates
             )
         ) {
 
-            return state.templates;
+            return state.templates.filter(
+                Boolean
+            );
         }
-
 
         if (
             Array.isArray(
@@ -1159,9 +1355,10 @@ window.Generator = (() => {
             )
         ) {
 
-            return state.templates.patterns;
+            return state.templates.patterns.filter(
+                Boolean
+            );
         }
-
 
         if (
             Array.isArray(
@@ -1169,9 +1366,10 @@ window.Generator = (() => {
             )
         ) {
 
-            return state.templates.templates;
+            return state.templates.templates.filter(
+                Boolean
+            );
         }
-
 
         return [];
     }
@@ -1183,22 +1381,61 @@ window.Generator = (() => {
         options
     ) {
 
-        if (!template) {
+        if (
+            !template
+        ) {
             return false;
         }
 
+        if (
+            typeof template ===
+            "string"
+        ) {
+
+            return true;
+        }
 
         if (
-            template.category &&
-            template.category !==
-                options.category &&
-            template.category !==
-                "general"
+            typeof template !==
+                "object"
         ) {
 
             return false;
         }
 
+        if (
+            template.category
+        ) {
+
+            const templateCategory =
+                String(
+                    template.category
+                ).toLowerCase();
+
+            const requestedCategory =
+                String(
+                    options.category ||
+                    "general"
+                ).toLowerCase();
+
+            const intentCategory =
+                String(
+                    context.intentCategory ||
+                    ""
+                ).toLowerCase();
+
+            if (
+                templateCategory !==
+                    "general" &&
+                templateCategory !==
+                    requestedCategory &&
+                templateCategory !==
+                    intentCategory
+            ) {
+
+                return false;
+            }
+        }
 
         if (
             Array.isArray(
@@ -1207,9 +1444,19 @@ window.Generator = (() => {
             template.styles.length
         ) {
 
+            const styles =
+                template.styles.map(
+                    style =>
+                        String(
+                            style
+                        ).toLowerCase()
+                );
+
             if (
-                !template.styles.includes(
-                    context.style
+                !styles.includes(
+                    String(
+                        context.style
+                    ).toLowerCase()
                 )
             ) {
 
@@ -1217,6 +1464,65 @@ window.Generator = (() => {
             }
         }
 
+        /*
+         * Support templates that explicitly specify an
+         * intent or list of intents.
+         */
+
+        if (
+            template.intent
+        ) {
+
+            const requestedIntent =
+                String(
+                    context.intent ||
+                    ""
+                ).toLowerCase();
+
+            const templateIntent =
+                String(
+                    template.intent
+                ).toLowerCase();
+
+            if (
+                requestedIntent !==
+                templateIntent
+            ) {
+
+                return false;
+            }
+        }
+
+        if (
+            Array.isArray(
+                template.intents
+            ) &&
+            template.intents.length
+        ) {
+
+            const requestedIntent =
+                String(
+                    context.intent ||
+                    ""
+                ).toLowerCase();
+
+            const allowedIntents =
+                template.intents.map(
+                    intent =>
+                        String(
+                            intent
+                        ).toLowerCase()
+                );
+
+            if (
+                !allowedIntents.includes(
+                    requestedIntent
+                )
+            ) {
+
+                return false;
+            }
+        }
 
         return true;
     }
@@ -1231,16 +1537,16 @@ window.Generator = (() => {
         context
     ) {
 
-        if (!template) {
+        if (
+            !template
+        ) {
             return "";
         }
-
 
         let text =
             String(
                 template
             );
-
 
         const replacements = {
 
@@ -1295,7 +1601,6 @@ window.Generator = (() => {
                 )
         };
 
-
         Object.entries(
             replacements
         ).forEach(
@@ -1305,30 +1610,37 @@ window.Generator = (() => {
 
                 const pattern =
                     new RegExp(
-                        `\\{${key}\\}`,
+                        `\\{${escapeRegex(key)}\\}`,
                         "gi"
                     );
-
 
                 text =
                     text.replace(
                         pattern,
-                        value || ""
+                        () =>
+                            value ||
+                            ""
                     );
             }
         );
 
-
         /*
-         * Remove extra whitespace.
+         * Remove unresolved template placeholders rather
+         * than leaving things such as "{foo}" in the
+         * training dataset.
          */
+
+        text =
+            text.replace(
+                /\{[a-zA-Z0-9_-]+\}/g,
+                ""
+            );
 
         text =
             text.replace(
                 /\s+/g,
                 " "
             );
-
 
         return text.trim();
     }
@@ -1346,9 +1658,10 @@ window.Generator = (() => {
             return "";
         }
 
-
-        return weightedChoice(
-            words
+        return getText(
+            weightedChoice(
+                words
+            )
         );
     }
 
@@ -1365,7 +1678,6 @@ window.Generator = (() => {
             return "";
         }
 
-
         if (
             typeof value ===
             "string"
@@ -1374,24 +1686,33 @@ window.Generator = (() => {
             return value;
         }
 
+        if (
+            typeof value ===
+            "number" ||
+            typeof value ===
+            "boolean"
+        ) {
+
+            return String(
+                value
+            );
+        }
 
         if (
             typeof value ===
             "object"
         ) {
 
-            return (
-                value.text ||
-                value.word ||
-                value.value ||
+            return String(
+                value.text ??
+                value.word ??
+                value.value ??
+                value.name ??
                 ""
             );
         }
 
-
-        return String(
-            value
-        );
+        return "";
     }
 
 
@@ -1404,92 +1725,130 @@ window.Generator = (() => {
         options
     ) {
 
-        if (!text) {
+        if (
+            !text
+        ) {
             return "";
         }
 
+        const southern =
+            clamp(
+                Number(
+                    options.southernInfluence
+                ) || 0,
+                0,
+                100
+            );
+
+        const appalachian =
+            clamp(
+                Number(
+                    options.appalachianInfluence
+                ) || 0,
+                0,
+                100
+            );
+
+        if (
+            southern === 0 &&
+            appalachian === 0
+        ) {
+
+            return text;
+        }
 
         const regional =
             selectRegionalWords(
                 options
             );
 
+        if (
+            !regional.length
+        ) {
 
-        if (!regional.length) {
             return text;
         }
-
 
         /*
-         * Do not blindly inject regional vocabulary into
-         * every sentence. That would create an artificial
-         * caricature instead of useful speech data.
+         * Regional words are selected above according to
+         * their own weights. This second probability controls
+         * whether one of those words is actually inserted.
          */
 
-        const shouldAdd =
-            Math.random() <
+        const averageInfluence =
             (
-                (
-                    Number(
-                        options.southernInfluence ||
-                        0
-                    ) +
-                    Number(
-                        options.appalachianInfluence ||
-                        0
-                    )
-                ) / 400
+                southern +
+                appalachian
+            ) / 2;
+
+        const insertionProbability =
+            clamp(
+                averageInfluence /
+                250,
+                0,
+                0.40
             );
 
+        if (
+            Math.random() >=
+            insertionProbability
+        ) {
 
-        if (!shouldAdd) {
             return text;
         }
-
 
         const regionalText =
             selectRegionalText(
                 regional
             );
 
+        if (
+            !regionalText
+        ) {
 
-        if (!regionalText) {
             return text;
         }
 
+        /*
+         * Avoid inserting a phrase that is already present.
+         */
+
+        if (
+            normalizeForComparison(
+                text
+            ).includes(
+                normalizeForComparison(
+                    regionalText
+                )
+            )
+        ) {
+
+            return text;
+        }
 
         const placement =
             Math.random();
-
 
         if (
             placement < 0.33
         ) {
 
-            return (
-                `${getText(
-                    regionalText
-                )} ${text}`
+            return cleanSentence(
+                `${regionalText} ${text}`
             );
         }
-
 
         if (
             placement < 0.66
         ) {
 
-            return (
-                `${text}, ${getText(
-                    regionalText
-                )}`
+            return cleanSentence(
+                `${text}, ${regionalText}`
             );
         }
 
-
-        return (
-            `${text} ${getText(
-                regionalText
-            )}`
+        return cleanSentence(
+            `${text} ${regionalText}`
         );
     }
 
@@ -1502,18 +1861,16 @@ window.Generator = (() => {
         text
     ) {
 
-        const targets =
-            [];
-
+        const targets = [];
 
         const data =
             state.pronunciation;
 
-
-        if (!data) {
+        if (
+            !data
+        ) {
             return targets;
         }
-
 
         const entries =
             Array.isArray(
@@ -1526,20 +1883,19 @@ window.Generator = (() => {
                     ? data.substitutions
                     : [];
 
-
         entries.forEach(
             item => {
 
                 const target =
-                    getText(
+                    getPronunciationTarget(
                         item
                     );
 
-
-                if (!target) {
+                if (
+                    !target
+                ) {
                     return;
                 }
-
 
                 const regex =
                     new RegExp(
@@ -1549,24 +1905,70 @@ window.Generator = (() => {
                         "i"
                     );
 
-
                 if (
                     regex.test(
                         text
                     )
                 ) {
 
-                    targets.push(
-                        item.id ||
-                        item.target ||
-                        target
-                    );
+                    const id =
+                        item &&
+                        typeof item ===
+                            "object"
+                            ? (
+                                item.id ||
+                                item.target ||
+                                item.word ||
+                                target
+                            )
+                            : target;
+
+                    if (
+                        !targets.includes(
+                            id
+                        )
+                    ) {
+
+                        targets.push(
+                            id
+                        );
+                    }
                 }
             }
         );
 
-
         return targets;
+    }
+
+
+    function getPronunciationTarget(
+        item
+    ) {
+
+        if (
+            typeof item ===
+            "string"
+        ) {
+
+            return item.trim();
+        }
+
+        if (
+            !item ||
+            typeof item !==
+                "object"
+        ) {
+
+            return "";
+        }
+
+        return String(
+            item.target ??
+            item.word ??
+            item.text ??
+            item.value ??
+            ""
+        ).trim();
     }
 
 
@@ -1588,40 +1990,44 @@ window.Generator = (() => {
        ===================================================== */
 
     function generateFallback(
-        options
+        options = {}
     ) {
+
+        const safeOptions =
+            normalizeOptions(
+                options
+            );
 
         const actions =
             getVocabulary(
                 "actions"
             );
 
-
         const devices =
             getVocabulary(
                 "devices"
             );
-
 
         const locations =
             getVocabulary(
                 "locations"
             );
 
-
         if (
             !actions.length ||
             !devices.length
         ) {
 
+            const fallbackText =
+                "Turn on the light.";
+
             return {
 
                 text:
-                    "Turn on the light.",
+                    fallbackText,
 
                 category:
-                    options.category ||
-                    "general",
+                    safeOptions.category,
 
                 intent:
                     null,
@@ -1633,16 +2039,20 @@ window.Generator = (() => {
                     [],
 
                 pronunciationTargets:
-                    [],
+                    findPronunciationTargets(
+                        fallbackText
+                    ),
 
                 template:
                     "fallback",
+
+                generated:
+                    true,
 
                 generatedAt:
                     new Date().toISOString()
             };
         }
-
 
         const action =
             getText(
@@ -1651,14 +2061,12 @@ window.Generator = (() => {
                 )
             );
 
-
         const device =
             getText(
                 weightedChoice(
                     devices
                 )
             );
-
 
         const location =
             locations.length
@@ -1668,7 +2076,6 @@ window.Generator = (() => {
                     )
                 )
                 : "";
-
 
         const text =
             cleanSentence(
@@ -1681,14 +2088,12 @@ window.Generator = (() => {
                     .join(" ")
             );
 
-
         return {
 
             text,
 
             category:
-                options.category ||
-                "general",
+                safeOptions.category,
 
             intent:
                 null,
@@ -1706,6 +2111,9 @@ window.Generator = (() => {
 
             template:
                 "fallback",
+
+            generated:
+                true,
 
             generatedAt:
                 new Date().toISOString()
@@ -1730,7 +2138,6 @@ window.Generator = (() => {
             return;
         }
 
-
         if (
             !window.Dataset
         ) {
@@ -1742,14 +2149,26 @@ window.Generator = (() => {
             return;
         }
 
+        if (
+            typeof window.Dataset.addSentences !==
+                "function"
+        ) {
+
+            setStatus(
+                "Dataset manager cannot add generated sentences."
+            );
+
+            return;
+        }
 
         const checkboxes =
             document.querySelectorAll(
                 ".generated-entry-select:checked"
             );
 
-
-        if (!checkboxes.length) {
+        if (
+            !checkboxes.length
+        ) {
 
             setStatus(
                 "Select at least one sentence."
@@ -1757,7 +2176,6 @@ window.Generator = (() => {
 
             return;
         }
-
 
         const selectedIndexes =
             Array.from(
@@ -1771,14 +2189,17 @@ window.Generator = (() => {
                 )
                 .filter(
                     index =>
-                        Number.isInteger(index) &&
+                        Number.isInteger(
+                            index
+                        ) &&
                         index >= 0 &&
                         index <
                             state.lastGenerated.length
                 );
 
-
-        if (!selectedIndexes.length) {
+        if (
+            !selectedIndexes.length
+        ) {
 
             setStatus(
                 "No valid sentences selected."
@@ -1786,7 +2207,6 @@ window.Generator = (() => {
 
             return;
         }
-
 
         const selected =
             selectedIndexes.map(
@@ -1796,18 +2216,67 @@ window.Generator = (() => {
                     ]
             );
 
+        let added = [];
 
-        const added =
-            window.Dataset.addSentences(
-                selected
+        try {
+
+            const result =
+                window.Dataset.addSentences(
+                    selected
+                );
+
+            if (
+                Array.isArray(
+                    result
+                )
+            ) {
+
+                added =
+                    result;
+
+            } else if (
+                Number.isFinite(
+                    Number(result)
+                )
+            ) {
+
+                added =
+                    selected.slice(
+                        0,
+                        Number(result)
+                    );
+
+            } else {
+
+                /*
+                 * Dataset.addSentences() may perform the
+                 * insertion without returning an array.
+                 * Assume the selected entries were accepted
+                 * rather than crashing on added.length.
+                 */
+
+                added =
+                    selected;
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Failed to add generated sentences:",
+                error
             );
 
+            setStatus(
+                `Could not add sentences: ${error.message}`
+            );
+
+            return;
+        }
 
         const selectedSet =
             new Set(
                 selectedIndexes
             );
-
 
         state.lastGenerated =
             state.lastGenerated.filter(
@@ -1820,11 +2289,9 @@ window.Generator = (() => {
                     )
             );
 
-
         renderGenerated(
             state.lastGenerated
         );
-
 
         setStatus(
             `Added ${added.length} selected sentence${added.length === 1 ? "" : "s"} to the dataset.`
@@ -1849,7 +2316,6 @@ window.Generator = (() => {
             return;
         }
 
-
         if (
             !window.Dataset
         ) {
@@ -1861,24 +2327,76 @@ window.Generator = (() => {
             return;
         }
 
+        if (
+            typeof window.Dataset.addSentences !==
+                "function"
+        ) {
+
+            setStatus(
+                "Dataset manager cannot add generated sentences."
+            );
+
+            return;
+        }
 
         const generated =
             [...state.lastGenerated];
 
+        let added = [];
 
-        const added =
-            window.Dataset.addSentences(
-                generated
+        try {
+
+            const result =
+                window.Dataset.addSentences(
+                    generated
+                );
+
+            if (
+                Array.isArray(
+                    result
+                )
+            ) {
+
+                added =
+                    result;
+
+            } else if (
+                Number.isFinite(
+                    Number(result)
+                )
+            ) {
+
+                added =
+                    generated.slice(
+                        0,
+                        Number(result)
+                    );
+
+            } else {
+
+                added =
+                    generated;
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Failed to add generated sentences:",
+                error
             );
 
+            setStatus(
+                `Could not add sentences: ${error.message}`
+            );
+
+            return;
+        }
 
         state.lastGenerated = [];
-
 
         renderGenerated(
             state.lastGenerated
         );
-
 
         setStatus(
             `Added ${added.length} sentences to the dataset.`
@@ -1899,16 +2417,18 @@ window.Generator = (() => {
                 "generated-list"
             );
 
-
-        if (!container) {
+        if (
+            !container
+        ) {
             return;
         }
 
-
         container.innerHTML = "";
 
-
         if (
+            !Array.isArray(
+                sentences
+            ) ||
             !sentences.length
         ) {
 
@@ -1917,23 +2437,18 @@ window.Generator = (() => {
                     "p"
                 );
 
-
             empty.className =
                 "empty-state";
 
-
             empty.textContent =
                 "No generated sentences.";
-
 
             container.appendChild(
                 empty
             );
 
-
             return;
         }
-
 
         sentences.forEach(
             (
@@ -1946,106 +2461,64 @@ window.Generator = (() => {
                         "div"
                     );
 
-
-                /*
-                 * Keep the class used by app.css so the
-                 * complete sentence row receives the
-                 * selection styling.
-                 */
-
                 row.className =
                     "generated-sentence";
-
-
-                /* -----------------------------------------
-                   Selection checkbox
-                   ----------------------------------------- */
 
                 const select =
                     document.createElement(
                         "input"
                     );
 
-
                 select.type =
                     "checkbox";
-
 
                 select.className =
                     "generated-entry-select";
 
-
                 select.dataset.index =
                     index;
-
 
                 select.setAttribute(
                     "aria-label",
                     `Select sentence ${index + 1}`
                 );
 
-
-                /* -----------------------------------------
-                   Sentence number
-                   ----------------------------------------- */
-
                 const number =
                     document.createElement(
                         "span"
                     );
 
-
                 number.className =
                     "generated-entry-number";
 
-
                 number.textContent =
                     `${index + 1}:`;
-
-
-                /* -----------------------------------------
-                   Sentence text
-                   ----------------------------------------- */
 
                 const text =
                     document.createElement(
                         "span"
                     );
 
-
                 text.className =
                     "generated-entry-text";
 
-
                 text.textContent =
-                    sentence.text;
-
-
-                /* -----------------------------------------
-                   Build row
-                   ----------------------------------------- */
+                    getText(
+                        sentence &&
+                        sentence.text
+                    );
 
                 row.appendChild(
                     select
                 );
 
-
                 row.appendChild(
                     number
                 );
 
-
                 row.appendChild(
                     text
                 );
-
-
-                /*
-                 * Make the entire sentence row clickable.
-                 * Clicking the checkbox itself is ignored so
-                 * the browser's normal checkbox behavior is
-                 * not toggled twice.
-                 */
 
                 row.addEventListener(
                     "click",
@@ -2055,6 +2528,7 @@ window.Generator = (() => {
                             event.target ===
                             select
                         ) {
+
                             row.classList.toggle(
                                 "selected",
                                 select.checked
@@ -2063,10 +2537,8 @@ window.Generator = (() => {
                             return;
                         }
 
-
                         select.checked =
                             !select.checked;
-
 
                         row.classList.toggle(
                             "selected",
@@ -2074,12 +2546,6 @@ window.Generator = (() => {
                         );
                     }
                 );
-
-
-                /*
-                 * Keep keyboard checkbox changes in sync
-                 * with the row's visual selection state.
-                 */
 
                 select.addEventListener(
                     "change",
@@ -2091,7 +2557,6 @@ window.Generator = (() => {
                         );
                     }
                 );
-
 
                 container.appendChild(
                     row
@@ -2105,39 +2570,63 @@ window.Generator = (() => {
        RANDOM CHOICE
        ===================================================== */
 
+    /*
+     * Supports both:
+     *
+     * weightedChoice(array)
+     *
+     * and:
+     *
+     * weightedChoice(array, "value")
+     *
+     * The second form is useful for arrays where the actual
+     * selectable value is stored inside an object.
+     */
+
     function weightedChoice(
-        values
+        values,
+        valueProperty = null
     ) {
 
         if (
-            !Array.isArray(values) ||
+            !Array.isArray(
+                values
+            ) ||
             !values.length
         ) {
 
             return "";
         }
 
-
         const weighted =
             values.map(
-                value => ({
+                value => {
 
-                    value,
+                    let weight =
+                        getWeight(
+                            value,
+                            "weight",
+                            1
+                        );
 
-                    weight:
-                        Math.max(
-                            0,
-                            Number(
-                                getWeight(
-                                    value,
-                                    "weight",
-                                    1
-                                )
-                            )
-                        )
-                })
+                    if (
+                        !Number.isFinite(
+                            weight
+                        ) ||
+                        weight < 0
+                    ) {
+
+                        weight = 0;
+                    }
+
+                    return {
+
+                        value,
+
+                        weight
+                    };
+                }
             );
-
 
         const total =
             weighted.reduce(
@@ -2150,45 +2639,69 @@ window.Generator = (() => {
                 0
             );
 
+        let selected;
 
         if (
             total <= 0
         ) {
 
-            return values[
-                Math.floor(
-                    Math.random() *
-                    values.length
-                )
-            ];
-        }
+            selected =
+                values[
+                    Math.floor(
+                        Math.random() *
+                        values.length
+                    )
+                ];
 
+        } else {
 
-        let random =
-            Math.random() *
-            total;
+            let random =
+                Math.random() *
+                total;
 
+            selected =
+                weighted[
+                    weighted.length - 1
+                ].value;
 
-        for (
-            const item of weighted
-        ) {
-
-            random -=
-                item.weight;
-
-
-            if (
-                random <= 0
+            for (
+                const item of weighted
             ) {
 
-                return item.value;
+                random -=
+                    item.weight;
+
+                if (
+                    random <= 0
+                ) {
+
+                    selected =
+                        item.value;
+
+                    break;
+                }
             }
         }
 
+        if (
+            valueProperty
+        ) {
 
-        return values[
-            values.length - 1
-        ];
+            if (
+                selected &&
+                typeof selected ===
+                    "object"
+            ) {
+
+                return selected[
+                    valueProperty
+                ];
+            }
+
+            return selected;
+        }
+
+        return selected;
     }
 
 
@@ -2201,16 +2714,22 @@ window.Generator = (() => {
         if (
             value &&
             typeof value ===
-            "object" &&
+                "object" &&
             value[property] !==
                 undefined
         ) {
 
-            return Number(
-                value[property]
-            );
-        }
+            const number =
+                Number(
+                    value[property]
+                );
 
+            return Number.isFinite(
+                number
+            )
+                ? number
+                : fallback;
+        }
 
         return fallback;
     }
@@ -2224,23 +2743,44 @@ window.Generator = (() => {
         text
     ) {
 
-        return String(
-            text || ""
-        )
-            .replace(
-                /\s+/g,
-                " "
+        let result =
+            String(
+                text || ""
             )
-            .replace(
-                /\s+([,.!?])/g,
-                "$1"
-            )
-            .trim()
-            .replace(
+                .replace(
+                    /\s+/g,
+                    " "
+                )
+                .replace(
+                    /\s+([,.!?])/g,
+                    "$1"
+                )
+                .replace(
+                    /([,.!?])([A-Za-z])/g,
+                    "$1 $2"
+                )
+                .trim();
+
+        if (
+            !result
+        ) {
+            return "";
+        }
+
+        /*
+         * Capitalize only the first character. Do not alter
+         * the remainder because contractions, proper names,
+         * and intentionally styled vocabulary may matter.
+         */
+
+        result =
+            result.replace(
                 /^[a-z]/,
                 character =>
                     character.toUpperCase()
             );
+
+        return result;
     }
 
 
@@ -2253,13 +2793,14 @@ window.Generator = (() => {
         )
             .toLowerCase()
             .replace(
-                /[^\w\s]/g,
+                /[^\p{L}\p{N}\s]/gu,
                 ""
             )
             .replace(
                 /\s+/g,
                 " "
-            );
+            )
+            .trim();
     }
 
 
@@ -2276,7 +2817,6 @@ window.Generator = (() => {
                 id
             );
 
-
         return element
             ? element.value
             : "";
@@ -2290,9 +2830,10 @@ window.Generator = (() => {
 
         const value =
             Number(
-                getValue(id)
+                getValue(
+                    id
+                )
             );
-
 
         return Number.isFinite(
             value
@@ -2311,11 +2852,97 @@ window.Generator = (() => {
                 "generator-status"
             );
 
-
-        if (element) {
+        if (
+            element
+        ) {
 
             element.textContent =
                 message;
+        }
+    }
+
+
+    /* =====================================================
+       GENERAL HELPERS
+       ===================================================== */
+
+    function clamp(
+        value,
+        minimum,
+        maximum
+    ) {
+
+        const number =
+            Number(
+                value
+            );
+
+        if (
+            !Number.isFinite(
+                number
+            )
+        ) {
+
+            return minimum;
+        }
+
+        return Math.min(
+            maximum,
+            Math.max(
+                minimum,
+                number
+            )
+        );
+    }
+
+
+    function cloneValue(
+        value
+    ) {
+
+        if (
+            value === null ||
+            value === undefined
+        ) {
+
+            return value;
+        }
+
+        if (
+            typeof structuredClone ===
+                "function"
+        ) {
+
+            try {
+
+                return structuredClone(
+                    value
+                );
+
+            } catch (
+                error
+            ) {
+
+                console.warn(
+                    "structuredClone failed while copying fallback data:",
+                    error
+                );
+            }
+        }
+
+        try {
+
+            return JSON.parse(
+                JSON.stringify(
+                    value
+                )
+            );
+
+        } catch (
+            error
+        ) {
+
+            return value;
         }
     }
 
@@ -2335,12 +2962,26 @@ window.Generator = (() => {
         generateOne,
 
         getState: () => ({
-            ...state
+            ...state,
+
+            lastGenerated:
+                Array.isArray(
+                    state.lastGenerated
+                )
+                    ? [
+                        ...state.lastGenerated
+                    ]
+                    : []
         }),
 
         getLastGenerated: () =>
-            state.lastGenerated
-
+            Array.isArray(
+                state.lastGenerated
+            )
+                ? [
+                    ...state.lastGenerated
+                ]
+                : []
     };
 
 })();
@@ -2354,7 +2995,18 @@ document.addEventListener(
     "DOMContentLoaded",
     async () => {
 
-        await Generator.init();
+        try {
 
+            await Generator.init();
+
+        } catch (
+            error
+        ) {
+
+            console.error(
+                "Generator initialization failed:",
+                error
+            );
+        }
     }
 );
