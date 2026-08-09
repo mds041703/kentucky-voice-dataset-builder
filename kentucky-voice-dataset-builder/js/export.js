@@ -29,11 +29,39 @@ const DatasetExport = (() => {
     };
 
     let config =
-        structuredCloneSafe(
-            DEFAULT_CONFIG
-        );
+    structuredCloneSafe(
+        DEFAULT_CONFIG
+    );
 
-    let initialized = false;
+let initialized = false;
+
+
+/* =====================================================
+   SYNC CONFIG FROM APP
+   ===================================================== */
+
+function syncConfigFromApp() {
+
+    if (
+        window.App &&
+        typeof App.getConfig === "function"
+    ) {
+
+        const appConfig =
+            App.getConfig();
+
+        if (appConfig) {
+
+            config =
+                deepMerge(
+                    structuredCloneSafe(
+                        DEFAULT_CONFIG
+                    ),
+                    appConfig
+                );
+        }
+    }
+}
 
 
     /* =====================================================
