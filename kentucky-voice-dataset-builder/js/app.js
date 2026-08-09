@@ -3,13 +3,27 @@
  * js/app.js
  *
  * Main application controller.
+ *
+ * Storage architecture:
+ *
+ *   IndexedDB
+ *       ↓
+ *   Storage
+ *       ↓
+ *   App.state
+ *       ↓
+ *   Dataset / UI
+ *
+ * IndexedDB is the persistent source of truth for application
+ * configuration and dataset entries. App.state is only the
+ * in-memory working state.
  */
 
 "use strict";
 
 window.App = (() => {
 
-    const VERSION = "0.1.0";
+    const VERSION = "0.5.1";
 
 
     /* =====================================================
@@ -75,7 +89,11 @@ window.App = (() => {
 
         dataset: [],
 
-        initialized: false
+        initialized: false,
+
+        storageInitialized: false,
+
+        _eventsInitialized: false
     };
 
 
@@ -95,7 +113,34 @@ window.App = (() => {
         );
 
 
+        /*
+         * IndexedDB MUST be initialized before anything
+         * attempts to read or write persistent application
+         * data.
+         */
+
+        await initializeStorage();
+
+
+        /*
+         * Load configuration from IndexedDB before any
+         * module uses App.state.config.
+         */
+
+        await loadSavedConfig();
+
+
+        /*
+         * The previous version called setVersion() here,
+         * but no such function existed. The application
+         * version is already stored in state.version and
+         * displayed by the startup log.
+         *
+         * If a version element exists in the UI, update it.
+         */
+
         setVersion();
+
 
         setupNavigation();
 
@@ -105,11 +150,24 @@ window.App = (() => {
 
         setupApplicationEvents();
 
+
+        /*
+         * Load the dataset from IndexedDB through Dataset.
+         *
+         * Dataset.init() is responsible for loading the
+         * persistent entries into its in-memory state.
+         */
+
+        await initializeDataset();
+
+
         loadConfigIntoUI();
 
         updateGeneratorUI();
 
         syncDatasetFromModule();
+
+        syncCurrentSentence();
 
         updateDatasetStatistics();
 
@@ -119,11 +177,9 @@ window.App = (() => {
 
 
         /*
-         * Recorder may already have initialized itself
-         * through its own DOMContentLoaded handler.
-         *
-         * Recorder.init() is intentionally safe to call
-         * more than once.
+         * Recorder initialization happens only after
+         * Storage, configuration, and Dataset have been
+         * initialized.
          */
 
         if (
@@ -134,7 +190,9 @@ window.App = (() => {
 
             try {
 
-                window.Recorder.init();
+                await Promise.resolve(
+                    window.Recorder.init()
+                );
 
                 console.log(
                     "Recorder initialized by App."
@@ -145,6 +203,10 @@ window.App = (() => {
                 console.error(
                     "Recorder initialization failed:",
                     error
+                );
+
+                setRecordingState(
+                    "Recorder unavailable"
                 );
             }
 
@@ -158,8 +220,9 @@ window.App = (() => {
 
         state.initialized = true;
 
+
         setStorageStatus(
-            "Local"
+            "Local • Saved"
         );
 
 
@@ -175,16 +238,213 @@ window.App = (() => {
 
     function setVersion() {
 
-        const element =
-            document.getElementById(
-                "app-version"
+        /*
+         * Update any version elements that exist in the UI.
+         *
+         * Multiple selectors are supported so the HTML can
+         * use whichever version element is appropriate.
+         */
+
+        const selectors = [
+
+            "#app-version",
+            "#version",
+            ".app-version",
+            "[data-app-version]"
+        ];
+
+
+        const updated = new Set();
+
+
+        selectors.forEach(
+            selector => {
+
+                const elements =
+                    document.querySelectorAll(
+                        selector
+                    );
+
+
+                elements.forEach(
+                    element => {
+
+                        if (
+                            updated.has(
+                                element
+                            )
+                        ) {
+
+                            return;
+                        }
+
+
+                        updated.add(
+                            element
+                        );
+
+
+                        element.textContent =
+                            `v${VERSION}`;
+                    }
+                );
+            }
+        );
+
+
+        /*
+         * Also expose the current version on the root
+         * application element when one exists.
+         */
+
+        const appElement =
+            document.querySelector(
+                "[data-app-version]"
             );
 
 
-        if (element) {
+        if (appElement) {
 
-            element.textContent =
-                `v${VERSION}`;
+            appElement.dataset.appVersion =
+                VERSION;
+        }
+    }
+
+
+    /* =====================================================
+       STORAGE INITIALIZATION
+       ===================================================== */
+
+    async function initializeStorage() {
+
+        if (state.storageInitialized) {
+            return;
+        }
+
+
+        if (
+            !window.Storage ||
+            typeof window.Storage.init !==
+                "function"
+        ) {
+
+            setStorageStatus(
+                "Storage unavailable"
+            );
+
+
+            throw new Error(
+                "Storage module is unavailable. IndexedDB cannot be initialized."
+            );
+        }
+
+
+        try {
+
+            setStorageStatus(
+                "Opening local storage..."
+            );
+
+
+            await window.Storage.init();
+
+
+            state.storageInitialized =
+                true;
+
+
+            setStorageStatus(
+                "Local • Ready"
+            );
+
+
+            console.log(
+                "IndexedDB initialized."
+            );
+
+        } catch (error) {
+
+            setStorageStatus(
+                "Storage error"
+            );
+
+
+            console.error(
+                "IndexedDB initialization failed:",
+                error
+            );
+
+
+            throw new Error(
+                "Unable to initialize IndexedDB.",
+                {
+                    cause: error
+                }
+            );
+        }
+    }
+
+
+    /* =====================================================
+       DATASET INITIALIZATION
+       ===================================================== */
+
+    async function initializeDataset() {
+
+        if (
+            !window.Dataset ||
+            typeof window.Dataset.init !==
+                "function"
+        ) {
+
+            console.warn(
+                "Dataset module is unavailable."
+            );
+
+            state.dataset = [];
+
+            return;
+        }
+
+
+        try {
+
+            /*
+             * Dataset.init() must load entries from
+             * IndexedDB and populate its internal state.
+             */
+
+            await Promise.resolve(
+                window.Dataset.init()
+            );
+
+
+            syncDatasetFromModule();
+
+            syncCurrentSentence();
+
+
+            console.log(
+                `Dataset initialized with ${state.dataset.length} entries.`
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Dataset initialization failed:",
+                error
+            );
+
+
+            state.dataset = [];
+
+
+            throw new Error(
+                "Unable to initialize the dataset.",
+                {
+                    cause: error
+                }
+            );
         }
     }
 
@@ -194,12 +454,6 @@ window.App = (() => {
        ===================================================== */
 
     function setupApplicationEvents() {
-
-        /*
-         * Prevent duplicate listeners if init() is ever
-         * called manually before the normal application
-         * startup sequence.
-         */
 
         if (state._eventsInitialized) {
             return;
@@ -212,17 +466,11 @@ window.App = (() => {
 
         window.addEventListener(
             "kvdb:sentence-skipped",
-            event => {
+            () => {
 
                 syncDatasetFromModule();
 
                 updateDatasetStatistics();
-
-                /*
-                 * Dataset normally advances the current
-                 * sentence after a skip. Keep App's
-                 * reference synchronized with it.
-                 */
 
                 syncCurrentSentence();
             }
@@ -231,17 +479,11 @@ window.App = (() => {
 
         window.addEventListener(
             "kvdb:recording-ready",
-            event => {
+            () => {
 
                 syncDatasetFromModule();
 
                 updateDatasetStatistics();
-
-                /*
-                 * Dataset is responsible for committing
-                 * the recording. App only refreshes its
-                 * local view here.
-                 */
 
                 syncCurrentSentence();
             }
@@ -270,6 +512,31 @@ window.App = (() => {
                 syncCurrentSentence();
             }
         );
+
+
+        window.addEventListener(
+            "kvdb:config-changed",
+            event => {
+
+                if (
+                    event &&
+                    event.detail &&
+                    event.detail.config
+                ) {
+
+                    state.config =
+                        mergeConfig(
+                            DEFAULT_CONFIG,
+                            event.detail.config
+                        );
+                }
+
+
+                loadConfigIntoUI();
+
+                updateGeneratorUI();
+            }
+        );
     }
 
 
@@ -292,6 +559,14 @@ window.App = (() => {
 
 
                 if (Array.isArray(entries)) {
+
+                    /*
+                     * Keep App's state as a reference to
+                     * Dataset's current in-memory state.
+                     *
+                     * Persistence is handled by Dataset /
+                     * Storage, not by this function.
+                     */
 
                     state.dataset =
                         entries;
@@ -359,11 +634,8 @@ window.App = (() => {
         }
 
 
-        if (sentence) {
-
-            state.currentSentence =
-                sentence;
-        }
+        state.currentSentence =
+            sentence || null;
     }
 
 
@@ -381,11 +653,6 @@ window.App = (() => {
 
         buttons.forEach(
             button => {
-
-                /*
-                 * Avoid attaching the same handler more
-                 * than once if setupNavigation() is called.
-                 */
 
                 if (
                     button.dataset.kvdbNavigationBound ===
@@ -577,18 +844,36 @@ window.App = (() => {
 
         form.addEventListener(
             "submit",
-            event => {
+            async event => {
 
                 event.preventDefault();
 
-                readConfigFromUI();
 
-                saveConfig();
+                try {
 
-                showOperationStatus(
-                    "Settings saved.",
-                    "success"
-                );
+                    readConfigFromUI();
+
+                    await saveConfig();
+
+
+                    showOperationStatus(
+                        "Settings saved.",
+                        "success"
+                    );
+
+                } catch (error) {
+
+                    console.error(
+                        "Could not save settings:",
+                        error
+                    );
+
+
+                    showOperationStatus(
+                        "Settings could not be saved.",
+                        "error"
+                    );
+                }
             }
         );
 
@@ -612,7 +897,7 @@ window.App = (() => {
 
                 resetButton.addEventListener(
                     "click",
-                    event => {
+                    async event => {
 
                         event.preventDefault();
 
@@ -625,13 +910,30 @@ window.App = (() => {
 
                         loadConfigIntoUI();
 
-                        saveConfig();
+
+                        try {
+
+                            await saveConfig();
 
 
-                        showOperationStatus(
-                            "Settings reset to defaults.",
-                            "success"
-                        );
+                            showOperationStatus(
+                                "Settings reset to defaults.",
+                                "success"
+                            );
+
+                        } catch (error) {
+
+                            console.error(
+                                "Could not save reset settings:",
+                                error
+                            );
+
+
+                            showOperationStatus(
+                                "Settings were reset in memory but could not be saved.",
+                                "error"
+                            );
+                        }
                     }
                 );
             }
@@ -741,53 +1043,47 @@ window.App = (() => {
 
     function readConfigFromUI() {
 
-        state.config.dataset.name =
+        const datasetName =
             getValue(
                 "setting-dataset-name"
-            );
+            ).trim();
 
 
-        state.config.dataset.speakerId =
+        const speakerId =
             getValue(
                 "setting-speaker-id"
-            );
+            ).trim();
 
 
-        state.config.recording.countdownSeconds =
+        const countdownSeconds =
             getNumber(
                 "setting-countdown"
             );
 
 
-        state.config.recording.silenceBeforeStop =
+        const silenceBeforeStop =
             getNumber(
                 "setting-silence"
             );
 
 
-        state.config.recording.minimumDuration =
+        const minimumDuration =
             getNumber(
                 "setting-min-duration"
             );
 
 
-        state.config.recording.maximumDuration =
+        const maximumDuration =
             getNumber(
                 "setting-max-duration"
             );
 
 
-        state.config.recording.preRollMs =
+        const preRollMs =
             getNumber(
                 "setting-preroll"
             );
 
-
-        /*
-         * The recorder uses this setting directly.
-         * Older HTML versions may not contain the field,
-         * in which case the existing value is preserved.
-         */
 
         const silenceThresholdElement =
             document.getElementById(
@@ -795,13 +1091,93 @@ window.App = (() => {
             );
 
 
+        let silenceThreshold =
+            state.config.recording.silenceThreshold;
+
+
         if (silenceThresholdElement) {
 
-            state.config.recording.silenceThreshold =
+            silenceThreshold =
                 getNumber(
                     "setting-silence-threshold"
                 );
         }
+
+
+        /*
+         * Reject obviously invalid recording
+         * configuration instead of silently converting
+         * bad values into zero.
+         */
+
+        if (
+            !Number.isFinite(countdownSeconds) ||
+            !Number.isFinite(silenceBeforeStop) ||
+            !Number.isFinite(minimumDuration) ||
+            !Number.isFinite(maximumDuration) ||
+            !Number.isFinite(preRollMs) ||
+            !Number.isFinite(silenceThreshold) ||
+            countdownSeconds < 0 ||
+            silenceBeforeStop <= 0 ||
+            minimumDuration <= 0 ||
+            maximumDuration <= 0 ||
+            minimumDuration > maximumDuration ||
+            preRollMs < 0 ||
+            silenceThreshold < 0
+        ) {
+
+            throw new Error(
+                "Recording settings contain invalid values."
+            );
+        }
+
+
+        if (!datasetName) {
+
+            throw new Error(
+                "Dataset name cannot be empty."
+            );
+        }
+
+
+        if (!speakerId) {
+
+            throw new Error(
+                "Speaker ID cannot be empty."
+            );
+        }
+
+
+        state.config.dataset.name =
+            datasetName;
+
+
+        state.config.dataset.speakerId =
+            speakerId;
+
+
+        state.config.recording.countdownSeconds =
+            countdownSeconds;
+
+
+        state.config.recording.silenceBeforeStop =
+            silenceBeforeStop;
+
+
+        state.config.recording.minimumDuration =
+            minimumDuration;
+
+
+        state.config.recording.maximumDuration =
+            maximumDuration;
+
+
+        state.config.recording.preRollMs =
+            preRollMs;
+
+
+        state.config.recording.silenceThreshold =
+            silenceThreshold;
 
 
         state.config.audio.format =
@@ -846,11 +1222,13 @@ window.App = (() => {
             );
 
 
-        /*
-         * Generator settings are part of the same
-         * application configuration and must be read
-         * when Settings is saved.
-         */
+        updateGeneratorConfigFromUI();
+
+        updateGeneratorUI();
+    }
+
+
+    function updateGeneratorConfigFromUI() {
 
         const generatorCategory =
             document.getElementById(
@@ -875,10 +1253,23 @@ window.App = (() => {
 
         if (generatorCount) {
 
-            state.config.generator.count =
+            const count =
                 getNumber(
                     "generator-count"
                 );
+
+
+            if (
+                Number.isFinite(count) &&
+                count >= 1 &&
+                count <= 1000
+            ) {
+
+                state.config.generator.count =
+                    Math.floor(
+                        count
+                    );
+            }
         }
 
 
@@ -891,8 +1282,12 @@ window.App = (() => {
         if (generatorSouthern) {
 
             state.config.generator.southernInfluence =
-                getNumber(
-                    "generator-southern"
+                clamp(
+                    getNumber(
+                        "generator-southern"
+                    ),
+                    0,
+                    100
                 );
         }
 
@@ -906,8 +1301,12 @@ window.App = (() => {
         if (generatorAppalachian) {
 
             state.config.generator.appalachianInfluence =
-                getNumber(
-                    "generator-appalachian"
+                clamp(
+                    getNumber(
+                        "generator-appalachian"
+                    ),
+                    0,
+                    100
                 );
         }
 
@@ -921,111 +1320,149 @@ window.App = (() => {
         if (generatorInformality) {
 
             state.config.generator.informality =
-                getNumber(
-                    "generator-informality"
+                clamp(
+                    getNumber(
+                        "generator-informality"
+                    ),
+                    0,
+                    100
                 );
         }
-
-
-        updateGeneratorUI();
     }
 
 
-    function saveConfig() {
+    /* =====================================================
+       SAVE CONFIGURATION
+       ===================================================== */
+
+    async function saveConfig() {
+
+        if (!state.storageInitialized) {
+
+            await initializeStorage();
+        }
+
+
+        if (
+            !window.Storage ||
+            typeof window.Storage.saveConfig !==
+                "function"
+        ) {
+
+            throw new Error(
+                "Storage.saveConfig() is unavailable."
+            );
+        }
+
+
+        const config =
+            structuredClone(
+                state.config
+            );
+
+
+        /*
+         * Storage.saveConfig() already knows the
+         * configuration storage key. Do not pass an
+         * additional "app" key.
+         */
+
+        await window.Storage.saveConfig(
+            config
+        );
+
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "kvdb:config-changed",
+                {
+                    detail: {
+                        config
+                    }
+                }
+            )
+        );
+
+
+        return true;
+    }
+
+
+    /* =====================================================
+       LOAD CONFIGURATION
+       ===================================================== */
+
+    async function loadSavedConfig() {
+
+        if (!state.storageInitialized) {
+
+            await initializeStorage();
+        }
+
 
         try {
 
-            localStorage.setItem(
-                "kvdb-config",
-                JSON.stringify(
-                    state.config
-                )
-            );
+            if (
+                window.Storage &&
+                typeof window.Storage.loadConfig ===
+                    "function"
+            ) {
+
+                const saved =
+                    await window.Storage.loadConfig(
+                        null
+                    );
+
+
+                if (
+                    saved &&
+                    typeof saved === "object" &&
+                    !Array.isArray(saved)
+                ) {
+
+                    state.config =
+                        mergeConfig(
+                            DEFAULT_CONFIG,
+                            saved
+                        );
+
+
+                    return true;
+                }
+            }
 
 
             /*
-             * Let other application modules know that
-             * configuration changed.
+             * No saved configuration exists.
+             * Start with defaults and save them to IndexedDB.
              */
 
-            window.dispatchEvent(
-                new CustomEvent(
-                    "kvdb:config-changed",
-                    {
-                        detail: {
-                            config:
-                                structuredClone(
-                                    state.config
-                                )
-                        }
-                    }
-                )
-            );
+            state.config =
+                structuredClone(
+                    DEFAULT_CONFIG
+                );
+
+
+            if (
+                window.Storage &&
+                typeof window.Storage.saveConfig ===
+                    "function"
+            ) {
+
+                await window.Storage.saveConfig(
+                    structuredClone(
+                        state.config
+                    )
+                );
+            }
 
 
             return true;
 
         } catch (error) {
 
-            console.warn(
-                "Could not save configuration:",
-                error
-            );
-
-            return false;
-        }
-    }
-
-
-    function loadSavedConfig() {
-
-        try {
-
-            const saved =
-                localStorage.getItem(
-                    "kvdb-config"
-                );
-
-
-            if (!saved) {
-
-                state.config =
-                    structuredClone(
-                        DEFAULT_CONFIG
-                    );
-
-                return;
-            }
-
-
-            const parsed =
-                JSON.parse(
-                    saved
-                );
-
-
-            if (
-                !parsed ||
-                typeof parsed !== "object" ||
-                Array.isArray(parsed)
-            ) {
-
-                throw new Error(
-                    "Saved configuration is invalid."
-                );
-            }
-
-
-            state.config =
-                mergeConfig(
-                    DEFAULT_CONFIG,
-                    parsed
-                );
-
-        } catch (error) {
-
-            console.warn(
-                "Could not load saved configuration:",
+            console.error(
+                "Could not load saved configuration from IndexedDB:",
                 error
             );
 
@@ -1034,6 +1471,9 @@ window.App = (() => {
                 structuredClone(
                     DEFAULT_CONFIG
                 );
+
+
+            throw error;
         }
     }
 
@@ -1208,15 +1648,26 @@ window.App = (() => {
         id
     ) {
 
+        const element =
+            document.getElementById(
+                id
+            );
+
+
+        if (!element) {
+            return 0;
+        }
+
+
         const value =
             Number(
-                getValue(id)
+                element.value
             );
 
 
         return Number.isFinite(value)
             ? value
-            : 0;
+            : NaN;
     }
 
 
@@ -1510,6 +1961,35 @@ window.App = (() => {
 
 
     /* =====================================================
+       GENERAL HELPERS
+       ===================================================== */
+
+    function clamp(
+        value,
+        minimum,
+        maximum
+    ) {
+
+        const number =
+            Number(value);
+
+
+        if (!Number.isFinite(number)) {
+            return minimum;
+        }
+
+
+        return Math.min(
+            maximum,
+            Math.max(
+                minimum,
+                number
+            )
+        );
+    }
+
+
+    /* =====================================================
        PUBLIC API
        ===================================================== */
 
@@ -1520,6 +2000,8 @@ window.App = (() => {
         state,
 
         DEFAULT_CONFIG,
+
+        VERSION,
 
         showPage,
 
@@ -1547,7 +2029,7 @@ window.App = (() => {
    START APPLICATION
    ========================================================= */
 
-function startApplication() {
+async function startApplication() {
 
     if (
         !window.App ||
@@ -1563,26 +2045,45 @@ function startApplication() {
     }
 
 
-    /*
-     * Configuration MUST be loaded before
-     * Recorder, Generator, or other modules
-     * use App.state.config.
-     */
+    try {
 
-    App.loadSavedConfig();
+        /*
+         * App.init() owns the complete startup sequence:
+         *
+         *   IndexedDB
+         *       ↓
+         *   configuration
+         *       ↓
+         *   Dataset
+         *       ↓
+         *   UI
+         *       ↓
+         *   Recorder
+         *
+         * Do NOT load configuration separately here.
+         */
+
+        await App.init();
+
+    } catch (error) {
+
+        console.error(
+            "Application initialization failed:",
+            error
+        );
 
 
-    Promise.resolve(
-        App.init()
-    ).catch(
-        error => {
+        if (
+            window.App &&
+            typeof window.App.setStorageStatus ===
+                "function"
+        ) {
 
-            console.error(
-                "Application initialization failed:",
-                error
+            App.setStorageStatus(
+                "Storage error"
             );
         }
-    );
+    }
 }
 
 
@@ -1600,12 +2101,6 @@ if (
     );
 
 } else {
-
-    /*
-     * Handles scripts loaded after DOMContentLoaded.
-     * Humans have invented several ways to load JavaScript;
-     * apparently one event handler was too simple.
-     */
 
     startApplication();
 }
