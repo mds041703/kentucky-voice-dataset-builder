@@ -26,6 +26,7 @@ window.Generator = (() => {
         vocabulary: null,
         pronunciation: null,
         smartHome: null,
+        predefined: [],
 
         loaded: false,
 
@@ -118,6 +119,11 @@ window.Generator = (() => {
             await loadJson(
                 "data/smart-home.json",
                 DEFAULT_DATA.smartHome
+            );
+        state.predefined =
+            await loadJson(
+                "data/predefined.json",
+                []
             );
 
         state.loaded = true;
@@ -442,145 +448,80 @@ window.Generator = (() => {
     }
 
 
-    /* =====================================================
-       GENERATE ONE
-       ===================================================== */
+/* =====================================================
+   GENERATE PREDEFINED
+   ===================================================== */
 
-    function generateOne(
-        options = {}
-    ) {
-
-        const safeOptions =
-            normalizeOptions(
-                options
-            );
-
-        const intent =
-            selectIntent(
-                safeOptions.category
-            );
-
-        if (!intent) {
-
-            return generateFallback(
-                safeOptions
-            );
-        }
-
-        const context =
-            buildContext(
-                intent,
-                safeOptions
-            );
-
-        const template =
-            selectTemplate(
-                context,
-                safeOptions
-            );
-
-        if (!template) {
-
-            return generateFallback(
-                safeOptions
-            );
-        }
-
-        let templateText = "";
-
-        if (
-            typeof template ===
-            "string"
-        ) {
-
-            templateText =
-                template;
-
-        } else if (
-            template &&
-            typeof template ===
-                "object"
-        ) {
-
-            templateText =
-                template.pattern ||
-                template.text ||
-                "";
-        }
-
-        let text =
-            renderTemplate(
-                templateText,
-                context
-            );
-
-        text =
-            cleanSentence(
-                text
-            );
-
-        if (!text) {
-            return null;
-        }
-
-        /*
-         * Apply regional phrasing after the primary
-         * sentence has been constructed.
-         *
-         * This is intentionally probabilistic. A dataset
-         * full of exaggerated regional phrases is less
-         * useful than natural variation.
-         */
-
-        text =
-            applyRegionalStyle(
-                text,
-                safeOptions
-            );
-
-        text =
-            cleanSentence(
-                text
-            );
-
-        const templateId =
-            typeof template === "object" &&
-            template
-                ? (
-                    template.id ||
-                    template.name ||
-                    null
+function generatePredefined(
+    count
+) {
+    const sentences =
+        Array.isArray(state.predefined)
+            ? state.predefined
+                .map(item =>
+                    typeof item === "string"
+                        ? item.trim()
+                        : ""
                 )
-                : null;
+                .filter(Boolean)
+            : [];
 
-        return {
+    if (!sentences.length) {
+        return [];
+    }
 
-            text,
+    /*
+     * Shuffle the predefined sentence pool.
+     *
+     * This gives us random ordering while preventing
+     * duplicate sentences during a generation batch.
+     */
+    const shuffled = [...sentences];
+
+    for (
+        let index = shuffled.length - 1;
+        index > 0;
+        index--
+    ) {
+        const randomIndex =
+            Math.floor(
+                Math.random() * (index + 1)
+            );
+
+        [
+            shuffled[index],
+            shuffled[randomIndex]
+        ] = [
+            shuffled[randomIndex],
+            shuffled[index]
+        ];
+    }
+
+    const selected =
+        shuffled.slice(
+            0,
+            Math.min(
+                Number(count) || 1,
+                shuffled.length
+            )
+        );
+
+    return selected.map(
+        text => ({
+            text:
+                cleanSentence(text),
 
             category:
-                safeOptions.category !==
-                    "general"
-                    ? safeOptions.category
-                    : (
-                        intent.category ||
-                        "general"
-                    ),
+                "predefined",
 
             intent:
-                intent.id ||
-                intent.intent ||
                 null,
 
             style:
-                context.style ||
-                "neutral",
+                "predefined",
 
             regionalInfluence:
-                Array.isArray(
-                    context.regionalInfluence
-                )
-                    ? context.regionalInfluence
-                    : [],
+                [],
 
             pronunciationTargets:
                 findPronunciationTargets(
@@ -588,20 +529,178 @@ window.Generator = (() => {
                 ),
 
             template:
-                templateId,
+                "predefined",
 
             generated:
                 true,
 
             generatedAt:
                 new Date().toISOString()
-        };
+        })
+    );
+}
+
+
+/* =====================================================
+   GENERATE ONE
+   ===================================================== */
+
+function generateOne(
+    options = {}
+) {
+
+    const safeOptions =
+        normalizeOptions(
+            options
+        );
+
+    const intent =
+        selectIntent(
+            safeOptions.category
+        );
+
+    if (!intent) {
+
+        return generateFallback(
+            safeOptions
+        );
     }
 
+    const context =
+        buildContext(
+            intent,
+            safeOptions
+        );
 
-    /* =====================================================
-       CONTEXT
-       ===================================================== */
+    const template =
+        selectTemplate(
+            context,
+            safeOptions
+        );
+
+    if (!template) {
+
+        return generateFallback(
+            safeOptions
+        );
+    }
+
+    let templateText = "";
+
+    if (
+        typeof template ===
+        "string"
+    ) {
+
+        templateText =
+            template;
+
+    } else if (
+        template &&
+        typeof template ===
+            "object"
+    ) {
+
+        templateText =
+            template.pattern ||
+            template.text ||
+            "";
+    }
+
+    let text =
+        renderTemplate(
+            templateText,
+            context
+        );
+
+    text =
+        cleanSentence(
+            text
+        );
+
+    if (!text) {
+        return null;
+    }
+
+    /*
+     * Apply regional phrasing after the primary
+     * sentence has been constructed.
+     *
+     * This is intentionally probabilistic. A dataset
+     * full of exaggerated regional phrases is less
+     * useful than natural variation.
+     */
+
+    text =
+        applyRegionalStyle(
+            text,
+            safeOptions
+        );
+
+    text =
+        cleanSentence(
+            text
+        );
+
+    const templateId =
+        typeof template === "object" &&
+        template
+            ? (
+                template.id ||
+                template.name ||
+                null
+            )
+            : null;
+
+    return {
+
+        text,
+
+        category:
+            safeOptions.category !==
+                "general"
+                ? safeOptions.category
+                : (
+                    intent.category ||
+                    "general"
+                ),
+
+        intent:
+            intent.id ||
+            intent.intent ||
+            null,
+
+        style:
+            context.style ||
+            "neutral",
+
+        regionalInfluence:
+            Array.isArray(
+                context.regionalInfluence
+            )
+                ? context.regionalInfluence
+                : [],
+
+        pronunciationTargets:
+            findPronunciationTargets(
+                text
+            ),
+
+        template:
+            templateId,
+
+        generated:
+            true,
+
+        generatedAt:
+            new Date().toISOString()
+    };
+}
+
+
+/* =====================================================
+   CONTEXT
+   ===================================================== */
 
     function buildContext(
         intent,
