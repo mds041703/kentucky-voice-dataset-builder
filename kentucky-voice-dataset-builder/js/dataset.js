@@ -25,13 +25,13 @@ window.Dataset = (() => {
        INITIALIZATION
        ===================================================== */
 
-    function init() {
+    async function init() {
 
         if (state.initialized) {
             return;
         }
 
-        loadFromAppState();
+        await loadFromStorage();
 
         setupEvents();
 
@@ -155,7 +155,96 @@ window.Dataset = (() => {
 
 
     /* =====================================================
-       LOAD APP STATE
+       LOAD DATASET FROM STORAGE
+       ===================================================== */
+
+    async function loadFromStorage() {
+
+        if (
+            !window.Storage ||
+            typeof window.Storage.getAllEntries !==
+                "function"
+        ) {
+
+            loadFromAppState();
+
+            return;
+        }
+
+
+        try {
+
+            await window.Storage.init();
+
+
+            const storedEntries =
+                await window.Storage.getAllEntries();
+
+
+            if (
+                Array.isArray(storedEntries) &&
+                storedEntries.length > 0
+            ) {
+
+                state.entries =
+                    storedEntries;
+
+            } else {
+
+                loadFromAppState();
+            }
+
+
+            state.entries.forEach(
+                normalizeEntry
+            );
+
+
+            state.nextId =
+                calculateNextId(
+                    state.entries
+                );
+
+
+            if (
+                window.App &&
+                window.App.state &&
+                window.App.state.currentSentence
+            ) {
+
+                const current =
+                    window.App.state.currentSentence;
+
+
+                const index =
+                    state.entries.findIndex(
+                        entry =>
+                            entry.id === current.id
+                    );
+
+
+                if (index !== -1) {
+
+                    state.currentIndex =
+                        index;
+                }
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Unable to load dataset from IndexedDB:",
+                error
+            );
+
+
+            loadFromAppState();
+        }
+    }
+
+
+    /* =====================================================
+       LOAD APP STATE FALLBACK
        ===================================================== */
 
     function loadFromAppState() {
@@ -214,6 +303,10 @@ window.Dataset = (() => {
     }
 
 
+    /* =====================================================
+       NORMALIZE ENTRY
+       ===================================================== */
+
     function normalizeEntry(
         entry
     ) {
@@ -226,6 +319,11 @@ window.Dataset = (() => {
             return entry;
         }
 
+
+        /*
+         * Support older dataset entries where audio was
+         * stored directly as audioBlob.
+         */
 
         if (
             !entry.recording &&
@@ -314,19 +412,28 @@ window.Dataset = (() => {
         entry.text =
             String(
                 entry.text || ""
-            ).trim();
+            )
+                .replace(
+                    /\s+/g,
+                    " "
+                )
+                .trim();
+
 
         entry.category =
             entry.category ||
             "general";
 
+
         entry.intent =
             entry.intent ||
             null;
 
+
         entry.style =
             entry.style ||
             "neutral";
+
 
         entry.regionalInfluence =
             Array.isArray(
@@ -335,6 +442,7 @@ window.Dataset = (() => {
                 ? entry.regionalInfluence
                 : [];
 
+
         entry.pronunciationTargets =
             Array.isArray(
                 entry.pronunciationTargets
@@ -342,17 +450,21 @@ window.Dataset = (() => {
                 ? entry.pronunciationTargets
                 : [];
 
+
         entry.template =
             entry.template ||
             null;
+
 
         entry.status =
             entry.status ||
             "pending";
 
+
         entry.createdAt =
             entry.createdAt ||
             new Date().toISOString();
+
 
         entry.updatedAt =
             entry.updatedAt ||
@@ -362,6 +474,10 @@ window.Dataset = (() => {
         return entry;
     }
 
+
+    /* =====================================================
+       CALCULATE NEXT ID
+       ===================================================== */
 
     function calculateNextId(
         entries
@@ -504,7 +620,47 @@ window.Dataset = (() => {
 
 
     /* =====================================================
-       ADD SENTENCES
+       DATASET CHANGE NOTIFICATION
+       ===================================================== */
+
+    function notifyDatasetChanged(
+        detail = {}
+    ) {
+
+        try {
+
+            window.dispatchEvent(
+                new CustomEvent(
+                    "kvdb:dataset-changed",
+                    {
+                        detail: {
+                            entries:
+                                state.entries,
+
+                            currentIndex:
+                                state.currentIndex,
+
+                            currentSentence:
+                                getCurrentSentence(),
+
+                            ...detail
+                        }
+                    }
+                )
+            );
+
+        } catch (error) {
+
+            console.warn(
+                "Unable to dispatch dataset change event:",
+                error
+            );
+        }
+    }
+
+
+    /* =====================================================
+       ADD SENTENCE
        ===================================================== */
 
     function addSentence(
@@ -529,22 +685,13 @@ window.Dataset = (() => {
         );
 
 
-        syncAppState();
-
-        render();
-
-        updateStatistics();
-
-
         if (
             state.currentIndex === -1
         ) {
 
-            const index =
+            state.currentIndex =
                 state.entries.length - 1;
 
-            state.currentIndex =
-                index;
 
             setCurrentSentence(
                 sentence
@@ -552,9 +699,25 @@ window.Dataset = (() => {
         }
 
 
+        syncAppState();
+
+        render();
+
+        updateStatistics();
+
+        notifyDatasetChanged({
+            action: "add",
+            entry: sentence
+        });
+
+
         return sentence;
     }
 
+
+    /* =====================================================
+       ADD SENTENCES
+       ===================================================== */
 
     function addSentences(
         sentences
@@ -563,6 +726,7 @@ window.Dataset = (() => {
         if (
             !Array.isArray(sentences)
         ) {
+
             return [];
         }
 
@@ -606,6 +770,7 @@ window.Dataset = (() => {
                         sentence
                     );
 
+
                     added.push(
                         sentence
                     );
@@ -622,13 +787,6 @@ window.Dataset = (() => {
         }
 
 
-        syncAppState();
-
-        render();
-
-        updateStatistics();
-
-
         if (
             state.currentIndex === -1
         ) {
@@ -643,6 +801,7 @@ window.Dataset = (() => {
 
                 state.currentIndex =
                     index;
+
 
                 setCurrentSentence(
                     state.entries[index]
@@ -668,6 +827,18 @@ window.Dataset = (() => {
                 );
             }
         }
+
+
+        syncAppState();
+
+        render();
+
+        updateStatistics();
+
+        notifyDatasetChanged({
+            action: "add-multiple",
+            entries: added
+        });
 
 
         return added;
@@ -749,19 +920,28 @@ window.Dataset = (() => {
 
             state.currentIndex = -1;
 
+
             setCurrentSentence(
                 null
             );
 
+
             setRecordingState(
                 "No pending sentences."
             );
+
 
             syncAppState();
 
             render();
 
             updateStatistics();
+
+            notifyDatasetChanged({
+                action: "advance",
+                entry: null
+            });
+
 
             return null;
         }
@@ -779,9 +959,17 @@ window.Dataset = (() => {
             sentence
         );
 
+
+        syncAppState();
+
         render();
 
         updateStatistics();
+
+        notifyDatasetChanged({
+            action: "advance",
+            entry: sentence
+        });
 
 
         return sentence;
@@ -890,20 +1078,24 @@ window.Dataset = (() => {
                 "current-sentence"
             );
 
+
         const metadataElement =
             document.getElementById(
                 "sentence-metadata"
             );
+
 
         const numberElement =
             document.getElementById(
                 "recording-number"
             );
 
+
         const totalElement =
             document.getElementById(
                 "recording-total"
             );
+
 
         const categoryElement =
             document.getElementById(
@@ -919,11 +1111,13 @@ window.Dataset = (() => {
                     "No sentence selected.";
             }
 
+
             if (metadataElement) {
 
                 metadataElement.textContent =
                     "";
             }
+
 
             if (numberElement) {
 
@@ -931,17 +1125,20 @@ window.Dataset = (() => {
                     "0";
             }
 
+
             if (totalElement) {
 
                 totalElement.textContent =
                     state.entries.length;
             }
 
+
             if (categoryElement) {
 
                 categoryElement.textContent =
                     "No category";
             }
+
 
             return;
         }
@@ -1021,10 +1218,58 @@ window.Dataset = (() => {
 
 
     /* =====================================================
+       SELECT DATASET ENTRY
+       ===================================================== */
+
+    function selectEntry(
+        id
+    ) {
+
+        const index =
+            state.entries.findIndex(
+                entry =>
+                    entry.id === id
+            );
+
+
+        if (index === -1) {
+            return false;
+        }
+
+
+        state.currentIndex =
+            index;
+
+
+        const entry =
+            state.entries[index];
+
+
+        setCurrentSentence(
+            entry
+        );
+
+
+        syncAppState();
+
+        render();
+
+
+        notifyDatasetChanged({
+            action: "select",
+            entry
+        });
+
+
+        return true;
+    }
+
+
+    /* =====================================================
        RECORDING
        ===================================================== */
 
-    function receiveRecording(
+    async function receiveRecording(
         recording
     ) {
 
@@ -1043,6 +1288,21 @@ window.Dataset = (() => {
                     item =>
                         item.id ===
                         recording.sentenceId
+                );
+        }
+
+
+        if (
+            index === -1 &&
+            recording.sentence &&
+            recording.sentence.id
+        ) {
+
+            index =
+                state.entries.findIndex(
+                    item =>
+                        item.id ===
+                        recording.sentence.id
                 );
         }
 
@@ -1088,6 +1348,20 @@ window.Dataset = (() => {
         }
 
 
+        if (
+            typeof Blob !== "undefined" &&
+            !(recording.blob instanceof Blob)
+        ) {
+
+            console.warn(
+                "Recording received with invalid audio data.",
+                recording.blob
+            );
+
+            return;
+        }
+
+
         revokeObjectUrl(
             entry.id
         );
@@ -1125,6 +1399,41 @@ window.Dataset = (() => {
             new Date().toISOString();
 
 
+        /*
+         * Persist the completed entry in IndexedDB before
+         * advancing the Dataset state.
+         */
+
+        try {
+
+            if (
+                window.Storage &&
+                typeof window.Storage.saveEntry ===
+                    "function"
+            ) {
+
+                await window.Storage.saveEntry(
+                    entry
+                );
+
+            } else {
+
+                throw new Error(
+                    "Storage.saveEntry() is unavailable."
+                );
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Unable to persist recording:",
+                error
+            );
+
+            return;
+        }
+
+
         syncAppState();
 
         render();
@@ -1132,18 +1441,19 @@ window.Dataset = (() => {
         updateStatistics();
 
 
+        notifyDatasetChanged({
+            action: "record",
+            entry
+        });
+
+
         /*
-         * The recording that was just completed remains
-         * available to the recorder UI for playback and
-         * Record Again.
+         * The completed recording remains available to
+         * the recorder UI for playback and Record Again.
          *
-         * The dataset itself advances immediately so
-         * the sentence at the top is the NEXT sentence.
-         *
-         * This leaves the completed recording available
-         * in the result box while preparing the next
-         * sentence for recording.
+         * Dataset advances to the next pending sentence.
          */
+
         if (
             state.currentIndex === index
         ) {
@@ -1159,11 +1469,13 @@ window.Dataset = (() => {
                 state.currentIndex =
                     nextIndex;
 
+
                 setCurrentSentence(
                     state.entries[
                         nextIndex
                     ]
                 );
+
 
                 syncAppState();
 
@@ -1171,17 +1483,44 @@ window.Dataset = (() => {
 
                 updateStatistics();
 
+
+                notifyDatasetChanged({
+                    action: "advance-after-record",
+                    entry:
+                        state.entries[
+                            nextIndex
+                        ]
+                });
+
             } else {
 
                 /*
-                 * No pending sentence remains. Keep the
-                 * completed sentence selected so the
-                 * recording result can still be associated
-                 * with it.
+                 * No pending sentence remains.
+                 * Keep the completed entry selected so
+                 * its recording remains associated with
+                 * the current Dataset entry.
                  */
+
+                state.currentIndex =
+                    index;
+
+
                 setCurrentSentence(
                     entry
                 );
+
+
+                syncAppState();
+
+                render();
+
+                updateStatistics();
+
+
+                notifyDatasetChanged({
+                    action: "complete",
+                    entry
+                });
             }
         }
     }
@@ -1191,7 +1530,7 @@ window.Dataset = (() => {
        IMPORT ENTRY
        ===================================================== */
 
-    function importEntry(
+    async function importEntry(
         importedEntry
     ) {
 
@@ -1214,6 +1553,24 @@ window.Dataset = (() => {
             loadFromAppState();
         }
 
+
+        /*
+         * Primary supported format:
+         *
+         * recording: {
+         *     blob: Blob,
+         *     duration: Number,
+         *     mimeType: String,
+         *     createdAt: ISO date
+         * }
+         *
+         * Legacy/fallback format:
+         *
+         * audioBlob: Blob
+         *
+         * The import/export layer is responsible for
+         * converting external file formats into a Blob.
+         */
 
         const blob =
             importedEntry.recording &&
@@ -1303,7 +1660,12 @@ window.Dataset = (() => {
                 String(
                     importedEntry.text ||
                     ""
-                ).trim(),
+                )
+                    .replace(
+                        /\s+/g,
+                        " "
+                    )
+                    .trim(),
 
             category:
                 importedEntry.category ||
@@ -1396,6 +1758,7 @@ window.Dataset = (() => {
                 id
             );
 
+
             state.entries[
                 existingIndex
             ] = entry;
@@ -1408,11 +1771,18 @@ window.Dataset = (() => {
         }
 
 
-        syncAppState();
+        /*
+         * If the imported entry replaced the currently
+         * selected entry, keep that entry selected.
+         */
 
-        render();
+        if (
+            state.currentIndex === existingIndex
+        ) {
 
-        updateStatistics();
+            state.currentIndex =
+                existingIndex;
+        }
 
 
         if (
@@ -1440,6 +1810,7 @@ window.Dataset = (() => {
                 state.currentIndex =
                     pendingIndex;
 
+
                 setCurrentSentence(
                     state.entries[
                         pendingIndex
@@ -1448,14 +1819,100 @@ window.Dataset = (() => {
 
             } else {
 
-                setCurrentSentence(
-                    null
+                /*
+                 * If the imported dataset contains only
+                 * recorded entries, select the imported
+                 * entry rather than leaving the UI empty.
+                 */
+
+                const importedIndex =
+                    state.entries.findIndex(
+                        item =>
+                            item.id === id
+                    );
+
+
+                if (importedIndex !== -1) {
+
+                    state.currentIndex =
+                        importedIndex;
+
+
+                    setCurrentSentence(
+                        state.entries[
+                            importedIndex
+                        ]
+                    );
+
+                } else {
+
+                    setCurrentSentence(
+                        null
+                    );
+                }
+            }
+
+        } else {
+
+            setCurrentSentence(
+                state.entries[
+                    state.currentIndex
+                ]
+            );
+        }
+
+
+        /*
+         * Persist the imported entry in IndexedDB.
+         */
+
+        try {
+
+            if (
+                window.Storage &&
+                typeof window.Storage.saveEntry ===
+                    "function"
+            ) {
+
+                await window.Storage.saveEntry(
+                    entry
+                );
+
+            } else {
+
+                throw new Error(
+                    "Storage.saveEntry() is unavailable."
                 );
             }
+
+        } catch (error) {
+
+            console.error(
+                "Unable to persist imported dataset entry:",
+                error
+            );
+
+            return null;
         }
 
 
         state.initialized = true;
+
+
+        syncAppState();
+
+        render();
+
+        updateStatistics();
+
+
+        notifyDatasetChanged({
+            action:
+                existingIndex !== -1
+                    ? "import-replace"
+                    : "import",
+            entry
+        });
 
 
         console.log(
@@ -1544,6 +2001,14 @@ window.Dataset = (() => {
         ) {
 
             updateCurrentSentence();
+
+        } else {
+
+            notifyDatasetChanged({
+                action: "skip",
+                entry:
+                    state.entries[index]
+            });
         }
     }
 
@@ -1600,6 +2065,7 @@ window.Dataset = (() => {
                 "Unable to create audio object URL:",
                 error
             );
+
 
             return null;
         }
@@ -1715,19 +2181,48 @@ window.Dataset = (() => {
         }
 
 
+        if (
+            wasCurrent
+        ) {
+
+            const nextIndex =
+                findNextPendingIndexFrom(
+                    state.currentIndex
+                );
+
+
+            if (nextIndex !== -1) {
+
+                state.currentIndex =
+                    nextIndex;
+
+
+                setCurrentSentence(
+                    state.entries[
+                        nextIndex
+                    ]
+                );
+
+            } else {
+
+                setCurrentSentence(
+                    null
+                );
+            }
+        }
+
+
         syncAppState();
 
+        render();
 
-        if (wasCurrent) {
+        updateStatistics();
 
-            updateCurrentSentence();
 
-        } else {
-
-            render();
-
-            updateStatistics();
-        }
+        notifyDatasetChanged({
+            action: "delete",
+            id
+        });
 
 
         return true;
@@ -1773,9 +2268,10 @@ window.Dataset = (() => {
 
         /*
          * Keep this exact sentence selected.
-         * Record Again / Re-record must not send
-         * the user to some other pending sentence.
+         * Record Again / Dataset Re-record must not
+         * send the user to another pending sentence.
          */
+
         state.currentIndex =
             index;
 
@@ -1789,6 +2285,12 @@ window.Dataset = (() => {
         render();
 
         updateStatistics();
+
+
+        notifyDatasetChanged({
+            action: "reset",
+            entry
+        });
 
 
         return true;
@@ -1819,16 +2321,48 @@ window.Dataset = (() => {
             state.entries[index];
 
 
-        resetEntry(
-            id
-        );
+        /*
+         * Reset the exact entry first. This is important:
+         * the recorder must receive the same sentence ID
+         * and App.currentSentence must point to that entry.
+         */
+
+        if (
+            !resetEntry(
+                id
+            )
+        ) {
+
+            return false;
+        }
 
 
         /*
-         * Tell the recording system that this is a
-         * deliberate re-record of an existing sentence.
-         * The existing sentence object is preserved.
+         * Explicitly restore the entry after reset.
+         * This protects against other Dataset state
+         * changes during reset.
          */
+
+        state.currentIndex =
+            index;
+
+
+        setCurrentSentence(
+            entry
+        );
+
+
+        syncAppState();
+
+
+        /*
+         * Tell Recorder this is an intentional re-record
+         * from the Dataset tab.
+         *
+         * Do not create a new sentence. The existing
+         * sentence ID is preserved.
+         */
+
         window.dispatchEvent(
             new CustomEvent(
                 "kvdb:rerecord-sentence",
@@ -1843,10 +2377,10 @@ window.Dataset = (() => {
 
 
         /*
-         * Move the UI to Record without depending on a
-         * private App navigation API. The normal nav
-         * button already owns the page-switch behavior.
+         * Move to Record without depending on a private
+         * App navigation implementation.
          */
+
         const recordNav =
             document.querySelector(
                 '.nav-button[data-page="record"]'
@@ -1864,11 +2398,12 @@ window.Dataset = (() => {
                     "page-record"
                 );
 
+
             if (recordPage) {
 
                 document
                     .querySelectorAll(
-                        ".page"
+                        ".page[data-page-content]"
                     )
                     .forEach(
                         page =>
@@ -1877,9 +2412,10 @@ window.Dataset = (() => {
                             )
                     );
 
+
                 document
                     .querySelectorAll(
-                        ".nav-button"
+                        ".nav-button[data-page]"
                     )
                     .forEach(
                         button =>
@@ -1888,9 +2424,34 @@ window.Dataset = (() => {
                             )
                     );
 
+
                 recordPage.classList.add(
                     "active"
                 );
+
+
+                const recordButton =
+                    document.querySelector(
+                        '.nav-button[data-page="record"]'
+                    );
+
+
+                if (recordButton) {
+
+                    recordButton.classList.add(
+                        "active"
+                    );
+                }
+
+
+                if (
+                    window.App &&
+                    window.App.state
+                ) {
+
+                    window.App.state.currentPage =
+                        "record";
+                }
             }
         }
 
@@ -1932,7 +2493,6 @@ window.Dataset = (() => {
          * survives normal renders so filtering/searching
          * does not invalidate active playback.
          */
-
 
         const search =
             getValue(
@@ -2003,6 +2563,7 @@ window.Dataset = (() => {
                 empty
             );
 
+
             return;
         }
 
@@ -2038,9 +2599,54 @@ window.Dataset = (() => {
             entry.id;
 
 
+        if (
+            state.currentIndex >= 0 &&
+            state.entries[
+                state.currentIndex
+            ] &&
+            state.entries[
+                state.currentIndex
+            ].id === entry.id
+        ) {
+
+            element.classList.add(
+                "active"
+            );
+        }
+
+
+        /*
+         * Make the entire dataset row selectable.
+         * Action buttons below stop propagation so selecting
+         * a row does not accidentally trigger Play, Re-record,
+         * or Delete.
+         */
+
+        element.addEventListener(
+            "click",
+            event => {
+
+                if (
+                    event.target.closest(
+                        "button"
+                    )
+                ) {
+
+                    return;
+                }
+
+
+                selectEntry(
+                    entry.id
+                );
+            }
+        );
+
+
         /*
          * ID
          */
+
         const id =
             document.createElement(
                 "div"
@@ -2058,6 +2664,7 @@ window.Dataset = (() => {
         /*
          * Status
          */
+
         const status =
             document.createElement(
                 "div"
@@ -2075,6 +2682,7 @@ window.Dataset = (() => {
         /*
          * Sentence text
          */
+
         const text =
             document.createElement(
                 "div"
@@ -2096,6 +2704,7 @@ window.Dataset = (() => {
         /*
          * Recording duration
          */
+
         const duration =
             document.createElement(
                 "div"
@@ -2116,10 +2725,8 @@ window.Dataset = (() => {
 
         /*
          * Playback controls
-         *
-         * Use a small Play button instead of exposing
-         * the browser's full audio media player.
          */
+
         const playback =
             document.createElement(
                 "div"
@@ -2173,6 +2780,7 @@ window.Dataset = (() => {
                         objectUrl
                     );
 
+
                 audio.preload =
                     "metadata";
 
@@ -2183,6 +2791,7 @@ window.Dataset = (() => {
 
                         playButton.textContent =
                             "Play";
+
 
                         playButton.title =
                             `Play recording for ${entry.id}`;
@@ -2196,6 +2805,7 @@ window.Dataset = (() => {
 
                         playButton.textContent =
                             "Play";
+
 
                         console.warn(
                             "Unable to play dataset recording:",
@@ -2221,9 +2831,9 @@ window.Dataset = (() => {
 
 
                     /*
-                     * Stop other dataset recordings before
-                     * starting this one.
+                     * Stop all other dataset recordings.
                      */
+
                     document
                         .querySelectorAll(
                             ".dataset-entry-play"
@@ -2249,8 +2859,10 @@ window.Dataset = (() => {
 
                         audio.pause();
 
+
                         playButton.textContent =
                             "Play";
+
 
                         return;
                     }
@@ -2277,6 +2889,7 @@ window.Dataset = (() => {
                                     "Unable to play dataset recording:",
                                     error
                                 );
+
 
                                 playButton.textContent =
                                     "Play";
@@ -2320,6 +2933,7 @@ window.Dataset = (() => {
         /*
          * Actions
          */
+
         const actions =
             document.createElement(
                 "div"
@@ -2333,6 +2947,7 @@ window.Dataset = (() => {
         /*
          * Re-record
          */
+
         const rerecordButton =
             document.createElement(
                 "button"
@@ -2373,11 +2988,8 @@ window.Dataset = (() => {
 
         /*
          * Delete
-         *
-         * This removes the sentence entirely from
-         * the dataset and therefore also removes it
-         * from the pool of available sentences.
          */
+
         const deleteButton =
             document.createElement(
                 "button"
@@ -2447,21 +3059,26 @@ window.Dataset = (() => {
             id
         );
 
+
         element.appendChild(
             status
         );
+
 
         element.appendChild(
             text
         );
 
+
         element.appendChild(
             duration
         );
 
+
         element.appendChild(
             playback
         );
+
 
         element.appendChild(
             actions
@@ -2503,6 +3120,10 @@ window.Dataset = (() => {
 
             window.App.state.dataset =
                 state.entries;
+
+
+            window.App.state.currentSentence =
+                getCurrentSentence();
         }
     }
 
@@ -2608,6 +3229,8 @@ window.Dataset = (() => {
             () =>
                 state.currentIndex,
 
+        selectEntry,
+
         deleteEntry,
 
         resetEntry,
@@ -2624,7 +3247,11 @@ window.Dataset = (() => {
 
         advanceToNext,
 
-        importEntry
+        importEntry,
+
+        revokeObjectUrl,
+
+        revokeAllObjectUrls
 
     };
 
@@ -2653,21 +3280,14 @@ window.addEventListener(
     "beforeunload",
     () => {
 
-        /*
-         * Dataset owns the audio object URLs.
-         * Revoke them before the page is unloaded.
-         */
         if (
             window.Dataset &&
-            typeof window.Dataset.getEntries ===
+            typeof
+            window.Dataset.revokeAllObjectUrls ===
             "function"
         ) {
 
-            /*
-             * Browser cleanup on unload is normally
-             * sufficient, so no action is required here.
-             * Object URLs are managed internally by Dataset.
-             */
+            window.Dataset.revokeAllObjectUrls();
         }
     }
 );
