@@ -18,7 +18,7 @@ The original goal was to make it easier to build a personalized speech dataset f
 
 ## What This Is
 
-This is a relatively simple browser application that combines:
+This is a browser application that combines:
 
 * JSON vocabulary
 * Sentence templates
@@ -28,13 +28,17 @@ This is a relatively simple browser application that combines:
 * Pronunciation targets
 * Browser-based audio recording
 * Dataset management
+* Dataset searching and filtering
+* Recording replacement and re-recording
 * ZIP import and export
+* Whisper-compatible `metadata.csv` generation
+* Dataset configuration and manifest storage
 
 It does **not** use a local AI model to generate or validate sentences.
 
 The sentence generator is rule-based.
 
-That makes it lightweight and capable of running locally, but it also means the generator can produce some questionable sentences because, tragically, combining grammatically valid pieces does not guarantee that the resulting sentence makes sense.
+That makes it lightweight and capable of running locally, but it also means the generator can produce questionable sentences because, tragically, combining grammatically valid pieces does not guarantee that the resulting sentence makes sense.
 
 ---
 
@@ -115,7 +119,9 @@ This stops the local web server.
 
 ### Important
 
-The local server does **not** connect the application to the Internet. It only provides the web server functionality required for the browser to run the application correctly.
+The local server does **not** connect the application to the Internet.
+
+It only provides the HTTP server functionality required for the browser to run the application correctly.
 
 The application itself is designed to operate locally.
 
@@ -157,7 +163,7 @@ Record more
 Export ZIP again
 ```
 
-The **ZIP export and import functionality works** and should be treated as the actual backup mechanism.
+The **ZIP export and import functionality should be treated as the actual backup mechanism**.
 
 Do not build a large dataset in the browser and assume the browser will politely remember everything. Browsers have never shown much loyalty to human plans.
 
@@ -184,15 +190,64 @@ If you have recordings you care about, export them.
 * Search and filter dataset entries
 * Track dataset statistics
 * Add custom sentences
+* Re-record existing dataset entries
+* Replace an existing recording while keeping its transcript
 * Import an existing dataset
+* Import simple user-created datasets
+* Import ZIPs with an additional top-level folder
 * Continue adding recordings to an existing dataset
 * Export the dataset as a ZIP file
 * Store audio recordings with transcripts
 * Store configuration inside exported datasets
 * Restore configuration when importing
-* Generate configurable metadata
+* Generate configurable Whisper-style metadata
+* Generate a `metadata.csv` beginning with `audio,text`
 * Select audio format and sample rate
 * Run locally without requiring an Internet connection
+
+---
+
+# Dataset Tab
+
+The Dataset tab is used to review and manage recordings that have already been added to the dataset.
+
+It allows the user to inspect the generated sentence, transcript, recording status, and other dataset information.
+
+One important function is **re-recording**.
+
+## Re-recording an Existing Entry
+
+If a recording is poor, contains background noise, was spoken incorrectly, or simply needs to be replaced, the existing dataset entry can be re-recorded from the Dataset tab.
+
+The intended workflow is:
+
+```text
+Dataset Tab
+    ↓
+Find existing recording
+    ↓
+Select re-record
+    ↓
+Record replacement audio
+    ↓
+Save replacement
+```
+
+The transcript associated with the dataset entry remains the intended transcript unless the user explicitly changes it.
+
+This is important for training datasets.
+
+If the displayed transcript says:
+
+```text
+Turn on the living room lights.
+```
+
+and the speaker records it incorrectly, the application should not silently change the transcript to whatever a speech-recognition system thinks was spoken.
+
+The recording should either be re-recorded or discarded.
+
+The transcript represents what the speaker was **supposed to say**, not what an automatic speech recognizer guessed they said.
 
 ---
 
@@ -620,7 +675,7 @@ The application should not automatically change the transcript based on what the
 
 The displayed sentence is the intended transcript.
 
-If the recording contains a mistake, the recording should be discarded or reviewed rather than silently changing the transcript.
+If the recording contains a mistake, the recording should be discarded or re-recorded rather than silently changing the transcript.
 
 ---
 
@@ -637,16 +692,32 @@ Handles audio-related functions such as:
 * Audio metadata
 * Audio validation
 
-A commonly useful Whisper configuration is:
+The application's exported dataset uses WAV audio by default.
+
+The preferred dataset audio specification is:
 
 ```text
 Format: WAV
+Codec: PCM
 Channels: Mono
 Sample rate: 16000 Hz
-Bit depth: 16-bit PCM
+Bit depth: 16-bit
 ```
 
-The exact requirements depend on the training pipeline.
+This corresponds to:
+
+```text
+16 kHz
+16-bit
+mono
+PCM WAV
+```
+
+This is a practical format for Whisper-style speech datasets.
+
+Individual training systems may impose additional requirements, so the target training pipeline should always be checked before training.
+
+The important part is that the audio should be clean, intelligible speech with the transcript matching what was intentionally spoken.
 
 ---
 
@@ -680,6 +751,10 @@ pending
 recorded
 skipped
 ```
+
+The Dataset tab can also be used to replace an existing recording through the re-record function.
+
+This allows poor recordings to be corrected without having to delete and regenerate the associated sentence.
 
 ---
 
@@ -719,10 +794,10 @@ The ZIP export is the important backup mechanism.
 
 The application can export the dataset as a ZIP archive.
 
-A typical export looks like:
+The normal exported structure is:
 
 ```text
-kentucky-voice-dataset/
+kentucky-voice-dataset-YYYYMMDD-HHMMSS.zip
 │
 ├── audio/
 │   ├── 000001.wav
@@ -731,31 +806,537 @@ kentucky-voice-dataset/
 │   └── ...
 │
 ├── metadata.csv
-├── dataset.json
 ├── config.json
+├── manifest.json
 └── README.txt
 ```
 
-The exact structure may change depending on the training system being used.
+The exact ZIP filename may vary.
 
-## Import
+The important dataset files are:
 
-ZIP files exported by the application can be imported again.
+```text
+audio/
+metadata.csv
+```
 
-The import process is intended to:
+The other files contain additional application information.
 
-1. Read the ZIP archive.
-2. Locate `config.json`.
-3. Restore configuration.
-4. Locate dataset metadata.
-5. Locate audio files.
-6. Rebuild dataset entries.
-7. Preserve transcript text.
-8. Preserve available recording metadata.
-9. Add entries to the current dataset.
-10. Avoid overwriting existing recordings.
+---
 
-Invalid or incomplete entries should be reported instead of silently disappearing.
+# `metadata.csv`
+
+The exported metadata file is a CSV designed around the standard two-column Whisper-style format used by this project.
+
+The **first line must be exactly:**
+
+```csv
+audio,text
+```
+
+The audio column contains the relative path to the audio file.
+
+The text column contains the intended transcript.
+
+Example:
+
+```csv
+audio,text
+audio/000001.wav,Can you turn off the television
+audio/000002.wav,Turn off that air conditioner
+audio/000003.wav,"Hey, go ahead and you open the garage door upstairs"
+audio/000004.wav,Could you go on and adjust the air conditioner
+audio/000005.wav,"You see that TV over there, turn off it"
+```
+
+CSV quoting is required when transcript text contains characters that would interfere with CSV parsing, such as commas or quotation marks.
+
+For example:
+
+```csv
+audio/000003.wav,"Hey, go ahead and you open the garage door upstairs"
+```
+
+The application automatically handles CSV escaping during export.
+
+---
+
+# Importing a Dataset
+
+The application supports two related ZIP import formats.
+
+The first is the application's normal exported dataset format.
+
+The second is a simpler **fallback import format** intended for importing datasets created outside the application.
+
+The importer also supports a ZIP where the actual dataset is contained inside one additional top-level folder.
+
+This is useful when a dataset is packaged like:
+
+```text
+my-dataset.zip
+│
+└── some-random-folder-name/
+    │
+    ├── audio/
+    │   ├── 000001.wav
+    │   ├── 000002.wav
+    │   └── ...
+    │
+    └── metadata.csv
+```
+
+The folder name does **not** need to be known in advance.
+
+The importer searches for the dataset structure inside the ZIP instead of requiring `audio/` and `metadata.csv` to exist only at the ZIP root.
+
+This means a ZIP such as:
+
+```text
+my-dataset.zip
+└── 8f4c2b1a/
+    ├── audio/
+    │   ├── 000001.wav
+    │   └── 000002.wav
+    └── metadata.csv
+```
+
+can still be imported.
+
+---
+
+# Creating Your Own Dataset for Import
+
+You can create a compatible dataset without using this application.
+
+The simplest supported format is:
+
+```text
+your-dataset.zip
+│
+└── your-folder-name/
+    │
+    ├── audio/
+    │   ├── 000001.wav
+    │   ├── 000002.wav
+    │   ├── 000003.wav
+    │   └── ...
+    │
+    └── metadata.csv
+```
+
+The additional folder is optional.
+
+You can also create:
+
+```text
+your-dataset.zip
+│
+├── audio/
+│   ├── 000001.wav
+│   ├── 000002.wav
+│   └── ...
+│
+└── metadata.csv
+```
+
+Both layouts are supported.
+
+The importer is primarily interested in finding:
+
+```text
+audio/
+metadata.csv
+```
+
+inside the ZIP.
+
+---
+
+# Requirements for Your Own `metadata.csv`
+
+Your `metadata.csv` must begin with:
+
+```csv
+audio,text
+```
+
+The first column must identify the audio file.
+
+The second column must contain the transcript.
+
+Example:
+
+```csv
+audio,text
+audio/000001.wav,Turn on the living room lights
+audio/000002.wav,Turn off the television
+audio/000003.wav,Can you turn the thermostat down
+```
+
+The audio path in `metadata.csv` should correspond to the audio file's location inside the ZIP.
+
+For example:
+
+```text
+audio/000001.wav
+```
+
+corresponds to:
+
+```text
+audio/
+└── 000001.wav
+```
+
+If the dataset is inside another folder, the metadata does not need to include that outer folder name.
+
+For example, this ZIP:
+
+```text
+dataset.zip
+└── random-folder/
+    ├── audio/
+    │   └── 000001.wav
+    └── metadata.csv
+```
+
+can still use:
+
+```csv
+audio,text
+audio/000001.wav,Turn on the living room lights
+```
+
+The importer normalizes the paths and searches for the matching audio file.
+
+---
+
+# CSV Rules
+
+The importer supports normal CSV quoting.
+
+If the transcript contains a comma, quote, or other CSV-sensitive character, the field should be quoted.
+
+For example:
+
+```csv
+audio,text
+audio/000001.wav,"Hey, turn the living room lights on"
+```
+
+A quotation mark inside the transcript must be represented using two quotation marks according to normal CSV rules.
+
+Example:
+
+```csv
+audio,text
+audio/000001.wav,"He said ""turn on the lights"""
+```
+
+The application has its own CSV parser for importing metadata.
+
+The safest format is always:
+
+```csv
+audio,text
+```
+
+followed by one recording per line.
+
+---
+
+# Audio Requirements for Custom Imports
+
+For reliable importing and later Whisper training, use:
+
+```text
+WAV
+PCM
+16-bit
+16,000 Hz
+Mono
+```
+
+Recommended:
+
+```text
+Sample rate: 16000 Hz
+Channels: 1
+Bit depth: 16-bit
+Codec: PCM
+Container: WAV
+```
+
+Example:
+
+```text
+000001.wav
+```
+
+should be:
+
+```text
+16 kHz
+16-bit
+mono
+PCM WAV
+```
+
+The importer does not use the filename alone to determine the transcript.
+
+The transcript comes from `metadata.csv`.
+
+For example:
+
+```text
+audio/000001.wav
+```
+
+must have a corresponding metadata row:
+
+```csv
+audio/000001.wav,Turn on the living room lights
+```
+
+The audio should contain the speech represented by that transcript.
+
+---
+
+# Simple Custom Import Example
+
+A complete manually created dataset can therefore be as simple as:
+
+```text
+my-dataset/
+│
+├── audio/
+│   ├── 000001.wav
+│   ├── 000002.wav
+│   ├── 000003.wav
+│   ├── 000004.wav
+│   └── 000005.wav
+│
+└── metadata.csv
+```
+
+With:
+
+```csv
+audio,text
+audio/000001.wav,Can you turn off the television
+audio/000002.wav,Turn off that air conditioner
+audio/000003.wav,"Hey, go ahead and you open the garage door upstairs"
+audio/000004.wav,Could you go on and adjust the air conditioner
+audio/000005.wav,"You see that TV over there, turn off it"
+```
+
+Zip the `my-dataset` folder:
+
+```text
+my-dataset.zip
+```
+
+Then import that ZIP through the application.
+
+The ZIP may also contain additional files, but they are not required for the basic fallback import.
+
+---
+
+# Fallback Import
+
+The application has a fallback importer specifically for simple datasets that do not contain the application's full export structure.
+
+The fallback importer is used when the normal dataset import cannot successfully import the dataset.
+
+It looks for:
+
+```text
+metadata.csv
+```
+
+and:
+
+```text
+audio/
+```
+
+within the ZIP.
+
+The importer can also find these files when they are located inside one additional top-level folder.
+
+For example:
+
+```text
+dataset.zip
+└── abc123/
+    ├── metadata.csv
+    └── audio/
+        ├── 000001.wav
+        ├── 000002.wav
+        └── 000003.wav
+```
+
+is a valid layout.
+
+The fallback importer uses the following information:
+
+```text
+metadata.csv
+    ↓
+audio path
+    ↓
+transcript
+    ↓
+audio file
+    ↓
+new dataset entry
+```
+
+Additional metadata such as:
+
+```text
+category
+intent
+style
+regionalInfluence
+pronunciationTargets
+template
+```
+
+is not required for fallback imports.
+
+Those values are initialized to basic defaults.
+
+---
+
+# What Happens During Fallback Import
+
+For each row in `metadata.csv`, the importer:
+
+1. Reads the audio path.
+2. Finds the corresponding audio file inside the ZIP.
+3. Reads the transcript.
+4. Loads the audio as a Blob.
+5. Creates a dataset entry.
+6. Assigns the transcript.
+7. Adds the recording to the dataset.
+8. Continues to the next entry.
+
+For example:
+
+```csv
+audio,text
+audio/000001.wav,Turn on the kitchen lights
+```
+
+results in an imported dataset entry containing the audio from:
+
+```text
+audio/000001.wav
+```
+
+and the transcript:
+
+```text
+Turn on the kitchen lights
+```
+
+---
+
+# Import Failure Conditions
+
+The importer will reject the dataset if it cannot find the required information.
+
+Typical errors include:
+
+```text
+Import failed. The ZIP does not contain a usable dataset and no metadata.csv was found for fallback import.
+```
+
+This means the importer could not find a usable `metadata.csv`.
+
+Another possible error is:
+
+```text
+Import failed. metadata.csv contains no dataset entries.
+```
+
+This means the CSV was found but contained no usable recording rows.
+
+Another possible error is:
+
+```text
+Import failed. No audio files were found in the audio/ folder.
+```
+
+This means the metadata exists, but the importer could not find the corresponding audio directory.
+
+A fallback import may also fail if none of the metadata rows can be matched to actual audio files.
+
+---
+
+# Importing an Existing Export
+
+A ZIP exported directly by the application contains additional information.
+
+Example:
+
+```text
+kentucky-voice-dataset-20260808-190000.zip
+│
+├── audio/
+│   ├── 000001.wav
+│   ├── 000002.wav
+│   └── ...
+│
+├── metadata.csv
+├── config.json
+├── manifest.json
+└── README.txt
+```
+
+The normal importer attempts to restore:
+
+* Recordings
+* Transcripts
+* IDs
+* Categories
+* Intents
+* Styles
+* Templates
+* Regional influences
+* Pronunciation targets
+* Recording durations
+* MIME types
+* Creation timestamps
+* Configuration
+
+If the normal import cannot successfully recover recordings, the importer can attempt the simpler fallback import.
+
+---
+
+# Adding Imported Data
+
+Importing a dataset adds the imported recordings to the current dataset.
+
+It is intended to allow the user to:
+
+```text
+Create dataset
+    ↓
+Export
+    ↓
+Later import
+    ↓
+Continue recording
+```
+
+It can also be used to start with a dataset created elsewhere and then continue recording additional examples inside the application.
+
+The imported audio and transcript become normal dataset entries.
+
+Once imported, those entries can be reviewed and, where supported, re-recorded from the Dataset tab.
 
 ---
 
@@ -894,6 +1475,43 @@ How about you turn the living room light on?
 
 I reckon you could turn that light on.
 ```
+
+---
+
+# Dataset Accuracy
+
+The transcript should represent what the speaker is intentionally saying.
+
+If the target transcript is:
+
+```text
+Can you turn the thermostat down?
+```
+
+the speaker should attempt to say that sentence naturally.
+
+The dataset should not be created by recording random speech and then guessing what the speaker said afterward.
+
+For speech-recognition training, the relationship between audio and transcript is critical.
+
+An incorrect transcript effectively teaches the model that the wrong sound corresponds to the wrong words.
+
+If a recording is bad:
+
+```text
+Wrong pronunciation
+Background noise
+Missed words
+Wrong sentence
+Coughing
+Talking over the recording
+Recording started too late
+Recording stopped too early
+```
+
+the preferred solution is to re-record it or remove it.
+
+The Dataset tab's re-record capability exists specifically to make correcting bad recordings easier.
 
 ---
 
