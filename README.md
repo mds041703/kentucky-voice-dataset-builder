@@ -2,68 +2,90 @@
 
 > **Vibe coded with AI.**
 
-This project was built primarily with substantial assistance from generative AI. The code, data structures, sentence-generation logic, examples, and documentation have all been influenced by AI-generated material.
+Kentucky Voice Dataset Builder is a local-first browser application for building personalized speech datasets.
 
-It has **not** been professionally engineered, formally audited, or extensively tested.
+It was created primarily for collecting smart-home commands spoken naturally by one person, including Kentucky, Appalachian, Southern, and general American speech patterns. The resulting recordings can be exported for use with Whisper and other speech-recognition systems, particularly for projects such as Home Assistant.
 
-If you want to take this idea, rebuild it properly, improve it, or turn it into something actually useful, you are more than welcome to do so.
+The project was built with substantial assistance from generative AI. The code has not been professionally engineered or formally audited.
 
-A browser-based voice dataset builder for creating speech datasets for Whisper and other speech-recognition systems.
-
-The project was made specifically for collecting natural smart-home commands spoken in the user's normal Kentucky, Appalachian, Southern, and general American speech patterns.
-
-The original goal was to make it easier to build a personalized speech dataset for smart-home voice control, particularly for Home Assistant.
+The goal is practical: make it easier to generate sentences, record them, organize the recordings, and export a usable speech dataset.
 
 ---
 
-## What This Is
+## Current Version
 
-This is a browser application that combines:
+**Application version: 0.5.1**
 
-* JSON vocabulary
-* Sentence templates
-* Smart-home intents
-* Weighted random selection
-* Regional vocabulary
-* Pronunciation targets
-* Browser-based audio recording
+The current application includes:
+
+* Local browser recording
+* Rule-based smart-home sentence generation
 * Dataset management
-* Dataset searching and filtering
+* IndexedDB persistence
 * Recording replacement and re-recording
-* ZIP import and export
-* Whisper-compatible `metadata.csv` generation
-* Dataset configuration and manifest storage
+* ZIP export
+* ZIP import
+* Fallback dataset import
+* Support for ZIPs containing an additional top-level folder
+* Whisper-style `metadata.csv` generation
+* Dataset configuration persistence
+* Audio conversion and WAV generation
+* Local JSZip support
 
-It does **not** use a local AI model to generate or validate sentences.
+---
 
-The sentence generator is rule-based.
+# What the Application Does
 
-That makes it lightweight and capable of running locally, but it also means the generator can produce questionable sentences because, tragically, combining grammatically valid pieces does not guarantee that the resulting sentence makes sense.
+The application combines several systems:
+
+```text
+JSON Data
+   ↓
+Sentence Generator
+   ↓
+Dataset Entries
+   ↓
+Browser Recording
+   ↓
+IndexedDB
+   ↓
+Dataset Management
+   ↓
+ZIP Export
+   ↓
+Whisper / Speech-Recognition Dataset
+```
+
+The generator is rule-based. It does not use an AI language model to create or validate sentences.
+
+It combines predefined templates, vocabulary, smart-home intents, regional vocabulary, pronunciation targets, and weighted selections.
+
+That keeps the application lightweight and able to run locally, but it also means the generator can create sentences that are technically assembled correctly while still being ridiculous. Computers remain excellent at following rules and terrible at knowing when the rules produced nonsense.
 
 ---
 
 # Running the Application
 
-This application **must be run through a local web server**.
+The application should be run through a local HTTP server.
 
-Do **not** open `index.html` directly with `file://`.
+Do not open `index.html` directly with:
 
-The application uses browser features that may not work correctly when the page is opened directly from the filesystem.
+```text
+file://
+```
 
-You do not need an Internet connection to run the application, but you do need a local web server.
+The application uses browser APIs such as IndexedDB, Web Audio, microphone access, and `fetch()` for its local JSON data.
 
-Python 3 is the easiest option because it is available on Linux and macOS and can also be installed on Windows.
+A local HTTP server provides the environment the browser expects.
 
 ## Linux
-
-Open a terminal, change to the project directory, and run:
 
 ```bash
 cd /path/to/kentucky-voice-dataset-builder
 python3 -m http.server 8000
 ```
 
-Then open:
+Open:
 
 ```text
 http://localhost:8000
@@ -71,37 +93,39 @@ http://localhost:8000
 
 ## macOS
 
-Open Terminal, change to the project directory, and run:
-
 ```bash
 cd /path/to/kentucky-voice-dataset-builder
 python3 -m http.server 8000
 ```
 
-Then open:
+Open:
 
 ```text
 http://localhost:8000
 ```
 
-You can also type `cd ` in Terminal and drag the project folder into the Terminal window to insert its path automatically.
+You can also type:
+
+```bash
+cd 
+```
+
+and drag the project folder into Terminal to insert its path.
 
 ## Windows
-
-Open Command Prompt or PowerShell, change to the project directory, and run:
 
 ```powershell
 cd C:\path\to\kentucky-voice-dataset-builder
 py -m http.server 8000
 ```
 
-Then open:
+Open:
 
 ```text
 http://localhost:8000
 ```
 
-If `py` is not available but Python is installed, try:
+If `py` is unavailable:
 
 ```powershell
 python -m http.server 8000
@@ -109,47 +133,43 @@ python -m http.server 8000
 
 ## Stopping the Server
 
-When finished, return to the terminal window running the server and press:
+Press:
 
 ```text
 Ctrl+C
 ```
 
-This stops the local web server.
+in the terminal running the server.
 
-### Important
+The local server does not connect the application to the Internet. It simply provides HTTP access to the application files.
 
-The local server does **not** connect the application to the Internet.
-
-It only provides the HTTP server functionality required for the browser to run the application correctly.
-
-The application itself is designed to operate locally.
-
-You can disconnect from the Internet after the application files and required dependencies have been downloaded.
-
-Remember: the local server is required **every time you want to use the application**.
+Once the application and its local dependencies are available, the application is designed to operate locally.
 
 ---
 
-# Important Warning: Save Your Work
+# Important: Browser Storage and Backups
 
-**Export your dataset frequently.**
+The application uses IndexedDB for persistent application data and recorded audio.
 
-The application's browser storage should **not** be trusted as the only copy of your recordings.
+Recorded and imported dataset entries are written to IndexedDB. The current storage layer uses:
 
-Depending on the browser and the state of the application, refreshing the page can result in data being lost.
+```text
+Database:
+kentucky_voice_dataset_builder
 
-There is currently no guarantee that an in-progress dataset will survive:
+IndexedDB version:
+2
+```
 
-* Page refreshes
-* Browser crashes
-* Closing the browser
-* Clearing browser data
-* Storage cleanup
-* Browser storage limitations
-* Application changes
+The storage layer supports both the current recording structure and older audio structures for compatibility.
 
-The safest workflow is:
+Completed recordings are explicitly saved before the Dataset module advances to another sentence. Imported recordings are also persisted through the same storage layer.
+
+However, browser storage is still not a substitute for a real backup.
+
+Export important work as a ZIP periodically.
+
+A practical workflow is:
 
 ```text
 Generate
@@ -163,270 +183,88 @@ Record more
 Export ZIP again
 ```
 
-The **ZIP export and import functionality should be treated as the actual backup mechanism**.
+Keep the exported ZIP files somewhere outside the browser.
 
-Do not build a large dataset in the browser and assume the browser will politely remember everything. Browsers have never shown much loyalty to human plans.
-
-If you have recordings you care about, export them.
+Browser storage can be affected by clearing site data, browser storage policies, private browsing, browser failures, or future application changes.
 
 ---
 
-# Features
+# Important Persistence Detail
 
-* Generate smart-home sentences
-* Generate multiple variations of the same intent
-* Use different sentence structures
-* Generate direct commands
-* Generate conversational requests
-* Generate noun-first commands
-* Generate indirect requests
-* Generate pronoun/reference-based commands
-* Include Southern and Appalachian-influenced vocabulary
-* Track pronunciation targets
-* Record speech directly from the browser
-* Automatically move to the next sentence after recording
-* Skip sentences
-* Review recorded and pending sentences
-* Search and filter dataset entries
-* Track dataset statistics
-* Add custom sentences
-* Re-record existing dataset entries
-* Replace an existing recording while keeping its transcript
-* Import an existing dataset
-* Import simple user-created datasets
-* Import ZIPs with an additional top-level folder
-* Continue adding recordings to an existing dataset
-* Export the dataset as a ZIP file
-* Store audio recordings with transcripts
-* Store configuration inside exported datasets
-* Restore configuration when importing
-* Generate configurable Whisper-style metadata
-* Generate a `metadata.csv` beginning with `audio,text`
-* Select audio format and sample rate
-* Run locally without requiring an Internet connection
+There is an important distinction between generated sentences and completed recordings.
 
----
+Generated pending sentences are held by the Dataset module while the application is running.
 
-# Dataset Tab
+When a recording is completed, the entry is saved to IndexedDB.
 
-The Dataset tab is used to review and manage recordings that have already been added to the dataset.
+Imported recordings are also saved to IndexedDB.
 
-It allows the user to inspect the generated sentence, transcript, recording status, and other dataset information.
-
-One important function is **re-recording**.
-
-## Re-recording an Existing Entry
-
-If a recording is poor, contains background noise, was spoken incorrectly, or simply needs to be replaced, the existing dataset entry can be re-recorded from the Dataset tab.
-
-The intended workflow is:
+Therefore:
 
 ```text
-Dataset Tab
+Generated sentence
     ↓
-Find existing recording
+Pending in application
     ↓
-Select re-record
+Record it
     ↓
-Record replacement audio
-    ↓
-Save replacement
+Saved to IndexedDB
 ```
 
-The transcript associated with the dataset entry remains the intended transcript unless the user explicitly changes it.
+A generated sentence that has not yet been recorded is not the same thing as a persisted recording.
 
-This is important for training datasets.
+If the browser is refreshed before a generated sentence has been recorded, that pending in-memory entry may not be restored.
 
-If the displayed transcript says:
+---
+
+# Application Pages
+
+The application has five primary sections:
 
 ```text
-Turn on the living room lights.
+Record
+Generate
+Dataset
+Settings
+Import / Export
 ```
 
-and the speaker records it incorrectly, the application should not silently change the transcript to whatever a speech-recognition system thinks was spoken.
+## Record
 
-The recording should either be re-recorded or discarded.
+The Record page displays the currently selected sentence and provides microphone controls.
 
-The transcript represents what the speaker was **supposed to say**, not what an automatic speech recognizer guessed they said.
+The normal workflow is:
+
+1. Select a sentence.
+2. Start recording.
+3. Countdown.
+4. Record speech.
+5. Detect silence or manually stop.
+6. Finish the recording.
+7. Save it to the dataset.
+8. Advance to the next pending sentence.
+
+The recorder also supports recording controls such as stopping, skipping, redoing, saving, and retaking recordings.
 
 ---
 
-# Known Limitations
+## Generate
 
-The generator is **not an AI language model**.
+The Generate page creates new dataset sentences.
 
-It uses predefined templates and vocabulary to construct sentences.
-
-This works reasonably well for many normal commands, but it can also produce sentences that are:
-
-* Awkward
-* Unnatural
-* Semantically questionable
-* Ambiguous
-* Grammatically strange
-* Technically grammatical but unlikely to be spoken
-* Completely wrong combinations of devices and locations
-
-For example, it may generate:
+Generation is based on the JSON files in:
 
 ```text
-Turn on the kitchen light in the bedroom.
-
-Turn off the bedroom fan in the basement.
-
-Brighten the blinds in the hallway.
-
-Close the television.
-
-Put the bedroom lights in the dining room.
-
-Power on the kitchen fan in the bathroom.
+data/
 ```
 
-Some of these could make sense in a particular context.
-
-Some clearly do not.
-
-This is a limitation of the rule-based generation system.
-
-There is no semantic AI layer checking every generated sentence.
-
----
-
-# Why Some Weird Sentences Are Useful
-
-The purpose of this project is to collect speech from an actual person.
-
-Real speech is not perfectly grammatical.
-
-People use:
-
-* Pronouns
-* References
-* Reordered words
-* Incomplete commands
-* Informal grammar
-* Regional vocabulary
-* Connected speech
-* Indirect requests
-* Context-dependent phrases
-* Unusual wording
-* Corrections
-* Filler words
-* Different ways of expressing the same request
-
-Examples:
-
-```text
-Turn them living room lights on.
-
-It's pretty dark in here.
-
-Go ahead and cut them lights on.
-
-Turn that one on.
-
-The lights in here, get them on.
-
-It's fucking dark in the living room, how about you turn on the lights in here.
-```
-
-These can be useful training examples.
-
-The problem is that the generator does not always know the difference between a naturally odd human sentence and an accidentally bad sentence.
-
-That distinction currently has to be handled by the person using the application.
-
----
-
-# AI / Vibe Coding Disclosure
-
-This project is intentionally labeled as **vibe coded**.
-
-A substantial amount of the software was produced or modified with generative AI assistance.
-
-AI was used for things including:
-
-* JavaScript
-* HTML
-* CSS
-* JSON structures
-* Sentence-generation logic
-* Smart-home intent design
-* Dataset design
-* Debugging
-* Documentation
-* Example sentences
-* Architecture suggestions
-
-The resulting code has not been professionally reviewed.
-
-It may contain:
-
-* Bugs
-* Inefficient code
-* Poor design decisions
-* Inconsistent data structures
-* Security issues
-* Browser compatibility problems
-* Incorrect assumptions
-* Features that appear to work but have edge cases
-
-The same applies to the linguistic data.
-
-The regional vocabulary should **not** be treated as authoritative research on Kentucky, Appalachian, or Southern English.
-
-It was created as practical vocabulary for this particular project.
-
-If somebody wants to take the basic concept and build a properly engineered version, improve the generator, add a local language model, build better validation, or turn it into a real dataset platform, that is encouraged.
-
----
-
-# Project Structure
-
-```text
-kentucky-voice-dataset-builder/
-│
-├── index.html
-│
-├── css/
-│   └── app.css
-│
-├── js/
-│   ├── app.js
-│   ├── recorder.js
-│   ├── dataset.js
-│   ├── generator.js
-│   ├── audio.js
-│   ├── export.js
-│   └── storage.js
-│
-├── data/
-│   ├── templates.json
-│   ├── vocabulary.json
-│   ├── pronunciation.json
-│   └── smart-home.json
-│
-└── README.md
-```
-
----
-
-# How It Works
-
-## Generator
-
-`js/generator.js`
-
-The generator creates sentences using JSON files in the `data/` directory.
-
-It combines things such as:
+The generator uses:
 
 * Sentence templates
-* Openings
 * Actions
 * Devices
 * Locations
+* Openings
 * Connectors
 * Pronouns
 * Modifiers
@@ -434,148 +272,370 @@ It combines things such as:
 * Regional vocabulary
 * Smart-home intents
 * Pronunciation targets
+* Weighted selection
 
-Weighted random selection allows common phrases to occur more frequently than uncommon phrases.
+The generator attempts to avoid duplicate sentences within a generation batch.
 
-The generator also attempts to prevent duplicate sentences within a generation batch.
+It does not perform semantic reasoning.
 
-It does not understand language in the way a large language model does.
+---
+
+## Dataset
+
+The Dataset page is the management interface for dataset entries.
+
+It can be used to:
+
+* Search entries
+* Filter entries
+* Review transcripts
+* Review recording status
+* Select entries
+* Play recordings
+* Re-record recordings
+* Replace poor recordings
+* Inspect dataset statistics
+
+Dataset entries can contain information such as:
+
+```text
+ID
+Transcript
+Category
+Intent
+Style
+Template
+Regional influence
+Pronunciation targets
+Status
+Recording
+Duration
+MIME type
+Creation time
+Modification time
+Source
+Imported state
+```
+
+The Dataset module loads persisted entries from IndexedDB when the application starts.
+
+---
+
+# Re-recording
+
+A recording should be replaced if it contains:
+
+* Background noise
+* Incorrect speech
+* Missing words
+* Recording artifacts
+* An incorrect sentence
+* A bad microphone capture
+* A recording that otherwise should not be included in training
+
+The intended workflow is:
+
+```text
+Dataset
+   ↓
+Select entry
+   ↓
+Re-record
+   ↓
+Record replacement
+   ↓
+Save replacement
+```
+
+The transcript is not automatically changed based on the audio.
+
+If the intended transcript is:
+
+```text
+Turn the thermostat down.
+```
+
+the recording should contain that intended sentence.
+
+A speech-recognition system should not be used to guess a new transcript and silently replace the original.
+
+The Dataset module persists the replacement recording through `Storage.saveEntry()`.
+
+---
+
+# Settings
+
+The Settings page stores application configuration in IndexedDB.
+
+Settings include:
+
+## Dataset
+
+```text
+Dataset name
+Speaker ID
+```
+
+## Recording
+
+```text
+Countdown
+Silence before stopping
+Minimum duration
+Maximum duration
+Audio pre-roll
+Silence threshold
+```
+
+## Audio
+
+```text
+Format
+Sample rate
+Channels
+Bit depth
+```
+
+Available audio formats in the current interface include:
+
+```text
+WAV
+FLAC
+MP3
+WebM / Opus
+```
+
+Available sample rates include:
+
+```text
+8 kHz
+16 kHz
+22.05 kHz
+24 kHz
+44.1 kHz
+48 kHz
+```
+
+Available channel settings include:
+
+```text
+Mono
+Stereo
+```
+
+Bit depth settings include:
+
+```text
+16-bit
+24-bit
+```
+
+The default recording configuration targets:
+
+```text
+WAV
+16 kHz
+Mono
+16-bit
+```
+
+The Settings page also provides Whisper export options and configurable CSV delimiters.
+
+---
+
+# Recommended Audio Format for Whisper
+
+For a Whisper-style speech dataset, the recommended target is:
+
+```text
+Container: WAV
+Codec: PCM
+Sample rate: 16000 Hz
+Channels: 1
+Bit depth: 16-bit
+```
+
+In short:
+
+```text
+16 kHz
+16-bit
+mono
+PCM WAV
+```
+
+The exporter uses the audio settings to convert recordings to the selected output format when supported. WAV export uses the local `AudioTools` conversion system.
+
+Other speech-recognition pipelines may have different requirements. Check the requirements of the actual training pipeline before training.
+
+---
+
+# Audio Processing
+
+`js/audio.js` provides audio functionality including:
+
+* Blob handling
+* Audio decoding
+* Audio information
+* Mono conversion
+* Sample-rate conversion
+* PCM WAV encoding
+* Audio format handling
+* Audio conversion
+
+The application is designed to keep the original browser recording available while allowing the exporter to produce the desired dataset format.
+
+---
+
+# Sentence Generation
+
+The generator is located in:
+
+```text
+js/generator.js
+```
+
+It loads:
+
+```text
+data/templates.json
+data/vocabulary.json
+data/pronunciation.json
+data/smart-home.json
+```
+
+The generator uses weighted random selection and different sentence structures to create variation.
+
+It can produce:
+
+* Direct commands
+* Conversational commands
+* Questions
+* Indirect requests
+* Noun-first commands
+* Pronoun/reference-based commands
+* Informal phrasing
+* Regional vocabulary
+* Smart-home commands
+
+The generator loads the JSON data through local `fetch()` calls. If a JSON file cannot be loaded, it has internal default structures available as fallbacks.
 
 ---
 
 # Templates
 
-`data/templates.json`
-
-Templates define sentence structures.
-
-Examples:
+Templates are stored in:
 
 ```text
-{opening} {action} {device}
-
-{opening} {action} {device} {location}
-
-{question} {action} {device}
-
-{opening} {device} {modifier}
-
-{opening} it's {modifier} {location}
-
-{opening} {device} is {modifier}
-
-{regional} {action} {device}
+data/templates.json
 ```
 
-The goal is to create different ways of expressing the same intent rather than generating thousands of nearly identical commands.
+They define the structure of generated sentences.
+
+The template system allows the same basic intent to be expressed in different ways.
+
+For example, the concept of turning on a light could be expressed as:
+
+```text
+Turn on the living room lights.
+```
+
+or:
+
+```text
+Can you turn the living room lights on?
+```
+
+or:
+
+```text
+Go ahead and turn them lights on.
+```
+
+The exact sentences available depend on the current template and vocabulary data.
 
 ---
 
 # Vocabulary
 
-`data/vocabulary.json`
-
-Contains reusable vocabulary for:
-
-* Openings
-* Actions
-* Devices
-* Locations
-* Connectors
-* Pronouns
-* Modifiers
-* Questions
-* Regional language
-
-Examples include:
+Vocabulary is stored in:
 
 ```text
-over yonder
-back yonder
-out back
-up front
-right here
-right there
-in here
-in there
-this here
-that there
-them lights
-I reckon
-y'all
+data/vocabulary.json
 ```
 
-Regional vocabulary is intended to occur naturally.
+It contains reusable language for areas such as:
 
-The project is not intended to create an exaggerated or stereotypical Appalachian accent.
+```text
+Openings
+Actions
+Devices
+Locations
+Connectors
+Pronouns
+Modifiers
+Questions
+Regional vocabulary
+```
+
+Regional vocabulary is intended to provide natural variation rather than deliberately spelling words incorrectly.
+
+The purpose is to train on how someone naturally speaks, not to create a cartoon version of a regional accent.
 
 ---
 
 # Pronunciation Targets
 
-`data/pronunciation.json`
-
-Contains words and phrases useful for monitoring pronunciation.
-
-Examples:
+Pronunciation information is stored in:
 
 ```text
-light
-lights
-right
-night
-there
-here
-air
-door
-porch
-house
-out
-about
-down
-home
-y'all
-yonder
-reckon
-folks
+data/pronunciation.json
 ```
 
-The project does not intentionally misspell words to represent an accent.
+This data identifies words and phrases that are useful when building a personalized speech dataset.
 
-For example, a transcript should normally contain:
+The application does not intentionally misspell transcripts to represent an accent.
+
+For example, the transcript should normally use:
 
 ```text
 going to
 ```
 
-rather than:
+rather than changing it to:
 
 ```text
 gonna
 ```
 
-if `going to` is the intended transcript.
+unless `gonna` is actually the intended word in the sentence.
 
-The speaker should simply pronounce the words naturally.
+The speaker should pronounce the sentence naturally.
 
 ---
 
 # Smart-Home Intents
 
-`data/smart-home.json`
+Smart-home definitions are stored in:
 
-Defines smart-home commands that the generator can produce.
+```text
+data/smart-home.json
+```
 
-Current categories include:
+The intent system is designed around smart-home control.
 
-* Lighting
-* Climate
-* Media
-* Security
-* Covers
-* Power
+It can represent operations such as:
 
-Examples:
+```text
+Lighting
+Climate
+Media
+Security
+Covers
+Power
+```
+
+Examples include:
 
 ```text
 light_on
@@ -612,192 +672,212 @@ outlet_on
 outlet_off
 ```
 
-The intent system was designed around smart-home control rather than arbitrary speech.
+The actual available intents are defined by the current `smart-home.json` file.
 
 ---
 
-# Device and Location Problems
+# Why the Generator Can Produce Weird Sentences
 
-One of the generator's biggest weaknesses is that it can combine device names and locations in ways that do not make much sense.
+The generator is rule-based.
 
-For example:
+It does not understand whether every combination makes semantic sense.
 
-```text
-bedroom fan
-```
+For example, a rule-based system can accidentally combine a device and a location that do not belong together.
 
-may already contain a location, but the generator can still add:
-
-```text
-in the basement
-```
-
-resulting in:
+That can produce sentences such as:
 
 ```text
 Turn off the bedroom fan in the basement.
 ```
 
-This is a consequence of the simple rule-based system.
+or other combinations that may be valid in one house but nonsensical in another.
 
-A better implementation would separate:
+This is not a semantic language model.
 
-* Device type
-* Device name
-* Device location
-* Device aliases
-
-and understand the relationship between them.
-
-That is one of the areas where a future implementation could substantially improve on this project.
+Generated sentences should be reviewed before recording.
 
 ---
 
-# Recording
+# Natural Speech Is Not Perfect Speech
 
-`js/recorder.js`
+The purpose of the dataset is to teach a speech-recognition system how a real person talks.
 
-The intended recording workflow is:
+Real speech can include:
 
-1. Display a sentence.
-2. Wait for the user to start.
-3. Give a countdown.
-4. Start recording.
-5. Detect when the user has stopped speaking.
-6. Stop the recording.
-7. Save the audio.
-8. Mark the sentence as recorded.
-9. Move to the next pending sentence.
+* Different word orders
+* Pronouns
+* References
+* Informal grammar
+* Regional vocabulary
+* Indirect requests
+* Filler words
+* Corrections
+* Context-dependent wording
+* Connected speech
+* Unusual but understandable phrasing
 
-Manual recording controls are also useful when automatic silence detection does not behave correctly.
-
-The application should not automatically change the transcript based on what the recording sounds like.
-
-The displayed sentence is the intended transcript.
-
-If the recording contains a mistake, the recording should be discarded or re-recorded rather than silently changing the transcript.
-
----
-
-# Audio
-
-`js/audio.js`
-
-Handles audio-related functions such as:
-
-* Audio format handling
-* Audio duration
-* Audio playback
-* Audio conversion where supported
-* Audio metadata
-* Audio validation
-
-The application's exported dataset uses WAV audio by default.
-
-The preferred dataset audio specification is:
+Examples might include:
 
 ```text
-Format: WAV
-Codec: PCM
-Channels: Mono
-Sample rate: 16000 Hz
-Bit depth: 16-bit
+Turn them living room lights on.
+
+It's pretty dark in here.
+
+Go ahead and cut them lights on.
+
+Turn that one on.
+
+The lights in here, get them on.
 ```
 
-This corresponds to:
+These kinds of variations can be valuable.
+
+The important distinction is between:
 
 ```text
-16 kHz
-16-bit
-mono
-PCM WAV
+Natural unusual speech
 ```
 
-This is a practical format for Whisper-style speech datasets.
+and:
 
-Individual training systems may impose additional requirements, so the target training pipeline should always be checked before training.
+```text
+A generated sentence that simply makes no sense.
+```
 
-The important part is that the audio should be clean, intelligible speech with the transcript matching what was intentionally spoken.
+The application cannot reliably make that distinction automatically.
+
+Human review remains necessary.
 
 ---
 
-# Dataset Management
+# Dataset Quality
 
-`js/dataset.js`
+More recordings do not automatically mean a better dataset.
 
-Maintains dataset entries.
+Useful variation is more important than producing thousands of nearly identical commands.
 
-Entries can contain information such as:
+Useful variation can include:
 
 ```text
-ID
+Different sentence structures
+Different openings
+Different word orders
+Different device references
+Different locations
+Pronouns
+Indirect requests
+Conversational phrasing
+Regional vocabulary
+Different levels of formality
+```
+
+The speaker should speak naturally.
+
+Do not exaggerate an accent for the recording.
+
+If the person normally says something in a particular way, that natural pronunciation is exactly what the personalized dataset is intended to capture.
+
+---
+
+# Transcript Accuracy
+
+The transcript should represent the intended speech.
+
+If the target transcript is:
+
+```text
+Can you turn the thermostat down?
+```
+
+the recording should contain that sentence.
+
+If the speaker says something different, the recording should normally be:
+
+* Re-recorded
+* Rejected
+* Or otherwise removed from the training dataset
+
+Do not automatically replace the transcript with an automatic speech-recognition guess.
+
+For supervised speech training, the relationship between:
+
+```text
+Audio
+    ↕
 Transcript
-Category
-Intent
-Style
-Regional influence
-Pronunciation targets
-Template
-Status
-Recording
-Creation time
-Modification time
 ```
 
-Possible statuses include:
+is fundamental.
 
-```text
-pending
-recorded
-skipped
-```
-
-The Dataset tab can also be used to replace an existing recording through the re-record function.
-
-This allows poor recordings to be corrected without having to delete and regenerate the associated sentence.
+Incorrect transcripts teach the model incorrect relationships.
 
 ---
 
-# Storage
+# Dataset Storage
 
-`js/storage.js`
+The storage system is:
 
-The application uses browser storage for the working dataset.
+```text
+IndexedDB
+    ↓
+Storage
+    ↓
+Dataset
+    ↓
+App.state
+    ↓
+UI
+```
 
-IndexedDB is more appropriate than Local Storage for audio because recordings can be much larger than normal text data.
+IndexedDB is the persistent source of truth for configuration and persisted dataset entries.
 
-However, the current implementation should **not** be considered reliable permanent storage.
+The database currently uses:
 
-A page refresh may result in loss of the current working dataset.
+```text
+Name:
+kentucky_voice_dataset_builder
 
-Browser storage behavior can also be affected by:
+Version:
+2
 
-* Browser settings
-* Storage quotas
-* Clearing site data
-* Private browsing
-* Browser crashes
-* Application changes
-* Browser compatibility
+Object stores:
+entries
+settings
+meta
+```
 
-For that reason:
+The `entries` store uses the dataset entry ID as its key path and contains indexes for dataset metadata.
 
-**Export your dataset frequently.**
+Audio Blobs are stored directly in IndexedDB.
 
-The ZIP export is the important backup mechanism.
+The storage layer normalizes different audio representations so that the application can work with:
+
+```text
+entry.recording.blob
+```
+
+and older structures such as:
+
+```text
+entry.audioBlob
+```
+
+The normalized representation keeps both the legacy audio field and the recording object available for compatibility.
 
 ---
 
-# Import and Export
+# ZIP Export
 
-`js/export.js`
+The Import / Export page can create a ZIP archive containing the recorded dataset.
 
-The application can export the dataset as a ZIP archive.
+The exporter creates an `audio/` directory and places the recordings inside it.
 
-The normal exported structure is:
+It also creates metadata and dataset information.
+
+The basic exported structure is:
 
 ```text
-kentucky-voice-dataset-YYYYMMDD-HHMMSS.zip
+dataset.zip
 │
 ├── audio/
 │   ├── 000001.wav
@@ -806,164 +886,26 @@ kentucky-voice-dataset-YYYYMMDD-HHMMSS.zip
 │   └── ...
 │
 ├── metadata.csv
-├── config.json
 ├── manifest.json
+├── config.json
 └── README.txt
 ```
 
-The exact ZIP filename may vary.
+The exact additional files may depend on the current exporter configuration.
 
-The important dataset files are:
-
-```text
-audio/
-metadata.csv
-```
-
-The other files contain additional application information.
+The exporter only includes entries that have usable audio and text.
 
 ---
 
 # `metadata.csv`
 
-The exported metadata file is a CSV designed around the standard two-column Whisper-style format used by this project.
-
-The **first line must be exactly:**
+The default metadata format is a two-column CSV:
 
 ```csv
 audio,text
 ```
 
-The audio column contains the relative path to the audio file.
-
-The text column contains the intended transcript.
-
-Example:
-
-```csv
-audio,text
-audio/000001.wav,Can you turn off the television
-audio/000002.wav,Turn off that air conditioner
-audio/000003.wav,"Hey, go ahead and you open the garage door upstairs"
-audio/000004.wav,Could you go on and adjust the air conditioner
-audio/000005.wav,"You see that TV over there, turn off it"
-```
-
-CSV quoting is required when transcript text contains characters that would interfere with CSV parsing, such as commas or quotation marks.
-
-For example:
-
-```csv
-audio/000003.wav,"Hey, go ahead and you open the garage door upstairs"
-```
-
-The application automatically handles CSV escaping during export.
-
----
-
-# Importing a Dataset
-
-The application supports two related ZIP import formats.
-
-The first is the application's normal exported dataset format.
-
-The second is a simpler **fallback import format** intended for importing datasets created outside the application.
-
-The importer also supports a ZIP where the actual dataset is contained inside one additional top-level folder.
-
-This is useful when a dataset is packaged like:
-
-```text
-my-dataset.zip
-│
-└── some-random-folder-name/
-    │
-    ├── audio/
-    │   ├── 000001.wav
-    │   ├── 000002.wav
-    │   └── ...
-    │
-    └── metadata.csv
-```
-
-The folder name does **not** need to be known in advance.
-
-The importer searches for the dataset structure inside the ZIP instead of requiring `audio/` and `metadata.csv` to exist only at the ZIP root.
-
-This means a ZIP such as:
-
-```text
-my-dataset.zip
-└── 8f4c2b1a/
-    ├── audio/
-    │   ├── 000001.wav
-    │   └── 000002.wav
-    └── metadata.csv
-```
-
-can still be imported.
-
----
-
-# Creating Your Own Dataset for Import
-
-You can create a compatible dataset without using this application.
-
-The simplest supported format is:
-
-```text
-your-dataset.zip
-│
-└── your-folder-name/
-    │
-    ├── audio/
-    │   ├── 000001.wav
-    │   ├── 000002.wav
-    │   ├── 000003.wav
-    │   └── ...
-    │
-    └── metadata.csv
-```
-
-The additional folder is optional.
-
-You can also create:
-
-```text
-your-dataset.zip
-│
-├── audio/
-│   ├── 000001.wav
-│   ├── 000002.wav
-│   └── ...
-│
-└── metadata.csv
-```
-
-Both layouts are supported.
-
-The importer is primarily interested in finding:
-
-```text
-audio/
-metadata.csv
-```
-
-inside the ZIP.
-
----
-
-# Requirements for Your Own `metadata.csv`
-
-Your `metadata.csv` must begin with:
-
-```csv
-audio,text
-```
-
-The first column must identify the audio file.
-
-The second column must contain the transcript.
+The first row is the header.
 
 Example:
 
@@ -974,12 +916,127 @@ audio/000002.wav,Turn off the television
 audio/000003.wav,Can you turn the thermostat down
 ```
 
-The audio path in `metadata.csv` should correspond to the audio file's location inside the ZIP.
+The exporter automatically handles CSV quoting.
+
+For example, a transcript containing a comma may be exported as:
+
+```csv
+audio/000004.wav,"Hey, turn the living room lights on"
+```
+
+Quotes inside CSV fields are escaped according to normal CSV rules.
+
+The metadata column names and delimiter are configurable through the application's export configuration.
+
+---
+
+# Importing a Dataset
+
+The application accepts ZIP files through the Import / Export page.
+
+It supports two main situations.
+
+## Normal Application Export
+
+A ZIP produced by this application can contain:
+
+```text
+audio/
+metadata.csv
+manifest.json
+config.json
+```
+
+The normal importer attempts to use the manifest and metadata to restore the dataset.
+
+## Simple External Dataset
+
+The application also supports a simpler dataset containing:
+
+```text
+audio/
+metadata.csv
+```
+
+This is the fallback import format.
+
+The importer can search for the required files even when the dataset is placed inside an additional top-level directory.
 
 For example:
 
 ```text
-audio/000001.wav
+dataset.zip
+└── my-dataset/
+    ├── audio/
+    │   ├── 000001.wav
+    │   └── 000002.wav
+    │
+    └── metadata.csv
+```
+
+is supported.
+
+The outer directory does not have to be named `my-dataset`.
+
+---
+
+# Creating Your Own Import Dataset
+
+The simplest compatible dataset is:
+
+```text
+my-dataset/
+│
+├── audio/
+│   ├── 000001.wav
+│   ├── 000002.wav
+│   └── 000003.wav
+│
+└── metadata.csv
+```
+
+The ZIP can contain that directory:
+
+```text
+my-dataset.zip
+└── my-dataset/
+    ├── audio/
+    └── metadata.csv
+```
+
+or the files can be placed directly at the ZIP root:
+
+```text
+my-dataset.zip
+├── audio/
+└── metadata.csv
+```
+
+Both layouts are supported by the importer.
+
+---
+
+# Custom `metadata.csv`
+
+The minimum useful CSV is:
+
+```csv
+audio,text
+audio/000001.wav,Turn on the living room lights
+audio/000002.wav,Turn off the television
+audio/000003.wav,Can you turn the thermostat down
+```
+
+The `audio` field identifies the audio file.
+
+The `text` field contains the transcript.
+
+The audio path should correspond to the audio file inside the ZIP.
+
+For example:
+
+```csv
+audio/000001.wav,Turn on the living room lights
 ```
 
 corresponds to:
@@ -989,103 +1046,37 @@ audio/
 └── 000001.wav
 ```
 
-If the dataset is inside another folder, the metadata does not need to include that outer folder name.
-
-For example, this ZIP:
+The importer also recognizes common alternate transcript column names such as:
 
 ```text
-dataset.zip
-└── random-folder/
-    ├── audio/
-    │   └── 000001.wav
-    └── metadata.csv
+text
+transcript
+sentence
+utterance
+phrase
 ```
 
-can still use:
+The normal format should still be:
 
 ```csv
 audio,text
-audio/000001.wav,Turn on the living room lights
 ```
 
-The importer normalizes the paths and searches for the matching audio file.
+because that is the format produced by this application.
 
 ---
 
-# CSV Rules
+# Custom Audio Requirements
 
-The importer supports normal CSV quoting.
-
-If the transcript contains a comma, quote, or other CSV-sensitive character, the field should be quoted.
-
-For example:
-
-```csv
-audio,text
-audio/000001.wav,"Hey, turn the living room lights on"
-```
-
-A quotation mark inside the transcript must be represented using two quotation marks according to normal CSV rules.
-
-Example:
-
-```csv
-audio,text
-audio/000001.wav,"He said ""turn on the lights"""
-```
-
-The application has its own CSV parser for importing metadata.
-
-The safest format is always:
-
-```csv
-audio,text
-```
-
-followed by one recording per line.
-
----
-
-# Audio Requirements for Custom Imports
-
-For reliable importing and later Whisper training, use:
+For a Whisper-oriented dataset, use:
 
 ```text
 WAV
 PCM
 16-bit
-16,000 Hz
+16000 Hz
 Mono
 ```
-
-Recommended:
-
-```text
-Sample rate: 16000 Hz
-Channels: 1
-Bit depth: 16-bit
-Codec: PCM
-Container: WAV
-```
-
-Example:
-
-```text
-000001.wav
-```
-
-should be:
-
-```text
-16 kHz
-16-bit
-mono
-PCM WAV
-```
-
-The importer does not use the filename alone to determine the transcript.
-
-The transcript comes from `metadata.csv`.
 
 For example:
 
@@ -1093,83 +1084,58 @@ For example:
 audio/000001.wav
 ```
 
-must have a corresponding metadata row:
-
-```csv
-audio/000001.wav,Turn on the living room lights
-```
-
-The audio should contain the speech represented by that transcript.
-
----
-
-# Simple Custom Import Example
-
-A complete manually created dataset can therefore be as simple as:
+should contain:
 
 ```text
-my-dataset/
-│
-├── audio/
-│   ├── 000001.wav
-│   ├── 000002.wav
-│   ├── 000003.wav
-│   ├── 000004.wav
-│   └── 000005.wav
-│
-└── metadata.csv
+16 kHz
+16-bit
+mono
+PCM audio
 ```
 
-With:
+The transcript in `metadata.csv` should correspond to what the recording intentionally contains.
 
-```csv
-audio,text
-audio/000001.wav,Can you turn off the television
-audio/000002.wav,Turn off that air conditioner
-audio/000003.wav,"Hey, go ahead and you open the garage door upstairs"
-audio/000004.wav,Could you go on and adjust the air conditioner
-audio/000005.wav,"You see that TV over there, turn off it"
-```
-
-Zip the `my-dataset` folder:
-
-```text
-my-dataset.zip
-```
-
-Then import that ZIP through the application.
-
-The ZIP may also contain additional files, but they are not required for the basic fallback import.
+The importer does not infer the transcript from the filename.
 
 ---
 
 # Fallback Import
 
-The application has a fallback importer specifically for simple datasets that do not contain the application's full export structure.
+The fallback importer is designed for simple datasets that do not contain the full application export structure.
 
-The fallback importer is used when the normal dataset import cannot successfully import the dataset.
-
-It looks for:
+Its basic requirements are:
 
 ```text
 metadata.csv
-```
-
-and:
-
-```text
 audio/
 ```
 
-within the ZIP.
+The importer first attempts to locate `metadata.csv` at the detected dataset root.
 
-The importer can also find these files when they are located inside one additional top-level folder.
+If it cannot find it there, it searches the ZIP more broadly for a `metadata.csv`.
 
-For example:
+It then searches for audio files relative to the metadata file and, if necessary, searches more broadly for audio files inside an `audio/` directory.
+
+For every matching audio file, it:
+
+1. Finds the corresponding metadata row.
+2. Reads the transcript.
+3. Loads the audio into a Blob.
+4. Creates a dataset entry.
+5. Marks the entry as imported.
+6. Saves the entry through the Dataset/Storage system.
+
+The imported entry receives default metadata when information such as category, intent, style, or pronunciation targets is not supplied.
+
+---
+
+# Fallback Import Example
+
+This is enough to create a basic external dataset:
 
 ```text
 dataset.zip
-└── abc123/
+└── anything/
     ├── metadata.csv
     └── audio/
         ├── 000001.wav
@@ -1177,432 +1143,538 @@ dataset.zip
         └── 000003.wav
 ```
 
-is a valid layout.
-
-The fallback importer uses the following information:
-
-```text
-metadata.csv
-    ↓
-audio path
-    ↓
-transcript
-    ↓
-audio file
-    ↓
-new dataset entry
-```
-
-Additional metadata such as:
-
-```text
-category
-intent
-style
-regionalInfluence
-pronunciationTargets
-template
-```
-
-is not required for fallback imports.
-
-Those values are initialized to basic defaults.
-
----
-
-# What Happens During Fallback Import
-
-For each row in `metadata.csv`, the importer:
-
-1. Reads the audio path.
-2. Finds the corresponding audio file inside the ZIP.
-3. Reads the transcript.
-4. Loads the audio as a Blob.
-5. Creates a dataset entry.
-6. Assigns the transcript.
-7. Adds the recording to the dataset.
-8. Continues to the next entry.
-
-For example:
+With:
 
 ```csv
 audio,text
 audio/000001.wav,Turn on the kitchen lights
+audio/000002.wav,Turn off the television
+audio/000003.wav,Turn the thermostat down
 ```
 
-results in an imported dataset entry containing the audio from:
+The folder name can be arbitrary.
 
-```text
-audio/000001.wav
-```
-
-and the transcript:
-
-```text
-Turn on the kitchen lights
-```
+The importer searches for the actual dataset structure rather than requiring a specific outer directory name.
 
 ---
 
-# Import Failure Conditions
+# Import Errors
 
-The importer will reject the dataset if it cannot find the required information.
-
-Typical errors include:
+Common fallback-import failures include:
 
 ```text
-Import failed. The ZIP does not contain a usable dataset and no metadata.csv was found for fallback import.
+Import failed. No metadata.csv was found.
 ```
 
-This means the importer could not find a usable `metadata.csv`.
-
-Another possible error is:
+The ZIP did not contain a usable metadata file.
 
 ```text
 Import failed. metadata.csv contains no dataset entries.
 ```
 
-This means the CSV was found but contained no usable recording rows.
-
-Another possible error is:
+The metadata file was found but contained no usable rows.
 
 ```text
-Import failed. No audio files were found in the audio/ folder.
+Import failed. No audio files were found in an audio/ folder.
 ```
 
-This means the metadata exists, but the importer could not find the corresponding audio directory.
+The importer could not find compatible audio files.
 
-A fallback import may also fail if none of the metadata rows can be matched to actual audio files.
+```text
+Fallback import failed. No recordings could be imported using audio/ and metadata.csv.
+```
+
+The importer found the metadata and audio structure but could not match usable recordings to transcripts.
+
+These errors are preferable to silently importing an incomplete dataset.
 
 ---
 
-# Importing an Existing Export
+# Importing Into an Existing Dataset
 
-A ZIP exported directly by the application contains additional information.
+Imported recordings are added to the current Dataset state.
 
-Example:
+Each imported recording becomes a normal dataset entry.
+
+The imported entry is marked:
 
 ```text
-kentucky-voice-dataset-20260808-190000.zip
-│
-├── audio/
-│   ├── 000001.wav
-│   ├── 000002.wav
-│   └── ...
-│
-├── metadata.csv
-├── config.json
-├── manifest.json
-└── README.txt
+imported: true
 ```
 
-The normal importer attempts to restore:
+The recording is then persisted through IndexedDB.
 
-* Recordings
-* Transcripts
-* IDs
-* Categories
-* Intents
-* Styles
-* Templates
-* Regional influences
-* Pronunciation targets
-* Recording durations
-* MIME types
-* Creation timestamps
-* Configuration
-
-If the normal import cannot successfully recover recordings, the importer can attempt the simpler fallback import.
+If an imported entry uses an ID that already exists, the Dataset module can replace the existing entry rather than blindly creating another copy.
 
 ---
 
-# Adding Imported Data
+# Audio Export and Conversion
 
-Importing a dataset adds the imported recordings to the current dataset.
-
-It is intended to allow the user to:
+When exporting WAV audio, the exporter attempts to pass the recording through:
 
 ```text
-Create dataset
-    ↓
-Export
-    ↓
-Later import
-    ↓
-Continue recording
+AudioTools.convert()
 ```
 
-It can also be used to start with a dataset created elsewhere and then continue recording additional examples inside the application.
+using the configured audio settings.
 
-The imported audio and transcript become normal dataset entries.
+If conversion fails, the exporter logs the problem and falls back to the original recording rather than silently deleting the recording from the export.
 
-Once imported, those entries can be reviewed and, where supported, re-recorded from the Dataset tab.
-
----
-
-# Backup Workflow
-
-Because browser persistence is unreliable in the current version, the recommended workflow is:
-
-```text
-Generate sentences
-        ↓
-Record sentences
-        ↓
-Export ZIP
-        ↓
-Continue recording
-        ↓
-Export another ZIP
-        ↓
-Keep the ZIP files somewhere safe
-```
-
-If the page refreshes and the working dataset disappears, import the most recent ZIP backup.
-
-The import/export system is intended to make this recovery possible.
-
----
-
-# Offline Operation
-
-The application is designed to operate locally.
-
-It does not require a local AI model.
-
-Once the application files and required dependencies are downloaded, the generator, recorder, dataset manager, and export/import systems can operate without an Internet connection.
-
-Some browsers restrict functionality when an HTML file is opened directly with:
-
-```text
-file://
-```
-
-For reliable operation, run the project through a small local HTTP server.
-
-For example:
-
-```bash
-python3 -m http.server 8000
-```
-
-Then open:
-
-```text
-http://localhost:8000
-```
-
-No Internet connection is required for the local server.
-
-The local server is simply providing the browser with HTTP instead of loading the application directly from the filesystem.
+This means the exported audio should still be checked before beginning a training run.
 
 ---
 
 # JSZip
 
-The export system uses JSZip to create ZIP archives.
-
-For completely offline operation, JSZip should be stored locally rather than loaded from a CDN.
-
-Example:
+ZIP creation and extraction use the local copy of:
 
 ```text
-js/
-├── app.js
-├── recorder.js
-├── dataset.js
-├── generator.js
-├── audio.js
-├── export.js
-├── storage.js
-└── jszip.min.js
+js/jszip.min.js
+```
+
+The current HTML loads JSZip locally before the application systems.
+
+This avoids depending on a CDN for normal ZIP import/export operation.
+
+---
+
+# Project Structure
+
+The current repository structure is:
+
+```text
+kentucky-voice-dataset-builder/
+│
+├── kentucky-voice-dataset-builder/
+│   │
+│   ├── index.html
+│   │
+│   ├── css/
+│   │   └── app.css
+│   │
+│   ├── data/
+│   │   ├── pronunciation.json
+│   │   ├── smart-home.json
+│   │   ├── templates.json
+│   │   └── vocabulary.json
+│   │
+│   └── js/
+│       ├── app.js
+│       ├── audio.js
+│       ├── dataset.js
+│       ├── export.js
+│       ├── generator.js
+│       ├── jszip.min.js
+│       ├── recorder.js
+│       └── storage.js
+│
+└── README.md
+```
+
+The JavaScript files are loaded in dependency order by `index.html`.
+
+---
+
+# JavaScript Components
+
+## `app.js`
+
+Main application controller.
+
+Responsibilities include:
+
+* Application startup
+* Storage initialization
+* Configuration loading
+* Dataset initialization
+* Navigation
+* Settings
+* UI synchronization
+* Dataset statistics
+* Application state
+
+The current application version is:
+
+```text
+0.5.1
+```
+
+The application startup sequence is intended to be:
+
+```text
+IndexedDB
+   ↓
+Configuration
+   ↓
+Dataset
+   ↓
+UI
+   ↓
+Recorder
 ```
 
 ---
 
-# Privacy
+## `storage.js`
 
-The application is intended to keep recordings local.
+Provides the IndexedDB persistence layer.
 
-It does not need to upload recordings to a remote server.
+It handles:
 
-Voice recordings can contain highly identifying information and should be treated as private data.
+* Database initialization
+* Dataset entries
+* Audio Blobs
+* Configuration
+* Settings
+* Metadata
+* Entry normalization
+* Entry lookup
+* Entry counting
+* Entry saving
+* Entry deletion
 
-Be careful when sharing exported datasets.
+The storage layer uses `store.put()` when saving entries, allowing an existing ID to be updated as well as allowing new entries to be inserted.
 
 ---
 
-# Dataset Quality
+## `dataset.js`
 
-The goal is not simply to generate the largest possible number of recordings.
+Controls the in-memory dataset and Dataset UI.
 
-A smaller dataset containing varied, natural speech can be more useful than thousands of nearly identical commands.
+Responsibilities include:
 
-Useful variation includes:
+* Loading persisted entries
+* Adding sentences
+* Receiving recordings
+* Saving recordings
+* Importing entries
+* Selecting entries
+* Re-recording
+* Searching
+* Filtering
+* Statistics
+* Dataset rendering
+* Current-sentence management
 
-* Sentence structure
-* Word order
-* Openings
-* Actions
-* Devices
-* Locations
-* Pronouns
-* References
-* Formality
-* Regional vocabulary
-* Conversational phrasing
+Completed recordings are persisted before Dataset advances to another pending sentence.
 
-The speaker should speak naturally.
+---
 
-Do not deliberately exaggerate an accent.
+## `recorder.js`
 
-Useful examples include:
+Controls microphone recording.
+
+It manages:
+
+* Microphone access
+* Recording state
+* Countdown
+* Silence detection
+* Maximum recording duration
+* Recording chunks
+* Audio Blob creation
+* Current sentence association
+* Re-recording
+* Retakes
+* Recording UI
+
+The recorder uses the current Dataset sentence ID to help prevent a completed recording from being associated with the wrong sentence.
+
+---
+
+## `audio.js`
+
+Provides audio processing and conversion.
+
+It handles:
+
+* Blob decoding
+* AudioContext
+* AudioBuffer information
+* Mono conversion
+* Resampling
+* WAV encoding
+* Format conversion
+
+---
+
+## `generator.js`
+
+Loads the JSON language data and generates smart-home utterances.
+
+It is intentionally rule-based.
+
+There is no local LLM or remote AI service involved in sentence generation.
+
+---
+
+## `export.js`
+
+Handles:
+
+* ZIP export
+* ZIP import
+* Metadata CSV generation
+* Manifest handling
+* Configuration handling
+* Audio file discovery
+* Metadata matching
+* Fallback imports
+
+The exporter creates an `audio/` folder and writes metadata rows referencing those files.
+
+---
+
+# Current Known Limitations
+
+## Rule-Based Generation
+
+The generator does not semantically validate sentences.
+
+Generated sentences can therefore be:
+
+* Awkward
+* Unnatural
+* Ambiguous
+* Grammatically strange
+* Semantically incorrect
+* Unlikely to be spoken naturally
+
+Generated sentences should be reviewed before recording.
+
+---
+
+## Pending Generated Sentences
+
+Generated pending entries are not currently persisted to IndexedDB merely because they were generated.
+
+Persistence occurs when recordings are saved or entries are imported.
+
+Therefore, an application refresh can remove pending generated sentences that have not yet been recorded.
+
+---
+
+## Browser Storage
+
+IndexedDB provides persistent local storage, but it should not be treated as a complete backup strategy.
+
+Use ZIP exports for backups.
+
+---
+
+## Current Startup Issue
+
+The current `app.js` calls:
+
+```javascript
+setVersion();
+```
+
+during initialization.
+
+The current `app.js` contains the call and comments describing the intended behavior, but there is no corresponding `setVersion()` function in the current file.
+
+This can produce:
+
+```text
+ReferenceError: setVersion is not defined
+```
+
+during application initialization.
+
+The version itself is already exposed through:
+
+```javascript
+App.VERSION
+```
+
+and stored as:
+
+```text
+0.5.1
+```
+
+The `index.html` footer currently contains an older static fallback value of `v0.1.0`, while the application controller has moved to `0.5.1`.
+
+This should be corrected in the application code before treating the current checkout as a clean release.
+
+---
+
+# Dataset Quality Recommendations
+
+A useful personalized speech dataset should contain variation without becoming garbage.
+
+Good variation includes:
 
 ```text
 Turn on the living room lights.
 
 Can you turn the living room lights on?
 
-Go ahead and turn them lights on.
+Go ahead and turn them living room lights on.
 
-It's getting pretty dark in here.
+It's getting dark in here.
 
 It's too dark in the living room.
 
 Can you cut the lights on in here?
-
-How about you turn the living room light on?
-
-I reckon you could turn that light on.
 ```
+
+The exact wording should reflect how the speaker actually talks.
+
+Do not deliberately exaggerate pronunciation.
+
+Do not intentionally introduce spelling mistakes into transcripts merely to represent an accent.
+
+Do not keep recordings that contain obvious mistakes simply to increase the dataset size.
+
+A smaller clean dataset is preferable to a larger dataset containing mislabeled audio.
 
 ---
 
-# Dataset Accuracy
+# Privacy
 
-The transcript should represent what the speaker is intentionally saying.
+Voice recordings can contain identifying information.
 
-If the target transcript is:
+The application is designed to operate locally and does not require uploading recordings to a remote service.
 
-```text
-Can you turn the thermostat down?
-```
+However, exported ZIP files contain the actual recordings.
 
-the speaker should attempt to say that sentence naturally.
+Treat exported datasets as private files unless you intentionally want to share them.
 
-The dataset should not be created by recording random speech and then guessing what the speaker said afterward.
-
-For speech-recognition training, the relationship between audio and transcript is critical.
-
-An incorrect transcript effectively teaches the model that the wrong sound corresponds to the wrong words.
-
-If a recording is bad:
-
-```text
-Wrong pronunciation
-Background noise
-Missed words
-Wrong sentence
-Coughing
-Talking over the recording
-Recording started too late
-Recording stopped too early
-```
-
-the preferred solution is to re-record it or remove it.
-
-The Dataset tab's re-record capability exists specifically to make correcting bad recordings easier.
+Do not publish recordings containing personal or sensitive information without considering the consequences.
 
 ---
 
-# Project Philosophy
+# AI / Vibe-Coding Disclosure
 
-The original goal was simple:
+This project was built with substantial generative-AI assistance.
 
-> Build a dataset around how one real person actually talks to a smart home.
+AI assistance was used for areas including:
 
-That means the dataset should contain more than perfectly structured commands.
+* JavaScript
+* HTML
+* CSS
+* JSON structures
+* Dataset architecture
+* Sentence-generation logic
+* Smart-home intent design
+* Debugging
+* Documentation
+* Architecture decisions
+* Examples
 
-It should include:
+The project has not been professionally engineered or formally audited.
 
-* Normal commands
-* Casual commands
-* Indirect requests
-* Regional expressions
-* Pronoun references
-* Context-dependent requests
-* Natural speech reductions
-* Some unusual but understandable phrasing
+Possible issues include:
 
-The generator should not be treated as a source of perfect English.
+* Bugs
+* Browser compatibility problems
+* Inefficient code
+* Inconsistent structures
+* Incorrect assumptions
+* Edge cases
+* Poor architectural decisions
+* Security issues
 
-It is a tool for creating material that can then be recorded, reviewed, and used to build a personalized speech dataset.
+The linguistic data should also not be treated as authoritative research on Kentucky, Appalachian, or Southern English.
+
+The regional vocabulary exists for the practical purpose of generating speech examples for this project.
+
+---
+
+# What This Project Is
+
+It is a practical tool for:
+
+```text
+Generating speech prompts
+        ↓
+Recording natural speech
+        ↓
+Managing recordings
+        ↓
+Persisting completed entries locally
+        ↓
+Exporting a training dataset
+```
+
+It is especially useful for experimenting with personalized speech recognition and smart-home voice control.
 
 ---
 
 # What This Project Is Not
 
-This project is not:
+It is not:
 
-* Professionally engineered software
-* A professional linguistic corpus
-* A scientific study of Appalachian English
-* A universal Whisper dataset formatter
-* A semantic natural-language generation system
-* A replacement for human review
+* A professional speech corpus
+* A professional linguistic study
+* An authoritative representation of Appalachian English
+* A semantic natural-language-generation system
+* A replacement for human dataset review
+* A universal Whisper training pipeline
 * A guarantee that generated sentences make sense
-* A guarantee that every exported dataset works with every Whisper training system
-* A guarantee that a trained speech model will understand every command
+* A guarantee that exported data meets every training framework's requirements
+* A guarantee that a trained model will understand every possible command
 
-It is a practical experiment in building a personalized smart-home voice dataset.
+It is a dataset-building tool and an experiment in personalized speech recognition.
 
 ---
 
-# If You Want to Build Something Better
+# Future Improvements
 
-Take the idea.
+Potential future improvements include:
 
-Seriously.
-
-The useful part of this project is the concept more than the code.
-
-A better implementation could add:
-
-* Local LLM-based sentence validation
-* Semantic device/location validation
-* Better grammar checking
-* Better Home Assistant intent modeling
-* Entity-aware generation
-* More realistic conversational context
-* Automatic bad-sentence detection
-* Recording quality analysis
-* Reliable persistent storage
+* Persisting pending generated sentences
+* More robust semantic sentence validation
+* Device/location relationships
+* Entity-aware smart-home generation
 * Better dataset versioning
-* Better Whisper dataset exports
-* Multiple speaker support
-* Phoneme or pronunciation analysis
-* Better regional-language controls
-
-If someone takes this project and turns the idea into something substantially better, that is a success rather than a failure of the original project.
-
-The point was to make something useful enough to experiment with, not to pretend that a pile of AI-assisted JavaScript is going to overthrow the field of speech recognition.
-
----
-
-# Final Warning
-
-**Save often. Export often.**
-
-The current browser storage implementation can lose the working dataset after a page refresh.
-
-The ZIP export is your backup.
-
-If you care about the recordings, export them.
+* More detailed recording-quality checks
+* Automatic bad-recording detection
+* Multiple-speaker support
+* Better training-framework exports
+* Phoneme and pronunciation analysis
+* More advanced conversational sentence generation
+* Local language-model-assisted generation and validation
+* Improved IndexedDB recovery and migration
 
 ---
 
-## License
+# Project Philosophy
 
-No license has been selected yet.
+The original idea was simple:
 
-Choose an appropriate license before distributing the project publicly.
+> Build a speech dataset around how one real person actually talks to a smart home.
+
+That means the dataset should not consist entirely of rigid commands such as:
+
+```text
+Turn on the living room lights.
+```
+
+It should also contain natural alternatives:
+
+```text
+Can you turn the lights on in here?
+
+It's getting dark in the living room.
+
+Go ahead and cut them lights on.
+
+You see them lights over there? Turn them on.
+```
+
+The application exists to make collecting that variety easier.
+
+The generated text is a starting point.
+
+The human speaker and the quality of the resulting recordings are what ultimately determine the usefulness of the dataset.
+
+---
+
+# License
+
+No license has currently been selected for the project.
+
+Choose and add an appropriate license before distributing the project under an open-source license.
