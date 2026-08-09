@@ -896,31 +896,135 @@ function setupCustomSentence() {
                 event.preventDefault();
 
 
-                try {
+                function readConfigFromUI() {
 
-                    readConfigFromUI();
+    const datasetName =
+        getValue("setting-dataset-name").trim();
 
-                    await saveConfig();
+    const speakerId =
+        getValue("setting-speaker-id").trim();
 
+    const countdownSeconds =
+        getNumber("setting-countdown");
 
-                    showOperationStatus(
-                        "Settings saved.",
-                        "success"
-                    );
+    const silenceBeforeStop =
+        getNumber("setting-silence");
 
-                } catch (error) {
+    const minimumDuration =
+        getNumber("setting-min-duration");
 
-                    console.error(
-                        "Could not save settings:",
-                        error
-                    );
+    const maximumDuration =
+        getNumber("setting-max-duration");
 
+    const preRollMs =
+        getNumber("setting-preroll");
 
-                    showOperationStatus(
-                        "Settings could not be saved.",
-                        "error"
-                    );
-                }
+    const silenceThreshold =
+        getNumber("setting-silence-threshold");
+
+    if (
+        !Number.isFinite(countdownSeconds) ||
+        !Number.isFinite(silenceBeforeStop) ||
+        !Number.isFinite(minimumDuration) ||
+        !Number.isFinite(maximumDuration) ||
+        !Number.isFinite(preRollMs) ||
+        !Number.isFinite(silenceThreshold) ||
+        countdownSeconds < 0 ||
+        silenceBeforeStop <= 0 ||
+        minimumDuration <= 0 ||
+        maximumDuration <= 0 ||
+        minimumDuration > maximumDuration ||
+        preRollMs < 0 ||
+        silenceThreshold < 0
+    ) {
+        throw new Error(
+            "Recording settings contain invalid values."
+        );
+    }
+
+    if (!datasetName) {
+        throw new Error(
+            "Dataset name cannot be empty."
+        );
+    }
+
+    if (!speakerId) {
+        throw new Error(
+            "Speaker ID cannot be empty."
+        );
+    }
+
+    const format =
+        getValue("setting-format");
+
+    const sampleRate =
+        getNumber("setting-sample-rate");
+
+    const channels =
+        getNumber("setting-channels");
+
+    const bitDepth =
+        getNumber("setting-bit-depth");
+
+    if (
+        !format ||
+        !Number.isFinite(sampleRate) ||
+        !Number.isFinite(channels) ||
+        !Number.isFinite(bitDepth) ||
+        sampleRate <= 0 ||
+        channels <= 0 ||
+        bitDepth <= 0
+    ) {
+        throw new Error(
+            "Audio settings contain invalid values."
+        );
+    }
+
+    state.config = mergeConfig(
+        DEFAULT_CONFIG,
+        {
+            dataset: {
+                name: datasetName,
+                speakerId: speakerId
+            },
+
+            recording: {
+                countdownSeconds,
+                silenceBeforeStop,
+                minimumDuration,
+                maximumDuration,
+                preRollMs,
+                silenceThreshold
+            },
+
+            audio: {
+                format,
+                sampleRate,
+                channels,
+                bitDepth
+            },
+
+            whisper: {
+                enabled: getChecked(
+                    "setting-whisper-export"
+                ),
+                profile: getValue(
+                    "setting-whisper-profile"
+                ),
+                delimiter: getValue(
+                    "setting-whisper-delimiter"
+                )
+            },
+
+            generator: {
+                ...state.config.generator
+            }
+        }
+    );
+
+    updateGeneratorConfigFromUI();
+    updateGeneratorUI();
+}
             }
         );
 
