@@ -1,1150 +1,1202 @@
-<meta charset="UTF-8">
+<!DOCTYPE html>
+<html lang="en">
 
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
+<head>
 
-<meta
-    name="description"
-    content="Local voice dataset builder for speech recognition and Whisper training."
->
+    <meta charset="UTF-8">
 
-<title>Kentucky Voice Dataset Builder</title>
-
-<link
-    rel="stylesheet"
-    href="css/app.css"
->
-
-
-<!-- =========================================================
-     HEADER
-     ========================================================= -->
-<header class="app-header">
-
-    <div class="app-title">
-
-        <h1>Kentucky Voice Dataset Builder</h1>
-
-        <p>
-            Local-first voice recording and dataset builder
-        </p>
-
-    </div>
-
-
-    <div class="app-status">
-
-        <span
-            id="storage-status"
-            class="status-indicator"
-        >
-            Local
-        </span>
-
-    </div>
-
-</header>
-
-
-<!-- =========================================================
-     MAIN NAVIGATION
-     ========================================================= -->
-<nav
-    class="main-nav"
-    aria-label="Main navigation"
->
-
-    <button
-        type="button"
-        class="nav-button active"
-        data-page="record"
-    >
-        Record
-    </button>
-
-
-    <button
-        type="button"
-        class="nav-button"
-        data-page="generate"
-    >
-        Generate
-    </button>
-
-
-    <button
-        type="button"
-        class="nav-button"
-        data-page="dataset"
-    >
-        Dataset
-    </button>
-
-
-    <button
-        type="button"
-        class="nav-button"
-        data-page="settings"
-    >
-        Settings
-    </button>
-
-
-    <button
-        type="button"
-        class="nav-button"
-        data-page="import-export"
-    >
-        Import / Export
-    </button>
-
-</nav>
-
-
-<!-- =========================================================
-     MAIN CONTENT
-     ========================================================= -->
-<main class="app-main">
-
-
-    <!-- =====================================================
-         RECORD PAGE
-         ===================================================== -->
-    <section
-        id="page-record"
-        class="page active"
-        data-page-content="record"
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
     >
 
-        <div class="page-header">
+    <meta
+        name="description"
+        content="Local voice dataset builder for speech recognition and Whisper training."
+    >
 
-            <h2>Record</h2>
+    <title>Kentucky Voice Dataset Builder</title>
+
+    <link
+        rel="stylesheet"
+        href="css/app.css"
+    >
+
+</head>
+
+<body>
+
+    <!-- =========================================================
+         HEADER
+         ========================================================= -->
+    <header class="app-header">
+
+        <div class="app-title">
+
+            <h1>Kentucky Voice Dataset Builder</h1>
 
             <p>
-                Record the currently selected sentence.
+                Local-first voice recording and dataset builder
             </p>
 
         </div>
 
 
-        <!-- Recording progress -->
-        <div class="recording-progress">
+        <div class="app-status">
 
-            <div>
-
-                <span>Recording</span>
-
-                <strong id="recording-number">
-                    0
-                </strong>
-
-                <span>of</span>
-
-                <strong id="recording-total">
-                    0
-                </strong>
-
-            </div>
-
-
-            <div>
-
-                <span id="recording-category">
-                    No category
-                </span>
-
-            </div>
+            <span
+                id="storage-status"
+                class="status-indicator"
+                aria-live="polite"
+            >
+                Local
+            </span>
 
         </div>
 
-
-        <!-- Sentence -->
-        <div class="sentence-card">
-
-            <div class="sentence-label">
-                SAY:
-            </div>
+    </header>
 
 
-            <div
-                id="current-sentence"
-                class="current-sentence"
-            >
-                No sentence selected.
-            </div>
+    <!-- =========================================================
+         MAIN NAVIGATION
+         ========================================================= -->
+    <nav
+        class="main-nav"
+        aria-label="Main navigation"
+    >
+
+        <button
+            type="button"
+            class="nav-button active"
+            data-page="record"
+        >
+            Record
+        </button>
 
 
-            <div
-                id="sentence-metadata"
-                class="sentence-metadata"
-            >
-            </div>
+        <button
+            type="button"
+            class="nav-button"
+            data-page="generate"
+        >
+            Generate
+        </button>
 
-        </div>
+
+        <button
+            type="button"
+            class="nav-button"
+            data-page="dataset"
+        >
+            Dataset
+        </button>
 
 
-        <!-- Countdown / recording state -->
-        <div
-            id="recording-display"
-            class="recording-display"
+        <button
+            type="button"
+            class="nav-button"
+            data-page="settings"
+        >
+            Settings
+        </button>
+
+
+        <button
+            type="button"
+            class="nav-button"
+            data-page="import-export"
+        >
+            Import / Export
+        </button>
+
+    </nav>
+
+
+    <!-- =========================================================
+         MAIN CONTENT
+         ========================================================= -->
+    <main class="app-main">
+
+
+        <!-- =====================================================
+             RECORD PAGE
+             ===================================================== -->
+        <section
+            id="page-record"
+            class="page active"
+            data-page-content="record"
         >
 
-            <div
-                id="countdown"
-                class="countdown"
-            >
-                Ready
+            <div class="page-header">
+
+                <h2>Record</h2>
+
+                <p>
+                    Record the currently selected sentence.
+                </p>
+
             </div>
 
 
-            <div
-                id="recording-state"
-                class="recording-state"
-            >
-                Waiting
+            <!-- Recording progress -->
+            <div class="recording-progress">
+
+                <div>
+
+                    <span>Recording</span>
+
+                    <strong id="recording-number">
+                        0
+                    </strong>
+
+                    <span>of</span>
+
+                    <strong id="recording-total">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span id="recording-category">
+                        No category
+                    </span>
+
+                </div>
+
             </div>
 
-        </div>
 
+            <!-- Sentence -->
+            <div class="sentence-card">
 
-        <!-- Audio level -->
-        <div class="audio-meter-container">
+                <div class="sentence-label">
+                    SAY:
+                </div>
 
-            <div class="audio-meter-label">
-                Microphone
-            </div>
-
-
-            <div
-                class="audio-meter"
-                aria-label="Microphone level"
-            >
 
                 <div
-                    id="audio-meter-level"
-                    class="audio-meter-level"
+                    id="current-sentence"
+                    class="current-sentence"
+                >
+                    No sentence selected.
+                </div>
+
+
+                <div
+                    id="sentence-metadata"
+                    class="sentence-metadata"
                 ></div>
 
             </div>
 
-        </div>
 
-
-        <!-- Recording controls -->
-        <div class="recording-controls">
-
-            <button
-                type="button"
-                id="record-button"
-                class="primary-button"
-            >
-                Record
-            </button>
-
-
-            <button
-                type="button"
-                id="stop-button"
-                class="secondary-button"
-                disabled
-            >
-                Stop
-            </button>
-
-
-            <button
-                type="button"
-                id="skip-button"
-                class="secondary-button"
-            >
-                Skip
-            </button>
-
-        </div>
-
-
-        <!-- Recording result
-             This shows the recording that was just completed.
-             The sentence above has already advanced to the next
-             sentence. "Record Again" returns to the completed
-             sentence and removes its existing recording. -->
-        <div
-            id="recording-result"
-            class="recording-result hidden"
-        >
-
-            <h3>
-                Recording complete
-            </h3>
-
-
+            <!-- Countdown / recording state -->
             <div
-                id="recording-result-details"
-            ></div>
+                id="recording-display"
+                class="recording-display"
+            >
 
-
-            <audio
-                id="recording-preview"
-                preload="metadata"
-            ></audio>
-
-
-            <div class="recording-result-controls">
-
-                <button
-                    type="button"
-                    id="retake-recording-button"
-                    class="secondary-button"
+                <div
+                    id="countdown"
+                    class="countdown"
                 >
-                    Record Again
-                </button>
+                    Ready
+                </div>
+
+
+                <div
+                    id="recording-state"
+                    class="recording-state"
+                >
+                    Waiting
+                </div>
 
             </div>
 
-        </div>
 
-    </section>
+            <!-- Audio level -->
+            <div class="audio-meter-container">
 
-
-    <!-- =====================================================
-         GENERATE PAGE
-         ===================================================== -->
-    <section
-        id="page-generate"
-        class="page"
-        data-page-content="generate"
-    >
-
-        <div class="page-header">
-
-            <h2>
-                Generate Sentences
-            </h2>
-
-            <p>
-                Create natural speech variations for the dataset.
-            </p>
-
-        </div>
+                <div class="audio-meter-label">
+                    Microphone
+                </div>
 
 
-        <div class="generator-layout">
-
-
-            <!-- Generator controls -->
-            <div class="generator-controls">
-
-                <label for="generator-category">
-                    Category
-                </label>
-
-
-                <select id="generator-category">
-
-                    <option value="general">
-                        General Conversation
-                    </option>
-
-                    <option value="southern">
-                        Southern Conversation
-                    </option>
-
-                    <option value="appalachian">
-                        Appalachian Conversation
-                    </option>
-
-                    <option value="smart_home">
-                        Smart Home
-                    </option>
-
-                </select>
-
-
-                <label for="generator-count">
-                    Number of sentences
-                </label>
-
-
-                <input
-                    id="generator-count"
-                    type="number"
-                    min="1"
-                    max="1000"
-                    value="25"
+                <div
+                    class="audio-meter"
+                    aria-label="Microphone level"
                 >
 
+                    <div
+                        id="audio-meter-level"
+                        class="audio-meter-level"
+                    ></div>
 
-                <label for="generator-southern">
-                    Southern influence
-                </label>
+                </div>
 
-
-                <input
-                    id="generator-southern"
-                    type="range"
-                    min="0"
-                    max="100"
-                    value="50"
-                >
+            </div>
 
 
-                <output id="generator-southern-value">
-                    50%
-                </output>
-
-
-                <label for="generator-appalachian">
-                    Appalachian influence
-                </label>
-
-
-                <input
-                    id="generator-appalachian"
-                    type="range"
-                    min="0"
-                    max="100"
-                    value="50"
-                >
-
-
-                <output id="generator-appalachian-value">
-                    50%
-                </output>
-
-
-                <label for="generator-informality">
-                    Informality
-                </label>
-
-
-                <input
-                    id="generator-informality"
-                    type="range"
-                    min="0"
-                    max="100"
-                    value="70"
-                >
-
-
-                <output id="generator-informality-value">
-                    70%
-                </output>
-
+            <!-- Recording controls -->
+            <div class="recording-controls">
 
                 <button
                     type="button"
-                    id="generate-button"
+                    id="record-button"
                     class="primary-button"
                 >
-                    Generate Sentences
+                    Record
+                </button>
+
+
+                <button
+                    type="button"
+                    id="stop-button"
+                    class="secondary-button"
+                    disabled
+                >
+                    Stop
+                </button>
+
+
+                <button
+                    type="button"
+                    id="skip-button"
+                    class="secondary-button"
+                >
+                    Skip
                 </button>
 
             </div>
 
 
-            <!-- Generator results -->
-            <div class="generator-results">
+            <!-- Recording result -->
+            <div
+                id="recording-result"
+                class="recording-result hidden"
+            >
 
-                <div class="section-header">
-
-                    <h3>
-                        Generated Sentences
-                    </h3>
-
-
-                    <div class="generated-actions">
-
-                        <button
-                            type="button"
-                            id="add-generated-button"
-                            class="secondary-button"
-                        >
-                            Add Selected
-                        </button>
+                <h3>
+                    Recording complete
+                </h3>
 
 
-                        <button
-                            type="button"
-                            id="add-all-generated-button"
-                            class="secondary-button"
-                        >
-                            Add All
-                        </button>
+                <div
+                    id="recording-result-details"
+                ></div>
+
+
+                <audio
+                    id="recording-preview"
+                    preload="metadata"
+                    controls
+                ></audio>
+
+
+                <div class="recording-result-controls">
+
+                    <button
+                        type="button"
+                        id="retake-recording-button"
+                        class="secondary-button"
+                    >
+                        Record Again
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================================
+             GENERATE PAGE
+             ===================================================== -->
+        <section
+            id="page-generate"
+            class="page"
+            data-page-content="generate"
+        >
+
+            <div class="page-header">
+
+                <h2>
+                    Generate Sentences
+                </h2>
+
+                <p>
+                    Create natural speech variations for the dataset.
+                </p>
+
+            </div>
+
+
+            <div class="generator-layout">
+
+
+                <!-- Generator controls -->
+                <div class="generator-controls">
+
+                    <label for="generator-category">
+                        Category
+                    </label>
+
+
+                    <select id="generator-category">
+
+                        <option value="general">
+                            General Conversation
+                        </option>
+
+                        <option value="southern">
+                            Southern Conversation
+                        </option>
+
+                        <option value="appalachian">
+                            Appalachian Conversation
+                        </option>
+
+                        <option value="smart_home">
+                            Smart Home
+                        </option>
+
+                    </select>
+
+
+                    <label for="generator-count">
+                        Number of sentences
+                    </label>
+
+
+                    <input
+                        id="generator-count"
+                        type="number"
+                        min="1"
+                        max="1000"
+                        value="25"
+                    >
+
+
+                    <label for="generator-southern">
+                        Southern influence
+                    </label>
+
+
+                    <input
+                        id="generator-southern"
+                        type="range"
+                        min="0"
+                        max="100"
+                        value="50"
+                    >
+
+
+                    <output id="generator-southern-value">
+                        50%
+                    </output>
+
+
+                    <label for="generator-appalachian">
+                        Appalachian influence
+                    </label>
+
+
+                    <input
+                        id="generator-appalachian"
+                        type="range"
+                        min="0"
+                        max="100"
+                        value="50"
+                    >
+
+
+                    <output id="generator-appalachian-value">
+                        50%
+                    </output>
+
+
+                    <label for="generator-informality">
+                        Informality
+                    </label>
+
+
+                    <input
+                        id="generator-informality"
+                        type="range"
+                        min="0"
+                        max="100"
+                        value="70"
+                    >
+
+
+                    <output id="generator-informality-value">
+                        70%
+                    </output>
+
+
+                    <button
+                        type="button"
+                        id="generate-button"
+                        class="primary-button"
+                    >
+                        Generate Sentences
+                    </button>
+
+                </div>
+
+
+                <!-- Generator results -->
+                <div class="generator-results">
+
+                    <div class="section-header">
+
+                        <h3>
+                            Generated Sentences
+                        </h3>
+
+
+                        <div class="generated-actions">
+
+                            <button
+                                type="button"
+                                id="add-generated-button"
+                                class="secondary-button"
+                            >
+                                Add Selected
+                            </button>
+
+
+                            <button
+                                type="button"
+                                id="add-all-generated-button"
+                                class="secondary-button"
+                            >
+                                Add All
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        id="generated-list"
+                        class="generated-sentences"
+                    >
+
+                        <p class="empty-state">
+                            No sentences generated yet.
+                        </p>
 
                     </div>
 
                 </div>
 
+            </div>
 
-                <div
-                    id="generated-list"
-                    class="generated-sentences"
-                >
 
-                    <p class="empty-state">
-                        No sentences generated yet.
-                    </p>
+            <!-- Custom sentence -->
+            <div class="custom-sentence">
+
+                <h3>
+                    Add Custom Sentence
+                </h3>
+
+
+                <textarea
+                    id="custom-sentence-text"
+                    rows="3"
+                    placeholder="Enter something you would naturally say..."
+                ></textarea>
+
+
+                <div class="custom-sentence-controls">
+
+                    <select id="custom-sentence-category">
+
+                        <option value="general">
+                            General
+                        </option>
+
+                        <option value="southern">
+                            Southern
+                        </option>
+
+                        <option value="appalachian">
+                            Appalachian
+                        </option>
+
+                        <option value="smart_home">
+                            Smart Home
+                        </option>
+
+                    </select>
+
+
+                    <button
+                        type="button"
+                        id="add-custom-sentence-button"
+                        class="primary-button"
+                    >
+                        Add Sentence
+                    </button>
 
                 </div>
 
             </div>
 
-        </div>
+        </section>
 
 
-        <!-- Custom sentence -->
-        <div class="custom-sentence">
+        <!-- =====================================================
+             DATASET PAGE
+             ===================================================== -->
+        <section
+            id="page-dataset"
+            class="page"
+            data-page-content="dataset"
+        >
 
-            <h3>
-                Add Custom Sentence
-            </h3>
+            <div class="page-header">
+
+                <h2>
+                    Dataset
+                </h2>
+
+                <p>
+                    Review recordings and dataset information.
+                </p>
+
+            </div>
 
 
-            <textarea
-                id="custom-sentence-text"
-                rows="3"
-                placeholder="Enter something you would naturally say..."
-            ></textarea>
+            <div class="dataset-statistics">
+
+                <div class="stat-card">
+
+                    <span>Total</span>
+
+                    <strong id="stat-total">
+                        0
+                    </strong>
+
+                </div>
 
 
-            <div class="custom-sentence-controls">
+                <div class="stat-card">
 
-                <select id="custom-sentence-category">
+                    <span>Recorded</span>
 
-                    <option value="general">
-                        General
+                    <strong id="stat-recorded">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <span>Pending</span>
+
+                    <strong id="stat-pending">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <span>Skipped</span>
+
+                    <strong id="stat-skipped">
+                        0
+                    </strong>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <span>Duration</span>
+
+                    <strong id="stat-duration">
+                        0:00
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="dataset-toolbar">
+
+                <input
+                    id="dataset-search"
+                    type="search"
+                    placeholder="Search dataset..."
+                >
+
+
+                <select id="dataset-filter">
+
+                    <option value="all">
+                        All
                     </option>
 
-                    <option value="southern">
-                        Southern
+                    <option value="pending">
+                        Pending
                     </option>
 
-                    <option value="appalachian">
-                        Appalachian
+                    <option value="recorded">
+                        Recorded
                     </option>
 
-                    <option value="smart_home">
-                        Smart Home
+                    <option value="skipped">
+                        Skipped
                     </option>
 
                 </select>
 
-
-                <button
-                    type="button"
-                    id="add-custom-sentence-button"
-                    class="primary-button"
-                >
-                    Add Sentence
-                </button>
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- =====================================================
-         DATASET PAGE
-         ===================================================== -->
-    <section
-        id="page-dataset"
-        class="page"
-        data-page-content="dataset"
-    >
-
-        <div class="page-header">
-
-            <h2>
-                Dataset
-            </h2>
-
-            <p>
-                Review recordings and dataset information.
-            </p>
-
-        </div>
-
-
-        <div class="dataset-statistics">
-
-            <div class="stat-card">
-
-                <span>Total</span>
-
-                <strong id="stat-total">
-                    0
-                </strong>
-
             </div>
 
 
-            <div class="stat-card">
-
-                <span>Recorded</span>
-
-                <strong id="stat-recorded">
-                    0
-                </strong>
-
-            </div>
-
-
-            <div class="stat-card">
-
-                <span>Pending</span>
-
-                <strong id="stat-pending">
-                    0
-                </strong>
-
-            </div>
-
-
-            <div class="stat-card">
-
-                <span>Skipped</span>
-
-                <strong id="stat-skipped">
-                    0
-                </strong>
-
-            </div>
-
-
-            <div class="stat-card">
-
-                <span>Duration</span>
-
-                <strong id="stat-duration">
-                    0:00
-                </strong>
-
-            </div>
-
-        </div>
-
-
-        <div class="dataset-toolbar">
-
-            <input
-                id="dataset-search"
-                type="search"
-                placeholder="Search dataset..."
+            <div
+                id="dataset-list"
+                class="dataset-list"
             >
 
+                <p class="empty-state">
+                    No dataset entries yet.
+                </p>
 
-            <select id="dataset-filter">
+            </div>
 
-                <option value="all">
-                    All
-                </option>
-
-                <option value="pending">
-                    Pending
-                </option>
-
-                <option value="recorded">
-                    Recorded
-                </option>
-
-                <option value="skipped">
-                    Skipped
-                </option>
-
-            </select>
-
-        </div>
+        </section>
 
 
-        <div
-            id="dataset-list"
-            class="dataset-list"
+        <!-- =====================================================
+             SETTINGS PAGE
+             ===================================================== -->
+        <section
+            id="page-settings"
+            class="page"
+            data-page-content="settings"
         >
 
-            <p class="empty-state">
-                No dataset entries yet.
-            </p>
+            <div class="page-header">
 
-        </div>
+                <h2>
+                    Settings
+                </h2>
 
-    </section>
+                <p>
+                    Configure recording and dataset behavior.
+                </p>
 
+            </div>
 
-    <!-- =====================================================
-         SETTINGS PAGE
-         ===================================================== -->
-    <section
-        id="page-settings"
-        class="page"
-        data-page-content="settings"
-    >
 
-        <div class="page-header">
+            <form id="settings-form">
 
-            <h2>
-                Settings
-            </h2>
 
-            <p>
-                Configure recording and dataset behavior.
-            </p>
+                <!-- Dataset -->
+                <fieldset>
 
-        </div>
+                    <legend>
+                        Dataset
+                    </legend>
 
 
-        <form id="settings-form">
+                    <label for="setting-dataset-name">
+                        Dataset name
+                    </label>
 
-
-            <!-- Dataset -->
-            <fieldset>
-
-                <legend>
-                    Dataset
-                </legend>
-
-
-                <label for="setting-dataset-name">
-                    Dataset name
-                </label>
-
-
-                <input
-                    id="setting-dataset-name"
-                    type="text"
-                    value="Kentucky Voice Dataset"
-                >
-
-
-                <label for="setting-speaker-id">
-                    Speaker ID
-                </label>
-
-
-                <input
-                    id="setting-speaker-id"
-                    type="text"
-                    value="speaker_01"
-                >
-
-            </fieldset>
-
-
-            <!-- Recording -->
-            <fieldset>
-
-                <legend>
-                    Recording
-                </legend>
-
-
-                <label for="setting-countdown">
-                    Countdown seconds
-                </label>
-
-
-                <input
-                    id="setting-countdown"
-                    type="number"
-                    min="0"
-                    max="10"
-                    step="0.1"
-                    value="2"
-                >
-
-
-                <label for="setting-silence">
-                    Silence before stopping
-                </label>
-
-
-                <input
-                    id="setting-silence"
-                    type="number"
-                    min="0.2"
-                    max="5"
-                    step="0.1"
-                    value="1.2"
-                >
-
-
-                <label for="setting-min-duration">
-                    Minimum recording duration
-                </label>
-
-
-                <input
-                    id="setting-min-duration"
-                    type="number"
-                    min="0.1"
-                    max="10"
-                    step="0.1"
-                    value="0.5"
-                >
-
-
-                <label for="setting-max-duration">
-                    Maximum recording duration
-                </label>
-
-
-                <input
-                    id="setting-max-duration"
-                    type="number"
-                    min="1"
-                    max="60"
-                    step="1"
-                    value="15"
-                >
-
-
-                <label for="setting-preroll">
-                    Audio pre-roll milliseconds
-                </label>
-
-
-                <input
-                    id="setting-preroll"
-                    type="number"
-                    min="0"
-                    max="1000"
-                    step="50"
-                    value="200"
-                >
-
-            </fieldset>
-
-
-            <!-- Audio -->
-            <fieldset>
-
-                <legend>
-                    Audio
-                </legend>
-
-
-                <label for="setting-format">
-                    Format
-                </label>
-
-
-                <select id="setting-format">
-
-                    <option value="wav">
-                        WAV
-                    </option>
-
-                    <option value="flac">
-                        FLAC
-                    </option>
-
-                    <option value="mp3">
-                        MP3
-                    </option>
-
-                    <option value="webm">
-                        WebM / Opus
-                    </option>
-
-                </select>
-
-
-                <label for="setting-sample-rate">
-                    Sample rate
-                </label>
-
-
-                <select id="setting-sample-rate">
-
-                    <option value="8000">
-                        8 kHz
-                    </option>
-
-                    <option
-                        value="16000"
-                        selected
-                    >
-                        16 kHz
-                    </option>
-
-                    <option value="22050">
-                        22.05 kHz
-                    </option>
-
-                    <option value="24000">
-                        24 kHz
-                    </option>
-
-                    <option value="44100">
-                        44.1 kHz
-                    </option>
-
-                    <option value="48000">
-                        48 kHz
-                    </option>
-
-                </select>
-
-
-                <label for="setting-channels">
-                    Channels
-                </label>
-
-
-                <select id="setting-channels">
-
-                    <option value="1">
-                        Mono
-                    </option>
-
-                    <option value="2">
-                        Stereo
-                    </option>
-
-                </select>
-
-
-                <label for="setting-bit-depth">
-                    Bit depth
-                </label>
-
-
-                <select id="setting-bit-depth">
-
-                    <option value="16">
-                        16-bit
-                    </option>
-
-                    <option value="24">
-                        24-bit
-                    </option>
-
-                </select>
-
-            </fieldset>
-
-
-            <!-- Whisper -->
-            <fieldset>
-
-                <legend>
-                    Whisper Export
-                </legend>
-
-
-                <label>
 
                     <input
-                        id="setting-whisper-export"
-                        type="checkbox"
-                        checked
+                        id="setting-dataset-name"
+                        type="text"
+                        value="Kentucky Voice Dataset"
                     >
 
-                    Include Whisper-compatible metadata
 
-                </label>
-
-
-                <label for="setting-whisper-profile">
-                    Whisper profile
-                </label>
+                    <label for="setting-speaker-id">
+                        Speaker ID
+                    </label>
 
 
-                <select id="setting-whisper-profile">
+                    <input
+                        id="setting-speaker-id"
+                        type="text"
+                        value="speaker_01"
+                    >
 
-                    <option value="huggingface">
-                        Hugging Face
-                    </option>
-
-                    <option value="csv">
-                        Whisper CSV
-                    </option>
-
-                    <option value="custom">
-                        Custom
-                    </option>
-
-                </select>
+                </fieldset>
 
 
-                <label for="setting-whisper-delimiter">
-                    CSV delimiter
-                </label>
+                <!-- Recording -->
+                <fieldset>
+
+                    <legend>
+                        Recording
+                    </legend>
 
 
-                <select id="setting-whisper-delimiter">
-
-                    <option value=",">
-                        Comma
-                    </option>
-
-                    <option value="|">
-                        Pipe
-                    </option>
-
-                    <option value=";">
-                        Semicolon
-                    </option>
-
-                    <option value="tab">
-                        Tab
-                    </option>
-
-                </select>
-
-            </fieldset>
+                    <label for="setting-countdown">
+                        Countdown seconds
+                    </label>
 
 
-            <div class="form-actions">
-
-                <button
-                    type="submit"
-                    class="primary-button"
-                >
-                    Save Settings
-                </button>
-
-
-                <button
-                    type="button"
-                    id="reset-settings-button"
-                    class="secondary-button"
-                >
-                    Reset Defaults
-                </button>
-
-            </div>
-
-        </form>
-
-    </section>
+                    <input
+                        id="setting-countdown"
+                        type="number"
+                        min="0"
+                        max="10"
+                        step="0.1"
+                        value="2"
+                    >
 
 
-    <!-- =====================================================
-         IMPORT / EXPORT PAGE
-         ===================================================== -->
-    <section
-        id="page-import-export"
-        class="page"
-        data-page-content="import-export"
-    >
-
-        <div class="page-header">
-
-            <h2>
-                Import / Export
-            </h2>
-
-            <p>
-                Save, move, or restore your dataset.
-            </p>
-
-        </div>
+                    <label for="setting-silence">
+                        Silence before stopping
+                    </label>
 
 
-        <div class="import-export-grid">
+                    <input
+                        id="setting-silence"
+                        type="number"
+                        min="0.2"
+                        max="5"
+                        step="0.1"
+                        value="1.2"
+                    >
 
 
-            <!-- Export -->
-            <div class="panel">
-
-                <h3>
-                    Export Dataset
-                </h3>
+                    <label for="setting-min-duration">
+                        Minimum recording duration
+                    </label>
 
 
-                <p>
-                    Creates a ZIP containing recordings,
-                    metadata, configuration, and dataset
-                    information.
-                </p>
+                    <input
+                        id="setting-min-duration"
+                        type="number"
+                        min="0.1"
+                        max="10"
+                        step="0.1"
+                        value="0.5"
+                    >
 
 
-                <button
-                    type="button"
-                    id="export-dataset-button"
-                    class="primary-button"
-                >
-                    Export ZIP
-                </button>
-
-            </div>
+                    <label for="setting-max-duration">
+                        Maximum recording duration
+                    </label>
 
 
-            <!-- Import -->
-            <div class="panel">
-
-                <h3>
-                    Import Dataset
-                </h3>
-
-
-                <p>
-                    Import an existing dataset ZIP and
-                    continue recording where you left off.
-                </p>
+                    <input
+                        id="setting-max-duration"
+                        type="number"
+                        min="1"
+                        max="60"
+                        step="1"
+                        value="15"
+                    >
 
 
-                <input
-                    id="import-dataset-file"
-                    type="file"
-                    accept=".zip"
-                >
+                    <label for="setting-preroll">
+                        Audio pre-roll milliseconds
+                    </label>
 
 
-                <button
-                    type="button"
-                    id="import-dataset-button"
-                    class="primary-button"
-                >
-                    Import ZIP
-                </button>
+                    <input
+                        id="setting-preroll"
+                        type="number"
+                        min="0"
+                        max="1000"
+                        step="50"
+                        value="200"
+                    >
 
-            </div>
-
-        </div>
+                </fieldset>
 
 
-        <div
-            id="import-export-status"
-            class="operation-status"
+                <!-- Audio -->
+                <fieldset>
+
+                    <legend>
+                        Audio
+                    </legend>
+
+
+                    <label for="setting-format">
+                        Format
+                    </label>
+
+
+                    <select id="setting-format">
+
+                        <option value="wav">
+                            WAV
+                        </option>
+
+                        <option value="flac">
+                            FLAC
+                        </option>
+
+                        <option value="mp3">
+                            MP3
+                        </option>
+
+                        <option value="webm">
+                            WebM / Opus
+                        </option>
+
+                    </select>
+
+
+                    <label for="setting-sample-rate">
+                        Sample rate
+                    </label>
+
+
+                    <select id="setting-sample-rate">
+
+                        <option value="8000">
+                            8 kHz
+                        </option>
+
+                        <option
+                            value="16000"
+                            selected
+                        >
+                            16 kHz
+                        </option>
+
+                        <option value="22050">
+                            22.05 kHz
+                        </option>
+
+                        <option value="24000">
+                            24 kHz
+                        </option>
+
+                        <option value="44100">
+                            44.1 kHz
+                        </option>
+
+                        <option value="48000">
+                            48 kHz
+                        </option>
+
+                    </select>
+
+
+                    <label for="setting-channels">
+                        Channels
+                    </label>
+
+
+                    <select id="setting-channels">
+
+                        <option value="1">
+                            Mono
+                        </option>
+
+                        <option value="2">
+                            Stereo
+                        </option>
+
+                    </select>
+
+
+                    <label for="setting-bit-depth">
+                        Bit depth
+                    </label>
+
+
+                    <select id="setting-bit-depth">
+
+                        <option value="16">
+                            16-bit
+                        </option>
+
+                        <option value="24">
+                            24-bit
+                        </option>
+
+                    </select>
+
+                </fieldset>
+
+
+                <!-- Whisper -->
+                <fieldset>
+
+                    <legend>
+                        Whisper Export
+                    </legend>
+
+
+                    <label>
+
+                        <input
+                            id="setting-whisper-export"
+                            type="checkbox"
+                            checked
+                        >
+
+                        Include Whisper-compatible metadata
+
+                    </label>
+
+
+                    <label for="setting-whisper-profile">
+                        Whisper profile
+                    </label>
+
+
+                    <select id="setting-whisper-profile">
+
+                        <option value="huggingface">
+                            Hugging Face
+                        </option>
+
+                        <option value="csv">
+                            Whisper CSV
+                        </option>
+
+                        <option value="custom">
+                            Custom
+                        </option>
+
+                    </select>
+
+
+                    <label for="setting-whisper-delimiter">
+                        CSV delimiter
+                    </label>
+
+
+                    <select id="setting-whisper-delimiter">
+
+                        <option value=",">
+                            Comma
+                        </option>
+
+                        <option value="|">
+                            Pipe
+                        </option>
+
+                        <option value=";">
+                            Semicolon
+                        </option>
+
+                        <option value="tab">
+                            Tab
+                        </option>
+
+                    </select>
+
+                </fieldset>
+
+
+                <div class="form-actions">
+
+                    <button
+                        type="submit"
+                        class="primary-button"
+                    >
+                        Save Settings
+                    </button>
+
+
+                    <button
+                        type="button"
+                        id="reset-settings-button"
+                        class="secondary-button"
+                    >
+                        Reset Defaults
+                    </button>
+
+                </div>
+
+            </form>
+
+        </section>
+
+
+        <!-- =====================================================
+             IMPORT / EXPORT PAGE
+             ===================================================== -->
+        <section
+            id="page-import-export"
+            class="page"
+            data-page-content="import-export"
         >
-        </div>
 
-    </section>
+            <div class="page-header">
 
-</main>
+                <h2>
+                    Import / Export
+                </h2>
 
+                <p>
+                    Save, move, or restore your dataset.
+                </p>
 
-<!-- =========================================================
-     FOOTER
-     ========================================================= -->
-<footer class="app-footer">
-
-    <span>
-        Kentucky Voice Dataset Builder
-    </span>
+            </div>
 
 
-    <span>
-        Local data only
-    </span>
+            <div class="import-export-grid">
 
 
-    <span id="app-version">
-        v0.1.0
-    </span>
+                <!-- Export -->
+                <div class="panel">
 
-<script src="js/jszip.min.js"></script>
-    <script src="js/storage.js"></script>
-    <script src="js/audio.js"></script>
-    <script src="js/dataset.js"></script>
-    <script src="js/generator.js"></script>
-    <script src="js/export.js"></script>
-    <script src="js/recorder.js"></script>
-    <script src="js/app.js"></script>
+                    <h3>
+                        Export Dataset
+                    </h3>
 
-</footer>
+
+                    <p>
+                        Creates a ZIP containing recordings,
+                        metadata, configuration, and dataset
+                        information.
+                    </p>
+
+
+                    <button
+                        type="button"
+                        id="export-dataset-button"
+                        class="primary-button"
+                    >
+                        Export ZIP
+                    </button>
+
+                </div>
+
+
+                <!-- Import -->
+                <div class="panel">
+
+                    <h3>
+                        Import Dataset
+                    </h3>
+
+
+                    <p>
+                        Import an existing dataset ZIP and
+                        continue recording where you left off.
+                    </p>
+
+
+                    <input
+                        id="import-dataset-file"
+                        type="file"
+                        accept=".zip,application/zip"
+                    >
+
+
+                    <button
+                        type="button"
+                        id="import-dataset-button"
+                        class="primary-button"
+                    >
+                        Import ZIP
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="import-export-status"
+                class="operation-status"
+                aria-live="polite"
+            ></div>
+
+        </section>
+
+    </main>
+
+
+    <!-- =========================================================
+         FOOTER
+         ========================================================= -->
+    <footer class="app-footer">
+
+        <span>
+            Kentucky Voice Dataset Builder
+        </span>
+
+
+        <span>
+            Local data only
+        </span>
+
+
+        <span id="app-version">
+            v0.1.0
+        </span>
+
+    </footer>
+
+
+    <!-- =========================================================
+         JAVASCRIPT
+         
+         Scripts are loaded in dependency order.
+         "defer" ensures the HTML is parsed before execution
+         while preserving this order.
+         
+         app.js is the application bootstrap and will initialize
+         Storage before Dataset and the other application systems.
+         ========================================================= -->
+
+    <script
+        src="js/jszip.min.js"
+        defer
+    ></script>
+
+    <script
+        src="js/storage.js"
+        defer
+    ></script>
+
+    <script
+        src="js/audio.js"
+        defer
+    ></script>
+
+    <script
+        src="js/dataset.js"
+        defer
+    ></script>
+
+    <script
+        src="js/generator.js"
+        defer
+    ></script>
+
+    <script
+        src="js/export.js"
+        defer
+    ></script>
+
+    <script
+        src="js/recorder.js"
+        defer
+    ></script>
+
+    <script
+        src="js/app.js"
+        defer
+    ></script>
+
+</body>
+
+</html>
