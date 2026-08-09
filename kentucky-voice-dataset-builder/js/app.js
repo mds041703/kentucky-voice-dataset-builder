@@ -1277,47 +1277,125 @@ function setupCustomSentence() {
 
     function updateGeneratorConfigFromUI() {
 
-        const generatorCategory =
-            document.getElementById(
-                "generator-category"
-            );
+        function setupApplicationEvents() {
+
+    if (state._eventsInitialized) {
+        return;
+    }
 
 
-        if (generatorCategory) {
+    state._eventsInitialized =
+        true;
 
-            state.config.generator.category =
-                getValue(
-                    "generator-category"
-                );
+
+    window.addEventListener(
+        "kvdb:sentence-skipped",
+        () => {
+
+            syncDatasetFromModule();
+
+            updateDatasetStatistics();
+
+            syncCurrentSentence();
         }
+    );
 
 
-        const generatorCount =
-            document.getElementById(
-                "generator-count"
-            );
+    window.addEventListener(
+        "kvdb:recording-ready",
+        () => {
+
+            syncDatasetFromModule();
+
+            updateDatasetStatistics();
+
+            syncCurrentSentence();
+        }
+    );
 
 
-        if (generatorCount) {
+    window.addEventListener(
+        "kvdb:save-recording",
+        () => {
 
-            const count =
-                getNumber(
-                    "generator-count"
-                );
+            syncDatasetFromModule();
 
+            updateDatasetStatistics();
+        }
+    );
+
+
+    window.addEventListener(
+        "kvdb:dataset-changed",
+        () => {
+
+            syncDatasetFromModule();
+
+            updateDatasetStatistics();
+
+            syncCurrentSentence();
+        }
+    );
+
+
+    window.addEventListener(
+        "kvdb:config-changed",
+        event => {
 
             if (
-                Number.isFinite(count) &&
-                count >= 1 &&
-                count <= 1000
+                event &&
+                event.detail &&
+                event.detail.config
             ) {
 
-                state.config.generator.count =
-                    Math.floor(
-                        count
+                state.config =
+                    mergeConfig(
+                        DEFAULT_CONFIG,
+                        event.detail.config
                     );
             }
+
+
+            loadConfigIntoUI();
+
+            updateGeneratorUI();
         }
+    );
+
+
+    /*
+     * Keep the generator configuration synchronized
+     * with the currently selected generator category.
+     */
+
+    const generatorCategory =
+        document.getElementById(
+            "generator-category"
+        );
+
+
+    if (generatorCategory) {
+
+        if (
+            generatorCategory.dataset.kvdbGeneratorCategoryBound !==
+            "true"
+        ) {
+
+            generatorCategory.dataset.kvdbGeneratorCategoryBound =
+                "true";
+
+
+            generatorCategory.addEventListener(
+                "change",
+                () => {
+
+                    state.config.generator.category =
+                        generatorCategory.value;
+                }
+            );
+        }
+    }
+}
 
 
         const generatorSouthern =
