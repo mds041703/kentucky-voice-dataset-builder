@@ -378,6 +378,21 @@ window.Generator = (() => {
                 1,
                 1000
             );
+    if (
+        safeOptions.category ===
+        "predefined"
+    ) {
+        const predefined =
+            generatePredefined(
+                safeCount
+            );
+
+        state.generationCount +=
+            predefined.length;
+
+        return predefined;
+    }
+        
 
         const results = [];
         const usedTexts = new Set();
