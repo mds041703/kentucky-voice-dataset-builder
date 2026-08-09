@@ -2,8 +2,14 @@
 
 window.Recorder = (() => {
 
+    /* =====================================================
+       STATE
+       ===================================================== */
+
     const state = {
+
         initialized: false,
+
         recording: false,
         countdownActive: false,
 
@@ -24,30 +30,38 @@ window.Recorder = (() => {
         recordingDuration: 0,
 
         chunks: [],
+
         lastBlob: null,
         lastObjectUrl: null,
         currentMimeType: "",
 
         currentSentenceId: null,
         lastSentenceId: null,
-
-        /*
-         * When a recording is completed Dataset advances
-         * to the next pending sentence. Keep the recorded
-         * sentence here so REDO can correctly return to it.
-         */
         redoSentenceId: null,
 
         audioLevel: 0,
-        hasSpoken: false
+        hasSpoken: false,
+
+        /*
+         * Prevents a completed recording from being
+         * accidentally associated with a different sentence
+         * if the Dataset cursor advances while the result is
+         * still visible.
+         */
+        resultSentenceId: null
     };
 
 
     const DEFAULTS = {
+
         countdownSeconds: 2,
+
         silenceBeforeStop: 1.2,
+
         minimumDuration: 0.5,
+
         maximumDuration: 15,
+
         silenceThreshold: 0.015
     };
 
@@ -63,6 +77,8 @@ window.Recorder = (() => {
         }
 
         setupButtons();
+
+        setupEvents();
 
         state.initialized = true;
 
@@ -108,6 +124,7 @@ window.Recorder = (() => {
 
 
         if (recordButton) {
+
             recordButton.addEventListener(
                 "click",
                 start
@@ -116,6 +133,7 @@ window.Recorder = (() => {
 
 
         if (stopButton) {
+
             stopButton.addEventListener(
                 "click",
                 stop
@@ -124,6 +142,7 @@ window.Recorder = (() => {
 
 
         if (redoButton) {
+
             redoButton.addEventListener(
                 "click",
                 redo
@@ -132,6 +151,7 @@ window.Recorder = (() => {
 
 
         if (skipButton) {
+
             skipButton.addEventListener(
                 "click",
                 skip
@@ -140,6 +160,7 @@ window.Recorder = (() => {
 
 
         if (saveButton) {
+
             saveButton.addEventListener(
                 "click",
                 saveCurrentRecording
@@ -148,15 +169,192 @@ window.Recorder = (() => {
 
 
         if (retakeButton) {
+
             retakeButton.addEventListener(
                 "click",
                 redo
             );
         }
+    }
 
-        console.log(
-            "Recorder buttons connected."
+
+    function setupEvents() {
+
+        /*
+         * Dataset.rerecordEntry() deliberately emits this
+         * event so the recorder knows exactly which sentence
+         * must be recorded again.
+         */
+        window.addEventListener(
+            "kvdb:rerecord-sentence",
+            event => {
+
+                if (
+                    !event.detail
+                ) {
+                    return;
+                }
+
+                handleRerecordRequest(
+                    event.detail
+                );
+            }
         );
+
+
+        /*
+         * If another component changes the current sentence,
+         * only adopt it when the recorder is idle and there is
+         * no active REDO target.
+         */
+        window.addEventListener(
+            "kvdb:advance-sentence",
+            () => {
+
+                if (
+                    state.recording ||
+                    state.countdownActive
+                ) {
+                    return;
+                }
+
+                if (
+                    state.redoSentenceId
+                ) {
+                    return;
+                }
+
+                state.currentSentenceId =
+                    null;
+
+                updateRecordingButtons();
+            }
+        );
+    }
+
+
+    /* =====================================================
+       RERECORD
+       ===================================================== */
+
+    function handleRerecordRequest(
+        detail
+    ) {
+
+        if (
+            state.recording ||
+            state.countdownActive
+        ) {
+            return;
+        }
+
+
+        const sentenceId =
+            detail.sentenceId ||
+            (
+                detail.sentence &&
+                detail.sentence.id
+            );
+
+
+        if (!sentenceId) {
+
+            console.warn(
+                "Recorder received a re-record request without a sentence ID."
+            );
+
+            return;
+        }
+
+
+        const sentence =
+            findSentenceById(
+                sentenceId
+            );
+
+
+        if (!sentence) {
+
+            console.warn(
+                "Recorder could not find requested re-record sentence:",
+                sentenceId
+            );
+
+            return;
+        }
+
+
+        /*
+         * Dataset.resetEntry() has already removed the old
+         * recording and marked the entry pending.
+         */
+        state.currentSentenceId =
+            sentenceId;
+
+        state.redoSentenceId =
+            sentenceId;
+
+        state.lastSentenceId =
+            null;
+
+        state.resultSentenceId =
+            null;
+
+        state.lastBlob =
+            null;
+
+        state.chunks =
+            [];
+
+        state.recordingDuration =
+            0;
+
+        state.audioLevel =
+            0;
+
+        state.hasSpoken =
+            false;
+
+
+        revokeLastObjectUrl();
+
+        hideRecordingResult();
+
+        clearSilenceTimer();
+
+        stopDurationMonitor();
+
+        stopAudioLevelMonitoring();
+
+        updateAudioMeter(
+            0
+        );
+
+
+        const countdown =
+            document.getElementById(
+                "countdown"
+            );
+
+
+        if (countdown) {
+
+            countdown.textContent =
+                "Ready";
+        }
+
+
+        restoreSentenceDisplay(
+            sentence
+        );
+
+
+        setRecordingState(
+            "Ready to re-record."
+        );
+
+
+        updateRecordingButtons();
     }
 
 
@@ -165,11 +363,6 @@ window.Recorder = (() => {
        ===================================================== */
 
     async function start() {
-
-        console.log(
-            "Record button clicked."
-        );
-
 
         if (
             state.recording ||
@@ -193,6 +386,16 @@ window.Recorder = (() => {
         }
 
 
+        if (!sentence.id) {
+
+            setRecordingState(
+                "Selected sentence has no ID."
+            );
+
+            return;
+        }
+
+
         state.currentSentenceId =
             sentence.id;
 
@@ -205,7 +408,9 @@ window.Recorder = (() => {
             await requestMicrophone();
 
 
-            if (!state.currentSentenceId) {
+            if (
+                !state.currentSentenceId
+            ) {
                 return;
             }
 
@@ -213,7 +418,9 @@ window.Recorder = (() => {
             await runCountdown();
 
 
-            if (!state.currentSentenceId) {
+            if (
+                !state.currentSentenceId
+            ) {
 
                 setRecordingState(
                     "Recording cancelled."
@@ -255,10 +462,14 @@ window.Recorder = (() => {
                 error
             );
 
+
             cancelCountdown();
 
-            state.recording = false;
-            state.currentSentenceId = null;
+            state.recording =
+                false;
+
+            state.currentSentenceId =
+                null;
 
             updateRecordingButtons();
 
@@ -285,7 +496,17 @@ window.Recorder = (() => {
                     "suspended"
             ) {
 
-                await state.audioContext.resume();
+                try {
+
+                    await state.audioContext.resume();
+
+                } catch (error) {
+
+                    console.warn(
+                        "Unable to resume AudioContext:",
+                        error
+                    );
+                }
             }
 
             return state.stream;
@@ -294,34 +515,36 @@ window.Recorder = (() => {
 
         if (
             !navigator.mediaDevices ||
-            !navigator.mediaDevices.getUserMedia
+            typeof navigator.mediaDevices.getUserMedia !==
+                "function"
         ) {
 
             throw new Error(
-                "getUserMedia is not available. " +
-                "Use localhost or HTTPS."
+                "getUserMedia is not available. Use localhost or HTTPS."
             );
         }
 
 
         state.stream =
             await navigator.mediaDevices.getUserMedia({
+
                 audio: {
+
                     channelCount: 1,
+
                     echoCancellation: false,
+
                     noiseSuppression: false,
+
                     autoGainControl: false
                 },
+
                 video: false
             });
 
 
-        console.log(
-            "Microphone stream acquired."
-        );
-
-
         setupAudioAnalysis();
+
 
         return state.stream;
     }
@@ -352,7 +575,9 @@ window.Recorder = (() => {
         if (state.audioContext) {
 
             try {
+
                 state.audioContext.close();
+
             } catch (_) {}
         }
 
@@ -390,22 +615,19 @@ window.Recorder = (() => {
 
             state.audioContext
                 .resume()
-                .catch(error => {
+                .catch(
+                    error => {
 
-                    console.warn(
-                        "Unable to resume AudioContext:",
-                        error
-                    );
-                });
+                        console.warn(
+                            "Unable to resume AudioContext:",
+                            error
+                        );
+                    }
+                );
         }
 
 
         startAudioLevelMonitoring();
-
-
-        console.log(
-            "Audio analysis initialized."
-        );
     }
 
 
@@ -425,10 +647,14 @@ window.Recorder = (() => {
 
 
         const seconds =
-            Number.isFinite(configured)
+            Number.isFinite(
+                configured
+            )
                 ? Math.max(
                     0,
-                    Math.floor(configured)
+                    Math.floor(
+                        configured
+                    )
                 )
                 : DEFAULTS.countdownSeconds;
 
@@ -442,6 +668,7 @@ window.Recorder = (() => {
         if (seconds <= 0) {
 
             if (element) {
+
                 element.textContent =
                     "GO";
             }
@@ -466,95 +693,102 @@ window.Recorder = (() => {
         );
 
 
-        return new Promise(resolve => {
+        return new Promise(
+            resolve => {
 
-            let remaining =
-                seconds;
+                let remaining =
+                    seconds;
 
-            let resolved =
-                false;
-
-
-            const finish = () => {
-
-                if (resolved) {
-                    return;
-                }
-
-                resolved = true;
+                let resolved =
+                    false;
 
 
-                if (
-                    state.countdownTimer !==
-                    null
-                ) {
+                const finish = () => {
 
-                    clearInterval(
-                        state.countdownTimer
-                    );
-
-                    state.countdownTimer =
-                        null;
-                }
+                    if (resolved) {
+                        return;
+                    }
 
 
-                resolve();
-            };
+                    resolved =
+                        true;
 
 
-            const update = () => {
+                    if (
+                        state.countdownTimer !==
+                        null
+                    ) {
 
-                if (
-                    !state.countdownActive
-                ) {
+                        clearInterval(
+                            state.countdownTimer
+                        );
 
-                    finish();
+                        state.countdownTimer =
+                            null;
+                    }
 
-                    return;
-                }
+
+                    resolve();
+                };
 
 
-                if (remaining > 0) {
+                const update = () => {
+
+                    if (
+                        !state.countdownActive
+                    ) {
+
+                        finish();
+
+                        return;
+                    }
+
+
+                    if (
+                        remaining > 0
+                    ) {
+
+                        if (element) {
+
+                            element.textContent =
+                                String(
+                                    remaining
+                                );
+                        }
+
+                        remaining--;
+
+                        return;
+                    }
+
 
                     if (element) {
 
                         element.textContent =
-                            String(
-                                remaining
-                            );
+                            "GO";
                     }
 
-                    remaining--;
 
-                    return;
-                }
-
-
-                if (element) {
-                    element.textContent =
-                        "GO";
-                }
+                    state.countdownActive =
+                        false;
 
 
-                state.countdownActive =
-                    false;
+                    updateRecordingButtons();
+
+                    finish();
+                };
 
 
-                updateRecordingButtons();
-
-                finish();
-            };
+                update();
 
 
-            update();
-
-
-            state.countdownTimer =
-                setInterval(
-                    update,
-                    1000
-                );
-        });
+                state.countdownTimer =
+                    setInterval(
+                        update,
+                        1000
+                    );
+            }
+        );
     }
 
 
@@ -578,6 +812,22 @@ window.Recorder = (() => {
         }
 
 
+        const countdown =
+            document.getElementById(
+                "countdown"
+            );
+
+
+        if (
+            countdown &&
+            !state.recording
+        ) {
+
+            countdown.textContent =
+                "Ready";
+        }
+
+
         updateRecordingButtons();
     }
 
@@ -596,20 +846,37 @@ window.Recorder = (() => {
         }
 
 
-        if (!window.MediaRecorder) {
+        if (
+            typeof window.MediaRecorder ===
+            "undefined"
+        ) {
 
             throw new Error(
-                "MediaRecorder is not supported."
+                "MediaRecorder is not supported by this browser."
             );
         }
 
 
-        state.chunks = [];
-        state.lastBlob = null;
-        state.lastSentenceId = null;
-        state.hasSpoken = false;
-        state.recordingDuration = 0;
-        state.audioLevel = 0;
+        state.chunks =
+            [];
+
+        state.lastBlob =
+            null;
+
+        state.lastSentenceId =
+            null;
+
+        state.resultSentenceId =
+            null;
+
+        state.hasSpoken =
+            false;
+
+        state.recordingDuration =
+            0;
+
+        state.audioLevel =
+            0;
 
 
         state.recordingStartTime =
@@ -624,9 +891,12 @@ window.Recorder = (() => {
             null;
 
 
-        if (state.currentMimeType) {
+        if (
+            state.currentMimeType
+        ) {
 
             recorderOptions = {
+
                 mimeType:
                     state.currentMimeType
             };
@@ -686,6 +956,9 @@ window.Recorder = (() => {
         state.recording =
             true;
 
+        state.hasSpoken =
+            false;
+
 
         updateRecordingButtons();
 
@@ -715,12 +988,6 @@ window.Recorder = (() => {
         }
 
 
-        console.log(
-            "MediaRecorder started:",
-            state.mediaRecorder.mimeType
-        );
-
-
         startDurationMonitor();
 
         startMaximumDurationTimer();
@@ -730,15 +997,20 @@ window.Recorder = (() => {
     function selectMimeType() {
 
         const types = [
+
             "audio/webm;codecs=opus",
+
             "audio/webm",
+
             "audio/mp4",
+
             "audio/ogg;codecs=opus"
         ];
 
 
         if (
-            !window.MediaRecorder ||
+            typeof window.MediaRecorder ===
+                "undefined" ||
             typeof MediaRecorder.isTypeSupported !==
                 "function"
         ) {
@@ -770,7 +1042,9 @@ window.Recorder = (() => {
     }
 
 
-    function handleData(event) {
+    function handleData(
+        event
+    ) {
 
         if (
             event.data &&
@@ -786,16 +1060,10 @@ window.Recorder = (() => {
 
     function stop() {
 
-        console.log(
-            "Stop requested."
-        );
-
-
         if (
             !state.recording ||
             !state.mediaRecorder
         ) {
-
             return;
         }
 
@@ -820,6 +1088,10 @@ window.Recorder = (() => {
             ) {
 
                 state.mediaRecorder.stop();
+
+            } else {
+
+                handleRecorderStopped();
             }
 
         } catch (error) {
@@ -853,7 +1125,9 @@ window.Recorder = (() => {
 
 
         const maximum =
-            Number.isFinite(configured)
+            Number.isFinite(
+                configured
+            )
                 ? Math.max(
                     0,
                     configured
@@ -862,9 +1136,6 @@ window.Recorder = (() => {
 
 
         if (maximum <= 0) {
-
-            stop();
-
             return;
         }
 
@@ -886,7 +1157,6 @@ window.Recorder = (() => {
 
 
                     stop();
-
                 },
                 maximum * 1000
             );
@@ -916,11 +1186,6 @@ window.Recorder = (() => {
 
     function handleRecorderStopped() {
 
-        console.log(
-            "MediaRecorder stopped."
-        );
-
-
         state.recording =
             false;
 
@@ -933,23 +1198,25 @@ window.Recorder = (() => {
 
 
         state.recordingDuration =
-            (
-                performance.now() -
-                state.recordingStartTime
-            ) / 1000;
+            Math.max(
+                0,
+                (
+                    performance.now() -
+                    state.recordingStartTime
+                ) / 1000
+            );
 
 
         const blobType =
-            state.currentMimeType ||
-            (
-                state.mediaRecorder &&
-                state.mediaRecorder.mimeType
-            ) ||
-            (
-                state.chunks[0] &&
-                state.chunks[0].type
-            ) ||
-            "audio/webm";
+            state.mediaRecorder &&
+            state.mediaRecorder.mimeType
+                ? state.mediaRecorder.mimeType
+                : state.currentMimeType ||
+                    (
+                        state.chunks[0] &&
+                        state.chunks[0].type
+                    ) ||
+                    "audio/webm";
 
 
         const blob =
@@ -961,7 +1228,9 @@ window.Recorder = (() => {
             );
 
 
-        if (blob.size === 0) {
+        if (
+            blob.size === 0
+        ) {
 
             state.lastBlob =
                 null;
@@ -969,10 +1238,17 @@ window.Recorder = (() => {
             state.lastSentenceId =
                 null;
 
-            stopAudioLevelMonitoring();
+            state.resultSentenceId =
+                null;
 
             state.mediaRecorder =
                 null;
+
+            stopAudioLevelMonitoring();
+
+            updateAudioMeter(
+                0
+            );
 
             updateRecordingButtons();
 
@@ -984,74 +1260,94 @@ window.Recorder = (() => {
         }
 
 
-        state.lastBlob =
-            blob;
-
-
-        state.lastSentenceId =
+        const sentenceId =
             state.currentSentenceId;
 
 
-        /*
-         * Preserve the sentence ID so REDO can
-         * return to the sentence that was just
-         * recorded, even though Dataset advances
-         * to the next pending sentence.
-         */
-        state.redoSentenceId =
-            state.lastSentenceId;
+        if (!sentenceId) {
 
+            console.warn(
+                "Recording completed without a sentence ID."
+            );
 
-        if (state.lastObjectUrl) {
+            state.mediaRecorder =
+                null;
 
-            try {
+            stopAudioLevelMonitoring();
 
-                URL.revokeObjectURL(
-                    state.lastObjectUrl
-                );
+            updateAudioMeter(
+                0
+            );
 
-            } catch (_) {}
+            updateRecordingButtons();
+
+            setRecordingState(
+                "Recording completed, but no sentence was selected."
+            );
+
+            return;
         }
 
 
-        state.lastObjectUrl =
-            URL.createObjectURL(
-                blob
+        state.lastBlob =
+            blob;
+
+        state.lastSentenceId =
+            sentenceId;
+
+        state.resultSentenceId =
+            sentenceId;
+
+        state.redoSentenceId =
+            sentenceId;
+
+
+        revokeLastObjectUrl();
+
+
+        try {
+
+            state.lastObjectUrl =
+                URL.createObjectURL(
+                    blob
+                );
+
+        } catch (error) {
+
+            console.warn(
+                "Unable to create recording preview URL:",
+                error
             );
 
-
-        const sentenceId =
-            state.lastSentenceId;
-
-
-        console.log(
-            "Recording ready:",
-            {
-                sentenceId,
-                duration:
-                    state.recordingDuration,
-                size:
-                    blob.size,
-                type:
-                    blob.type
-            }
-        );
+            state.lastObjectUrl =
+                null;
+        }
 
 
         stopAudioLevelMonitoring();
 
-        updateAudioMeter(0);
+        updateAudioMeter(
+            0
+        );
 
         updateRecordingDisplay();
 
         showRecordingResult();
 
 
+        /*
+         * Dataset owns persistence. The recorder only
+         * publishes the completed recording.
+         *
+         * Dataset.receiveRecording() will mark this exact
+         * sentence recorded and advance its own cursor.
+         */
         window.dispatchEvent(
             new CustomEvent(
                 "kvdb:recording-ready",
                 {
                     detail: {
+
                         blob,
 
                         duration:
@@ -1070,6 +1366,15 @@ window.Recorder = (() => {
         );
 
 
+        /*
+         * Do not clear resultSentenceId or lastSentenceId.
+         * REDO needs those IDs after Dataset advances.
+         *
+         * currentSentenceId is cleared because the Dataset
+         * cursor now points at the next pending sentence.
+         * getCurrentSentence() will use the Dataset cursor
+         * until REDO or Re-record establishes a new target.
+         */
         state.currentSentenceId =
             null;
 
@@ -1081,10 +1386,13 @@ window.Recorder = (() => {
     }
 
 
-    function handleRecorderError(event) {
+    function handleRecorderError(
+        event
+    ) {
 
         console.error(
             "MediaRecorder error:",
+            event &&
             event.error
         );
 
@@ -1106,7 +1414,9 @@ window.Recorder = (() => {
             null;
 
 
-        updateAudioMeter(0);
+        updateAudioMeter(
+            0
+        );
 
         updateRecordingButtons();
 
@@ -1128,16 +1438,21 @@ window.Recorder = (() => {
 
         const tick = () => {
 
-            if (!state.recording) {
+            if (
+                !state.recording
+            ) {
                 return;
             }
 
 
             state.recordingDuration =
-                (
-                    performance.now() -
-                    state.recordingStartTime
-                ) / 1000;
+                Math.max(
+                    0,
+                    (
+                        performance.now() -
+                        state.recordingStartTime
+                    ) / 1000
+                );
 
 
             updateRecordingDisplay();
@@ -1196,14 +1511,28 @@ window.Recorder = (() => {
 
         const monitor = () => {
 
-            if (!state.analyser) {
+            if (
+                !state.analyser
+            ) {
                 return;
             }
 
 
-            state.analyser.getFloatTimeDomainData(
-                data
-            );
+            try {
+
+                state.analyser.getFloatTimeDomainData(
+                    data
+                );
+
+            } catch (error) {
+
+                console.warn(
+                    "Unable to read microphone level:",
+                    error
+                );
+
+                return;
+            }
 
 
             const rms =
@@ -1221,7 +1550,9 @@ window.Recorder = (() => {
             );
 
 
-            if (state.recording) {
+            if (
+                state.recording
+            ) {
 
                 monitorSilence(
                     rms
@@ -1273,7 +1604,8 @@ window.Recorder = (() => {
         }
 
 
-        let sum = 0;
+        let sum =
+            0;
 
 
         for (
@@ -1289,7 +1621,8 @@ window.Recorder = (() => {
 
 
         return Math.sqrt(
-            sum / samples.length
+            sum /
+            samples.length
         );
     }
 
@@ -1322,7 +1655,9 @@ window.Recorder = (() => {
                 : DEFAULTS.silenceThreshold;
 
 
-        if (level >= threshold) {
+        if (
+            level >= threshold
+        ) {
 
             state.hasSpoken =
                 true;
@@ -1333,7 +1668,15 @@ window.Recorder = (() => {
         }
 
 
-        if (!state.hasSpoken) {
+        /*
+         * Do not stop before the user has actually spoken.
+         * Otherwise the recorder would spend its life stopping
+         * itself because the microphone is, inconveniently,
+         * initially silent.
+         */
+        if (
+            !state.hasSpoken
+        ) {
             return;
         }
 
@@ -1342,7 +1685,6 @@ window.Recorder = (() => {
             state.silenceTimer !==
             null
         ) {
-
             return;
         }
 
@@ -1371,7 +1713,6 @@ window.Recorder = (() => {
             state.recordingDuration <
             minimum
         ) {
-
             return;
         }
 
@@ -1396,6 +1737,20 @@ window.Recorder = (() => {
                 : DEFAULTS.silenceBeforeStop;
 
 
+        if (
+            delay <= 0
+        ) {
+
+            setRecordingState(
+                "Silence detected."
+            );
+
+            stop();
+
+            return;
+        }
+
+
         state.silenceTimer =
             setTimeout(
                 () => {
@@ -1407,7 +1762,6 @@ window.Recorder = (() => {
                     if (
                         !state.recording
                     ) {
-
                         return;
                     }
 
@@ -1418,7 +1772,6 @@ window.Recorder = (() => {
 
 
                     stop();
-
                 },
                 delay * 1000
             );
@@ -1596,7 +1949,9 @@ window.Recorder = (() => {
 
 
             try {
+
                 preview.load();
+
             } catch (_) {}
         }
 
@@ -1661,35 +2016,19 @@ window.Recorder = (() => {
 
 
     /* =====================================================
-       REDO
+       REDO / RECORD AGAIN
        ===================================================== */
 
     function redo() {
-
-        console.log(
-            "Redo requested."
-        );
-
 
         if (
             state.recording ||
             state.countdownActive
         ) {
-
             return;
         }
 
 
-        /*
-         * IMPORTANT:
-         *
-         * After recording finishes Dataset normally
-         * advances to the next pending sentence.
-         *
-         * Therefore getCurrentSentence() is NOT reliable
-         * for REDO. Use the sentence ID belonging to the
-         * recording that is currently being previewed.
-         */
         const sentenceId =
             state.redoSentenceId ||
             state.lastSentenceId;
@@ -1722,11 +2061,9 @@ window.Recorder = (() => {
 
 
         /*
-         * Remove the old recording from the Dataset.
-         *
-         * This is the part the previous implementation
-         * was missing. Hiding the result does NOT remove
-         * the recording from Dataset.
+         * Dataset.resetEntry() is the authoritative way to
+         * remove the previous recording and return the exact
+         * sentence to pending status.
          */
         if (
             window.Dataset &&
@@ -1746,11 +2083,15 @@ window.Recorder = (() => {
                     "Dataset.resetEntry() failed:",
                     sentenceId
                 );
+
+                return;
             }
+
         } else {
 
             /*
-             * Defensive fallback if Dataset is unavailable.
+             * Defensive fallback for operation without the
+             * Dataset module.
              */
             sentence.status =
                 "pending";
@@ -1760,42 +2101,25 @@ window.Recorder = (() => {
 
             sentence.updatedAt =
                 new Date().toISOString();
-
-
-            if (
-                window.App &&
-                window.App.state
-            ) {
-
-                window.App.state.dataset =
-                    window.Dataset &&
-                    typeof window.Dataset.getEntries ===
-                        "function"
-                        ? window.Dataset.getEntries()
-                        : window.App.state.dataset;
-            }
         }
 
 
-        /*
-         * Keep this exact sentence active for the next
-         * recording. Dataset may have its internal cursor
-         * on the next sentence, so Recorder deliberately
-         * keeps its own temporary REDO target.
-         */
         state.redoSentenceId =
             sentenceId;
 
         state.currentSentenceId =
             sentenceId;
 
-
-        state.chunks = [];
-
-        state.lastBlob =
+        state.lastSentenceId =
             null;
 
-        state.lastSentenceId =
+        state.resultSentenceId =
+            null;
+
+        state.chunks =
+            [];
+
+        state.lastBlob =
             null;
 
         state.hasSpoken =
@@ -1808,35 +2132,24 @@ window.Recorder = (() => {
             0;
 
 
-        if (state.lastObjectUrl) {
-
-            try {
-
-                URL.revokeObjectURL(
-                    state.lastObjectUrl
-                );
-
-            } catch (_) {}
-
-            state.lastObjectUrl =
-                null;
-        }
-
-
-        /*
-         * Restore the sentence text in the Record UI.
-         * Dataset normally advances after a successful
-         * recording, so explicitly restore the sentence
-         * that is being retaken.
-         */
-        restoreSentenceDisplay(
-            sentence
-        );
-
+        revokeLastObjectUrl();
 
         hideRecordingResult();
 
         clearSilenceTimer();
+
+        stopDurationMonitor();
+
+        stopAudioLevelMonitoring();
+
+        updateAudioMeter(
+            0
+        );
+
+
+        restoreSentenceDisplay(
+            sentence
+        );
 
 
         const countdown =
@@ -1852,9 +2165,6 @@ window.Recorder = (() => {
         }
 
 
-        updateAudioMeter(0);
-
-
         setRecordingState(
             "Ready to record again."
         );
@@ -1864,10 +2174,6 @@ window.Recorder = (() => {
     }
 
 
-    /*
-     * Restore the visible "SAY:" sentence and App's
-     * currentSentence reference during REDO.
-     */
     function restoreSentenceDisplay(
         sentence
     ) {
@@ -1908,7 +2214,7 @@ window.Recorder = (() => {
         if (sentenceElement) {
 
             sentenceElement.textContent =
-                sentence.text;
+                sentence.text || "";
         }
 
 
@@ -1959,7 +2265,9 @@ window.Recorder = (() => {
 
 
             metadataElement.textContent =
-                metadata.join(" • ");
+                metadata.join(
+                    " • "
+                );
         }
     }
 
@@ -1980,11 +2288,19 @@ window.Recorder = (() => {
         }
 
 
+        /*
+         * The normal recording path already sends
+         * kvdb:recording-ready and Dataset.receiveRecording()
+         * persists it immediately.
+         *
+         * Keep this event for compatibility with other modules.
+         */
         window.dispatchEvent(
             new CustomEvent(
                 "kvdb:save-recording",
                 {
                     detail: {
+
                         blob:
                             state.lastBlob,
 
@@ -1995,6 +2311,7 @@ window.Recorder = (() => {
                             state.lastBlob.type,
 
                         sentenceId:
+                            state.resultSentenceId ||
                             state.lastSentenceId,
 
                         createdAt:
@@ -2022,16 +2339,10 @@ window.Recorder = (() => {
 
     function skip() {
 
-        console.log(
-            "Skip button clicked."
-        );
-
-
         if (
             state.recording ||
             state.countdownActive
         ) {
-
             return;
         }
 
@@ -2071,7 +2382,11 @@ window.Recorder = (() => {
         state.redoSentenceId =
             null;
 
-        state.chunks = [];
+        state.resultSentenceId =
+            null;
+
+        state.chunks =
+            [];
 
         state.lastBlob =
             null;
@@ -2088,25 +2403,17 @@ window.Recorder = (() => {
 
         clearSilenceTimer();
 
+        stopDurationMonitor();
 
-        if (state.lastObjectUrl) {
+        stopAudioLevelMonitoring();
 
-            try {
-
-                URL.revokeObjectURL(
-                    state.lastObjectUrl
-                );
-
-            } catch (_) {}
-
-            state.lastObjectUrl =
-                null;
-        }
-
+        revokeLastObjectUrl();
 
         hideRecordingResult();
 
-        updateAudioMeter(0);
+        updateAudioMeter(
+            0
+        );
 
 
         const countdown =
@@ -2178,6 +2485,16 @@ window.Recorder = (() => {
             state.countdownActive;
 
 
+        const hasRedoTarget =
+            Boolean(
+                state.lastBlob &&
+                (
+                    state.redoSentenceId ||
+                    state.lastSentenceId
+                )
+            );
+
+
         if (record) {
 
             record.disabled =
@@ -2196,13 +2513,7 @@ window.Recorder = (() => {
 
             redoButton.disabled =
                 busy ||
-                !(
-                    state.lastBlob &&
-                    (
-                        state.redoSentenceId ||
-                        state.lastSentenceId
-                    )
-                );
+                !hasRedoTarget;
         }
 
 
@@ -2225,13 +2536,7 @@ window.Recorder = (() => {
 
             retakeButton.disabled =
                 busy ||
-                !(
-                    state.lastBlob &&
-                    (
-                        state.redoSentenceId ||
-                        state.lastSentenceId
-                    )
-                );
+                !hasRedoTarget;
         }
     }
 
@@ -2243,35 +2548,38 @@ window.Recorder = (() => {
     function getCurrentSentence() {
 
         /*
-         * REDO has priority over Dataset's cursor.
-         * This prevents the next pending sentence from
-         * being recorded when the user presses Record Again.
+         * An explicit sentence ID always wins. This is what
+         * makes Dataset-tab Re-record reliable.
          */
-        if (state.currentSentenceId) {
+        if (
+            state.currentSentenceId
+        ) {
 
-            const redoSentence =
+            const explicit =
                 findSentenceById(
                     state.currentSentenceId
                 );
 
 
-            if (redoSentence) {
+            if (explicit) {
 
-                return redoSentence;
+                return explicit;
             }
+
+
+            state.currentSentenceId =
+                null;
         }
 
 
         if (
             window.Dataset &&
-            typeof window.Dataset
-                .getCurrentSentence ===
+            typeof window.Dataset.getCurrentSentence ===
                 "function"
         ) {
 
             const sentence =
-                window.Dataset
-                    .getCurrentSentence();
+                window.Dataset.getCurrentSentence();
 
 
             if (sentence) {
@@ -2287,8 +2595,7 @@ window.Recorder = (() => {
             window.App.state.currentSentence
         ) {
 
-            return window.App.state
-                .currentSentence;
+            return window.App.state.currentSentence;
         }
 
 
@@ -2301,9 +2608,9 @@ window.Recorder = (() => {
     ) {
 
         if (
+            !id ||
             !window.Dataset ||
-            typeof window.Dataset
-                .getEntries !==
+            typeof window.Dataset.getEntries !==
                 "function"
         ) {
 
@@ -2315,7 +2622,11 @@ window.Recorder = (() => {
             window.Dataset.getEntries();
 
 
-        if (!Array.isArray(entries)) {
+        if (
+            !Array.isArray(
+                entries
+            )
+        ) {
 
             return null;
         }
@@ -2324,8 +2635,10 @@ window.Recorder = (() => {
         return (
             entries.find(
                 entry =>
+                    entry &&
                     entry.id === id
-            ) || null
+            ) ||
+            null
         );
     }
 
@@ -2346,7 +2659,11 @@ window.Recorder = (() => {
         ) {
 
             const parts =
-                String(path).split(".");
+                String(
+                    path
+                ).split(
+                    "."
+                );
 
 
             let value =
@@ -2425,7 +2742,9 @@ window.Recorder = (() => {
         }
 
 
-        switch (error.name) {
+        switch (
+            error.name
+        ) {
 
             case "NotAllowedError":
 
@@ -2433,7 +2752,7 @@ window.Recorder = (() => {
 
                 return (
                     "Microphone permission was denied. " +
-                    "Allow microphone access for localhost."
+                    "Allow microphone access for this site."
                 );
 
 
@@ -2486,7 +2805,9 @@ window.Recorder = (() => {
     ) {
 
         if (
-            !Number.isFinite(bytes) ||
+            !Number.isFinite(
+                bytes
+            ) ||
             bytes <= 0
         ) {
 
@@ -2495,6 +2816,7 @@ window.Recorder = (() => {
 
 
         const units = [
+
             "B",
             "KB",
             "MB",
@@ -2505,8 +2827,12 @@ window.Recorder = (() => {
         const exponent =
             Math.min(
                 Math.floor(
-                    Math.log(bytes) /
-                    Math.log(1024)
+                    Math.log(
+                        bytes
+                    ) /
+                    Math.log(
+                        1024
+                    )
                 ),
                 units.length - 1
             );
@@ -2527,6 +2853,33 @@ window.Recorder = (() => {
                     : 1
             )} ${units[exponent]}`
         );
+    }
+
+
+    /* =====================================================
+       OBJECT URL
+       ===================================================== */
+
+    function revokeLastObjectUrl() {
+
+        if (
+            !state.lastObjectUrl
+        ) {
+            return;
+        }
+
+
+        try {
+
+            URL.revokeObjectURL(
+                state.lastObjectUrl
+            );
+
+        } catch (_) {}
+
+
+        state.lastObjectUrl =
+            null;
     }
 
 
@@ -2567,18 +2920,15 @@ window.Recorder = (() => {
             null;
 
 
-        updateAudioMeter(0);
+        updateAudioMeter(
+            0
+        );
 
         updateRecordingButtons();
     }
 
 
     function cleanup() {
-
-        console.log(
-            "Recorder cleanup."
-        );
-
 
         cancelCountdown();
 
@@ -2591,13 +2941,15 @@ window.Recorder = (() => {
         stopAudioLevelMonitoring();
 
 
-        if (state.mediaRecorder) {
+        if (
+            state.mediaRecorder
+        ) {
 
             try {
 
                 if (
                     state.mediaRecorder.state !==
-                    "inactive"
+                        "inactive"
                 ) {
 
                     state.mediaRecorder.ondataavailable =
@@ -2624,7 +2976,9 @@ window.Recorder = (() => {
                     track => {
 
                         try {
+
                             track.stop();
+
                         } catch (_) {}
                     }
                 );
@@ -2638,24 +2992,14 @@ window.Recorder = (() => {
         if (state.audioContext) {
 
             try {
+
                 state.audioContext.close();
+
             } catch (_) {}
         }
 
 
-        if (state.lastObjectUrl) {
-
-            try {
-
-                URL.revokeObjectURL(
-                    state.lastObjectUrl
-                );
-
-            } catch (_) {}
-
-            state.lastObjectUrl =
-                null;
-        }
+        revokeLastObjectUrl();
 
 
         state.audioContext =
@@ -2679,11 +3023,34 @@ window.Recorder = (() => {
         state.currentSentenceId =
             null;
 
+        state.lastSentenceId =
+            null;
+
         state.redoSentenceId =
             null;
 
+        state.resultSentenceId =
+            null;
 
-        updateAudioMeter(0);
+        state.chunks =
+            [];
+
+        state.lastBlob =
+            null;
+
+        state.hasSpoken =
+            false;
+
+        state.recordingDuration =
+            0;
+
+        state.audioLevel =
+            0;
+
+
+        updateAudioMeter(
+            0
+        );
 
         updateRecordingButtons();
     }
@@ -2734,6 +3101,7 @@ window.Recorder = (() => {
                         : state.currentMimeType,
 
                 sentenceId:
+                    state.resultSentenceId ||
                     state.lastSentenceId
             };
         },
@@ -2752,6 +3120,7 @@ window.Recorder = (() => {
             };
         }
     };
+
 })();
 
 
@@ -2776,7 +3145,7 @@ document.addEventListener(
 
 
 /* =========================================================
-   CLEANUP
+   PAGE CLEANUP
    ========================================================= */
 
 window.addEventListener(
